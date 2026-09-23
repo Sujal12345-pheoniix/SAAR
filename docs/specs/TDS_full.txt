@@ -1,0 +1,568 @@
+SAARTechnical Design Specification v1.0
+Implementation blueprint: architecture → database → APIs → events → AI → security → CI/CD
+Co-founder: Sujal Kumar  |  Strategic / Technical M.D.: GPT  |  Status: Draft for implementation
+1. Purpose
+This specification converts the SAAR Product Requirements Document into an implementation-level technical blueprint. ""It is intentionally opinionated: the first release should be modular, secure, observable, testable and capable of evolving from an MVP into a multi-region consumer product without rewriting its core domain model.
+Primary product loop:
+Current You → Desired You → Gap → Action → Behavior → Evidence → Insight → Adaptation → Repeat.
+SAAR is not a generic task manager. The technical architecture must preserve longitudinal behavioral context and turn it into explainable, bounded interventions.
+AI is an orchestration layer over trusted application data—not the source of truth.
+2. Architecture Principles
+Modular monolith first: keep domain boundaries strict while avoiding premature microservice complexity.
+API-first: mobile/web clients consume stable versioned contracts.
+PostgreSQL is the system of record; Redis is acceleration/state, never authoritative business storage.
+Event-driven side effects: reminders, analytics, AI analysis and weekly reports are asynchronous.
+AI never mutates critical user state directly. It proposes actions; policy + domain services validate and commit them.
+Privacy by design: collect the minimum data necessary, make sensitive features opt-in, support export/delete.
+Every important behavioral event is timestamped and attributable to a device/session/source.
+Observability is a feature: every workflow must be diagnosable with correlation IDs.
+Feature flags protect risky releases and permit controlled experiments.
+Figure 1 — Recommended SAAR logical architecture.
+3. Recommended Technology Baseline
+Layer
+Recommended choice
+Reason
+Mobile
+React Native + Expo
+Fast cross-platform iteration; native capabilities for notifications, biometrics and sensors.
+Web/Admin
+Next.js
+Marketing site, account/settings, internal operations and future web client.
+Backend
+NestJS + TypeScript
+Strong modular architecture, DI, validation, guards, background integrations.
+Database
+PostgreSQL
+Transactional integrity, JSONB where useful, mature indexing and analytics support.
+ORM
+Prisma
+Fast developer workflow and typed schema access; raw SQL allowed for tuned queries.
+Cache/Jobs
+Redis + BullMQ
+Rate limits, short-lived cache, delayed jobs, queues.
+Object storage
+S3-compatible storage
+Encrypted attachments/media with signed URLs.
+Auth
+OIDC/OAuth + email/password
+Flexible sign-in with MFA/passkeys later; server-side authorization.
+AI gateway
+Provider-agnostic internal adapter
+Avoid hard coupling to one model vendor.
+Observability
+OpenTelemetry + structured logs
+Trace requests and asynchronous workflows end-to-end.
+CI/CD
+GitHub Actions + preview/staging/prod
+Branch protection, automated checks and controlled releases.
+4. Repository / Monorepo Structure
+saar/├─ apps/│  ├─ mobile/                 # React Native / Expo client│  ├─ web/                    # Next.js marketing + authenticated web│  └─ api/                    # NestJS application├─ packages/│  ├─ contracts/              # OpenAPI-generated types / DTO contracts│  ├─ domain/                 # Pure domain types, rules, scoring│  ├─ config/                 # Typed environment/config package│  ├─ ui/                     # Shared design system where applicable│  ├─ analytics/              # Event names + schemas│  └─ ai-core/                # Prompt templates, tool schemas, AI adapters├─ infra/│  ├─ docker/│  ├─ terraform/              # Optional after MVP infrastructure stabilizes│  └─ scripts/├─ prisma/│  ├─ schema.prisma│  ├─ migrations/│  └─ seed/├─ docs/│  ├─ adr/│  ├─ api/│  ├─ security/│  └─ runbooks/├─ .github/workflows/├─ turbo.json└─ package.json
+5. Domain Modules
+Module
+Owns
+Key rule
+Identity
+users, sessions, credentials, devices
+Authentication is separate from authorization.
+Profile
+preferences, timezone, locale, notification settings
+User controls what is collected and used.
+Future Self
+vision, life areas, targets, values
+Desired state must be measurable where possible.
+Goals
+goals, milestones, metrics
+Goals have lifecycle and evidence.
+Planning
+tasks, routines, schedules, time blocks
+Planner is not the source of truth for historical behavior.
+Behavior
+events, completions, skips, snoozes, interventions
+Immutable event history; corrections are compensating events.
+Growth Engine
+scores, gaps, recommendations, experiments
+Recommendations are explainable and versioned.
+Daily Growth
+check-ins, daily review, reflection
+User-owned reflections; sensitive content needs strict access control.
+Companion
+conversations, summaries, approved memories
+AI context is scoped; no unrestricted database access.
+Notifications
+templates, preferences, delivery attempts
+Respect quiet hours and consent.
+Analytics
+product events, aggregates, experiments
+Do not expose raw sensitive content to product analytics.
+Safety
+risk signals, escalation policy, audit trail
+High-risk outputs must follow predefined safety policy.
+6. Database Design
+Core relational entities:
+Entity
+Important fields
+Indexes / constraints
+users
+id, email, status, timezone, created_at
+unique email; status index
+user_profiles
+user_id, display_name, locale, preferences_json
+1:1 user
+devices
+id, user_id, platform, push_token, last_seen_at
+user + active index
+life_areas
+id, user_id, type, title, target_state
+user + type
+goals
+id, user_id, life_area_id, title, status, target_date
+user + status; target date
+goal_metrics
+id, goal_id, metric_type, target_value, unit
+goal index
+plans
+id, user_id, date, generated_by
+unique user/date
+tasks
+id, plan_id, goal_id, title, due_at, status, priority
+user + due_at/status
+routines
+id, user_id, recurrence_rule, active
+user + active
+behavior_events
+id, user_id, event_type, occurred_at, source, metadata_json
+user + occurred_at; event_type
+checkins
+id, user_id, date, mood, energy, notes
+unique user/date
+insights
+id, user_id, type, evidence_json, recommendation_json, confidence, expires_at
+user + created_at
+interventions
+id, user_id, insight_id, action_type, status
+user + status
+conversations
+id, user_id, created_at
+user index
+messages
+id, conversation_id, role, content_ref, created_at
+conversation + created_at
+memories
+id, user_id, type, summary, source_refs, consent_status
+user + type
+notifications
+id, user_id, type, scheduled_at, status
+user + scheduled_at
+audit_logs
+id, user_id, actor_type, action, entity_type, entity_id, created_at
+entity + created_at
+Recommended event model:
+BehaviorEvent {  id: UUID  userId: UUID  eventType: string  occurredAt: timestamptz  source: mobile | web | system | integration  entityType?: string  entityId?: UUID  metadata: JSONB  schemaVersion: integer}
+7. Data Architecture
+Figure 2 — Data ownership and storage boundaries.
+8. API Architecture
+All authenticated APIs are versioned under /api/v1. Use REST for transactional operations and server-sent events/websockets only where real-time UX materially benefits.
+Area
+Representative endpoints
+Notes
+Auth
+POST /auth/register, /login, /refresh, /logout
+Short-lived access token + rotating refresh token.
+Profile
+GET/PATCH /me
+Never expose internal/security fields.
+Future Self
+GET/POST/PATCH /future-self
+Version target changes.
+Goals
+GET/POST/PATCH /goals
+Validate ownership and life-area membership.
+Plans
+GET /plans/:date, POST /plans/generate
+Generated plans require idempotency.
+Tasks
+POST /tasks, PATCH /tasks/:id
+Completion creates behavior event.
+Behavior
+POST /behavior-events, GET /behavior/timeline
+Write path should be cheap and append-oriented.
+Growth
+GET /growth/dashboard, /growth/gaps, /growth/insights
+Read models can be cached.
+Daily Growth
+GET /daily-growth/session, POST /daily-growth/checkin
+Session is user-timezone aware.
+Companion
+POST /companion/conversations, POST /companion/messages
+AI calls go through policy/orchestrator.
+Notifications
+GET /notifications/preferences, PATCH /notifications/preferences
+No silent override of user settings.
+Privacy
+GET /privacy/export, POST /privacy/delete-request
+Deletion is asynchronous and auditable.
+9. Authentication & Authorization
+Use short-lived access tokens and rotating refresh tokens stored in secure platform storage.
+Device/session records enable revocation and anomaly detection.
+Authorization must be server-side on every protected resource.
+Use RBAC internally (user/admin/support) but keep domain ownership checks mandatory.
+Prepare for passkeys and MFA; do not hard-code password-only assumptions.
+Never trust client-provided user_id, role, organization_id or ownership fields.
+Rate-limit login, OTP, password reset, companion messaging and expensive AI endpoints.
+Sensitive operations require step-up authentication when appropriate.
+10. AI Architecture
+The AI layer is a controlled decision-support system with four stages:
+Context Builder: retrieves only the minimum approved context needed for the task.
+Policy Engine: checks permissions, safety, privacy, age/eligibility and tool constraints.
+Model Router: selects model/provider based on task complexity, latency and cost.
+Action Validator: converts AI output into a strict schema and allows only whitelisted mutations.
+AI tools should be explicit, typed and permission-scoped, for example:
+get_today_plan()get_recent_behavior(days)get_goal_progress(goal_id)get_balance_snapshot()create_task(proposed_task)          # requires user confirmation for sensitive changesreschedule_task(task_id, new_time)  # policy checkedcreate_insight(insight_payload)save_memory(memory_payload)         # explicit memory policy / consent
+Do not expose a generic SQL tool or unrestricted application database to the model.
+11. Growth / Gap Engine
+Reference pipeline:
+Observed State    ↓Normalize events    ↓Build behavior features    ↓Compare with Desired State    ↓Detect gaps    ↓Rank gaps by impact + confidence + user preference    ↓Generate candidate interventions    ↓Policy / feasibility validation    ↓Explainable recommendation    ↓Measure outcome
+Signal
+Example feature
+Use
+Consistency
+completion_rate_7d
+Detect routine stability.
+Timing
+success_by_hour
+Adaptive scheduling.
+Load
+planned_minutes vs available_minutes
+Life trade-off engine.
+Recovery
+sleep/recovery inputs if explicitly connected
+Avoid overloading user.
+Mood/energy
+self-reported trend
+Contextual recommendations, not diagnosis.
+Goal trajectory
+actual pace vs target pace
+Detect stalled goals.
+Friction
+snooze/skip/failure patterns
+Change task design/time rather than guilt user.
+12. Life Trade-off Engine
+SAAR must treat time and attention as constrained resources. A recommendation that improves one life area while repeatedly damaging another is not automatically a good recommendation.
+Represent daily capacity as available time blocks rather than assuming unlimited availability.
+Maintain life-area weights selected by the user.
+Detect overload: planned effort > estimated capacity.
+Detect displacement: adding work consistently removes sleep, exercise, relationships or personal time.
+Recommend trade-offs explicitly: reduce, move, delegate, defer or drop.
+Never optimize a single score at the expense of the user's stated values.
+13. Adaptive Scheduling
+Store intended time and actual completion time.
+Calculate success rates by time window, day-of-week, context and task type.
+Require a minimum evidence threshold before moving a recurring routine automatically.
+Propose changes first; optionally enable auto-rescheduling for low-risk routines.
+Respect fixed commitments and user-defined no-move windows.
+Every adaptation is logged so the user can understand why the schedule changed.
+14. Daily Growth Session
+Trigger: user's configured local time1. Lock daily snapshot2. Collect plan + completed/failed behavior3. Run feature aggregation4. Calculate goal/gap changes5. Generate 3–5 concise insights6. Ask mood/energy/reflection questions7. Recommend tomorrow's top actions8. Save session summary9. Schedule next-day reminders10. Record outcome events
+Performance target: render the session quickly from precomputed aggregates; never wait for a full LLM analysis before showing basic progress.
+15. Companion Conversation Flow
+User message enters API → authentication → rate limit → safety classifier → context selection.
+Context Builder retrieves relevant recent conversation, goals, behavior summaries and user-approved memories.
+Prompt is assembled from versioned templates.
+Model returns structured response plus optional action proposals.
+Schema validator rejects malformed tool/action outputs.
+Policy layer decides whether confirmation is required.
+Response is stored with a redacted/structured audit record where appropriate.
+Sensitive raw conversation should not automatically enter analytics or long-term memory.
+16. Memory Model
+Memory class
+Examples
+Retention
+Preference
+prefers morning workouts
+Until user changes/deletes.
+Goal context
+wants to run 10K by a date
+Until goal expires or user deletes.
+Behavioral pattern
+usually completes exercise before 9 AM
+Derived; recompute periodically.
+Reflection
+user-authored life reflection
+User controlled; sensitive.
+Companion context
+recurring topic user asked to remember
+Explicit opt-in / visible management.
+Memory is not a dump of chat history. Store compact, explainable facts with source references, timestamps and retention rules.
+17. Notification / Alarm System
+Notification scheduling service stores intended notifications and delivery state.
+Client handles platform-specific local alarm behavior where OS capabilities are stronger.
+Server remains authoritative for schedule and recurring rules.
+Alarm dismissal actions are modeled as events.
+Behavioral alarms may require a configurable action (e.g., scan/step/task), but provide accessibility and emergency bypasses.
+Never use coercive or unsafe mechanics. The goal is accountability, not punishment.
+18. Event-Driven Processing
+Transactional request   ↓DB transaction   ├─ write business state   └─ write outbox event          ↓Outbox publisher          ↓Queue   ├─ analytics worker   ├─ notification worker   ├─ growth feature worker   └─ AI insight worker
+Use the transactional outbox pattern so important domain changes are not committed without their corresponding event.
+19. Idempotency & Reliability
+All write endpoints that may be retried accept an idempotency key.
+Workers must be safe to retry.
+Use exponential backoff and dead-letter queues for persistent failures.
+Every job has status, attempts, started_at, finished_at and error metadata.
+External provider calls use timeouts and circuit-breaking where appropriate.
+User-visible operations should return a correlation ID for support/debugging.
+20. Security Architecture
+TLS everywhere; HSTS on web.
+Secrets only in managed secret storage/environment configuration; never commit secrets.
+Encrypt data at rest using platform/database/object-store encryption.
+Signed, short-lived object URLs for private files.
+Strict CORS and CSRF strategy based on auth mechanism.
+Content validation and malware scanning for uploads.
+PII/sensitive-content classification at schema level.
+Audit logs for authentication, privacy actions, role changes and critical account changes.
+Dependency scanning, secret scanning, SAST and container scanning in CI.
+Threat-model high-risk flows before launch.
+21. Privacy & Data Lifecycle
+Explicitly explain why each sensitive permission/data source is requested.
+Default to minimal collection.
+Allow users to disable optional integrations.
+Provide export and deletion workflows.
+Separate operational data from product analytics where possible.
+Define retention periods per data class.
+Use data minimization in AI context retrieval.
+Never sell or share personal growth data as a default business model.
+22. Observability
+Signal
+Examples
+Alert
+Logs
+request_id, user-safe context, error code
+5xx spike; worker failures
+Metrics
+API latency, queue depth, AI latency, notification success
+SLO breach
+Traces
+API → DB → queue → AI provider
+Slow path / bottleneck
+Business metrics
+daily session completion, recommendation acceptance
+Product regression
+Cost metrics
+AI tokens/call, storage, push/email volume
+Budget anomaly
+23. Testing Strategy
+Unit tests for domain rules, scoring and scheduling.
+Integration tests for API + PostgreSQL + Redis.
+Contract tests for API schemas and mobile/web clients.
+End-to-end tests for onboarding, planning, daily session, companion and privacy deletion.
+Security tests for authorization bypass, IDOR, rate limits, token handling and upload paths.
+AI evaluation suite with deterministic test cases, safety cases and regression prompts.
+Load tests for daily-session spikes and notification jobs.
+Migration tests before production database changes.
+24. CI/CD Pipeline
+Figure 3 — Recommended branch-to-production pipeline.
+feature/* → pull request → lint/typecheck/unit/security checks.
+Preview deployment for frontend/API changes where practical.
+Integration/e2e suite → staging deployment.
+Manual approval for production for the initial release.
+Database migrations run as controlled release steps, never ad hoc from a developer laptop.
+Production rollback plan tested before launch.
+Main branch is protected; direct pushes disabled.
+25. Environments
+Environment
+Purpose
+Data
+Local
+Developer work
+Synthetic/local only.
+Preview
+PR validation
+Ephemeral/synthetic.
+Staging
+Release candidate
+Synthetic or anonymized test data.
+Production
+Real users
+Strict access, backups, monitoring.
+26. SLO / NFR Targets for MVP
+Area
+Initial target
+API availability
+≥ 99.5% monthly, excluding planned maintenance
+Typical API p95
+< 500 ms for non-AI CRUD endpoints
+Basic dashboard load
+< 2 s from warm API/cache target
+AI response
+stream first useful response when possible; target < 5 s median
+Notification job reliability
+≥ 99% successful/accepted by provider
+Data backup
+Automated daily backups + tested restore
+Crash-free mobile sessions
+Target ≥ 99.5% after stabilization
+27. Analytics & Product Events
+app_openedonboarding_completedfuture_self_createdgoal_createdtask_completedtask_skippedtask_snoozedalarm_dismisseddaily_growth_starteddaily_growth_completedinsight_viewedinsight_acceptedinsight_dismissedrecommendation_followedrecommendation_failedcompanion_message_sentmemory_savednotification_openedsubscription_startedsubscription_cancelled
+Event payloads must use schema versions and must not contain raw sensitive conversation text.
+28. Billing / Monetization Architecture
+Separate entitlement state from payment provider implementation.
+Maintain subscription, plan, entitlement and provider-event tables.
+Use provider webhooks as the source of truth for payment state.
+Gate premium capabilities server-side.
+Support grace periods and failed-payment states.
+Do not make safety-critical or basic privacy controls paywalled.
+29. Feature Flag Architecture
+Flags are server-evaluated for entitlement/security-sensitive behavior.
+Support user cohort, percentage rollout and environment targeting.
+Every flag has owner, purpose, created date and expiry date.
+Remove stale flags; do not accumulate permanent branches.
+30. Implementation Phases
+Phase
+Deliverables
+Exit criteria
+0 — Foundation
+monorepo, environments, CI, auth skeleton, DB, observability
+PR pipeline green; deployable skeleton.
+1 — Core Life Model
+profile, life areas, Future Self, goals
+CRUD + authorization + tests.
+2 — Planning
+tasks, routines, schedules, notifications
+Reliable planner and event tracking.
+3 — Behavior Engine
+events, aggregates, daily check-in
+Behavior timeline and metrics work.
+4 — Growth Engine
+gap detection, trade-offs, adaptive scheduling
+Explainable insights from real data.
+5 — Daily Growth
+daily session, weekly report
+End-to-end growth loop works.
+6 — Companion
+conversation, context builder, safety, memory
+Bounded AI assistant with evaluations.
+7 — Monetization
+entitlements, subscriptions, billing webhooks
+Premium gating + billing reconciliation.
+8 — Hardening
+security review, load testing, backup restore, app-store readiness
+Launch checklist passed.
+31. Definition of Done
+Feature works on supported clients.
+Database migrations are versioned.
+API contract documented and tested.
+Authorization tests cover owner/non-owner cases.
+Telemetry exists for success and failure.
+Errors are actionable and do not leak sensitive data.
+Performance is measured.
+Feature flag/rollback exists for risky features.
+User-facing privacy implications are documented.
+CI passes before merge; production changes are traceable to a reviewed PR.
+32. Major Technical Risks
+Risk
+Why it matters
+Mitigation
+Overbuilding microservices
+Solo developer velocity collapses.
+Modular monolith until scale proves otherwise.
+AI hallucination
+Bad advice damages trust.
+Grounded context, structured outputs, policy checks, evaluations.
+Privacy breach
+Product handles intimate life data.
+Minimization, encryption, scoped context, audit, deletion.
+Notification fatigue
+Users disable the app.
+Adaptive frequency and user controls.
+Gamification addiction
+Growth becomes another source of pressure.
+No compulsive streak mechanics as core.
+Cold start
+AI has little behavioral data initially.
+User-defined Future Self + simple check-ins + explicit goals.
+Cost explosion
+AI usage can scale faster than revenue.
+Model routing, caching, summaries, budgets and quotas.
+Feature sprawl
+Product becomes another bloated Life OS.
+Every feature must strengthen the growth loop.
+33. Initial Security Threat Model
+Threat
+Control
+Account takeover
+MFA/passkeys roadmap, secure sessions, rate limits, anomaly detection.
+IDOR / cross-user access
+Ownership checks + authorization tests.
+Token theft
+Short-lived tokens, rotation, secure storage, revocation.
+Prompt injection
+Treat retrieved content as untrusted; tool allowlists; no unrestricted tools.
+Sensitive data leakage to AI provider
+Context minimization, provider policy review, redaction where feasible.
+Malicious uploads
+MIME validation, size limits, scanning, isolated processing.
+Abusive automation
+Rate limits, quotas, bot detection where necessary.
+Insider access
+Least privilege, audit logs, production access controls.
+34. ADRs to Create Before Coding
+ADR-001: Modular monolith vs microservices.
+ADR-002: Authentication/session strategy.
+ADR-003: PostgreSQL/Prisma data ownership rules.
+ADR-004: Event/outbox architecture.
+ADR-005: AI provider abstraction and data handling.
+ADR-006: Memory retention and user control.
+ADR-007: Notification/alarm platform strategy.
+ADR-008: Subscription/entitlement model.
+ADR-009: Observability and incident response.
+ADR-010: Production deployment and rollback.
+35. Claude Code / Antigravity Execution Contract
+Agents should implement one bounded phase at a time. They must inspect the existing repository before changing architecture, preserve working behavior, write tests for critical paths, update documentation, and never silently introduce infrastructure or dependency choices.
+For every implementation task:1. Inspect current repository and identify affected modules.2. State assumptions and risks.3. Produce a short implementation plan.4. Implement in small reviewable commits.5. Add/update tests.6. Run lint, typecheck, unit/integration tests.7. Check authorization and failure paths.8. Update API/schema/docs.9. Report files changed, migrations, env vars and rollback steps.10. Do NOT modify unrelated modules.
+36. First Engineering Sprint
+Order
+Task
+Output
+1
+Initialize monorepo/workspaces
+apps + packages + tooling
+2
+API bootstrap
+NestJS health/readiness endpoints
+3
+PostgreSQL + Prisma
+Initial schema + migration
+4
+Auth foundation
+Register/login/refresh/logout + session model
+5
+Observability
+structured logs + request correlation
+6
+CI
+lint/typecheck/test/security checks
+7
+Mobile shell
+navigation + secure session handling
+8
+Design system
+tokens + core components
+9
+Future Self domain
+schema + API + tests
+10
+Goal domain
+schema + API + tests
+37. Final Technical Contract
+SAAR v1 should be built as a privacy-first, modular, event-aware application whose source of truth is deterministic application data and whose AI layer is bounded, explainable and replaceable. ""The architecture deliberately optimizes for a solo/small engineering team: strong module boundaries, one deployable backend initially, PostgreSQL as the durable core, Redis for acceleration, asynchronous workers for expensive work, and strict CI/CD. ""The product's technical moat is not the chat model; it is the longitudinal behavioral model, the gap engine, adaptive interventions and trusted user-controlled memory.
+38. Next Deliverable
+The next artifact after this specification should be the SAAR Database & API Contract Pack: complete Prisma schema, ERD, OpenAPI endpoint definitions, request/response DTOs, error model, event catalog, RBAC matrix and seed data. This becomes the direct execution source for Claude Code / Antigravity.
+Appendix A — Naming Conventions
+TypeScript: camelCase variables/functions, PascalCase classes/types.
+Database: snake_case tables/columns.
+API: kebab-case resource paths where appropriate.
+Events: lowercase dot notation, e.g. task.completed.
+IDs: UUIDv7 or equivalent time-sortable UUID strategy.
+Timestamps: UTC in storage; render in user's timezone.
+Appendix B — Environment Variable Categories
+DATABASE_URLREDIS_URLAUTH_SECRET / provider configurationOBJECT_STORAGE_* PUSH_PROVIDER_* EMAIL_PROVIDER_*AI_PROVIDER_* BILLING_PROVIDER_*OTEL_*SENTRY_* (if selected)
+Never place real secrets in the repository. Commit only a validated .env.example with placeholders.

@@ -1,0 +1,143 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: CI Pipeline
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: saar_test
+          POSTGRES_PASSWORD: saar_test
+          POSTGRES_DB: saar_test
+        ports:
+          - '5433:5432'
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - '6380:6379'
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://saar_test:saar_test@localhost:5433/saar_test
+      REDIS_URL: redis://localhost:6380
+      NODE_ENV: test
+      JWT_SECRET: ci-test-jwt-secret-32-chars-minimum
+      JWT_REFRESH_SECRET: ci-test-refresh-secret-32-chars-ok
+      ENCRYPTION_KEY: ci-test-encryption-key-32-chars!!
+
+    steps:
+      # ─────────────────────────────────────────────
+      # 1. Checkout
+      # ─────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history required for TruffleHog diff scan
+
+      # ─────────────────────────────────────────────
+      # 2. Toolchain
+      # ─────────────────────────────────────────────
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      # ─────────────────────────────────────────────
+      # 3. Install dependencies
+      # ─────────────────────────────────────────────
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ─────────────────────────────────────────────
+      # 4. Secret scan (must run before any build)
+      # ─────────────────────────────────────────────
+      - name: Secret scan (TruffleHog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          extra_args: --only-verified
+
+      # ─────────────────────────────────────────────
+      # 5. Lint
+      # ─────────────────────────────────────────────
+      - name: Lint
+        run: pnpm lint
+
+      # ─────────────────────────────────────────────
+      # 6. Type check
+      # ─────────────────────────────────────────────
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # ─────────────────────────────────────────────
+      # 7. Unit tests
+      # ─────────────────────────────────────────────
+      - name: Unit tests
+        run: pnpm test
+        env:
+          CI: true
+
+      # ─────────────────────────────────────────────
+      # 8. Build
+      # ─────────────────────────────────────────────
+      - name: Build
+        run: pnpm build
+
+      # ─────────────────────────────────────────────
+      # 9. Migration check (against ephemeral DB)
+      # ─────────────────────────────────────────────
+      - name: Migration check
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: postgresql://saar_test:saar_test@localhost:5433/saar_test
+
+      # ─────────────────────────────────────────────
+      # 10. Integration tests (post-migration)
+      # ─────────────────────────────────────────────
+      - name: Integration tests
+        run: pnpm test:integration
+        env:
+          DATABASE_URL: postgresql://saar_test:saar_test@localhost:5433/saar_test
+          REDIS_URL: redis://localhost:6380
+          CI: true
+
+      # ─────────────────────────────────────────────
+      # 11. Upload test coverage (optional artefact)
+      # ─────────────────────────────────────────────
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7

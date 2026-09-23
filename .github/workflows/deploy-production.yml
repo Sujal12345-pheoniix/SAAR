@@ -1,0 +1,228 @@
+name: Deploy — Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: 'Git ref to deploy (tag, branch, or SHA). Defaults to main.'
+        required: false
+        default: 'main'
+      skip_migration_dry_run:
+        description: 'Skip the migration dry-run step? (use only in emergencies)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      confirm:
+        description: 'Type DEPLOY to confirm you intend to deploy to production.'
+        required: true
+
+# Never run two production deploys simultaneously
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false  # Do NOT cancel an in-flight production deploy
+
+jobs:
+  # ──────────────────────────────────────────────────────
+  # Guard: validate the confirmation token
+  # ──────────────────────────────────────────────────────
+  validate-intent:
+    name: Validate Deploy Intent
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation token
+        run: |
+          if [[ "${{ github.event.inputs.confirm }}" != "DEPLOY" ]]; then
+            echo "❌ Confirmation token does not match. Type DEPLOY to proceed."
+            exit 1
+          fi
+          echo "✅ Deploy intent confirmed by ${{ github.actor }}"
+
+  # ──────────────────────────────────────────────────────
+  # Manual approval gate (GitHub environment protection)
+  # Configure an "Approvers" rule in:
+  #   Settings → Environments → production → Required reviewers
+  # ──────────────────────────────────────────────────────
+  approval-gate:
+    name: Await Manual Approval
+    runs-on: ubuntu-latest
+    needs: validate-intent
+    environment:
+      name: production
+      url: https://saar.dev
+    steps:
+      - name: Approval granted
+        run: echo "✅ Production deploy approved by a required reviewer."
+
+  # ──────────────────────────────────────────────────────
+  # Build
+  # ──────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: approval-gate
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.git_ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm build
+        env:
+          NODE_ENV: production
+
+      - name: Upload build artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: saar-prod-build-${{ github.sha }}
+          path: |
+            dist/
+            prisma/
+            package.json
+            pnpm-lock.yaml
+          retention-days: 14  # Keep production builds longer for rollback
+
+  # ──────────────────────────────────────────────────────
+  # Migration dry-run (shows what SQL will be executed)
+  # ──────────────────────────────────────────────────────
+  migration-dry-run:
+    name: Migration Dry-Run
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ github.event.inputs.skip_migration_dry_run == 'false' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.git_ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prisma migration dry-run
+        run: |
+          echo "=== Pending migrations ==="
+          pnpm exec prisma migrate status
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+  # ──────────────────────────────────────────────────────
+  # Run DB migrations (controlled, audited step)
+  # ──────────────────────────────────────────────────────
+  migrate:
+    name: Run DB Migrations
+    runs-on: ubuntu-latest
+    needs: migration-dry-run
+    if: always() && (needs.migration-dry-run.result == 'success' || needs.migration-dry-run.result == 'skipped')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.git_ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations to production DB
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+
+      - name: Log migration completion
+        run: |
+          echo "✅ Migrations applied at $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          echo "Ref   : ${{ github.event.inputs.git_ref }}"
+          echo "Actor : ${{ github.actor }}"
+
+  # ──────────────────────────────────────────────────────
+  # Deploy — push new version to production
+  # ──────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: migrate
+
+    steps:
+      - name: Download build artefact
+        uses: actions/download-artifact@v4
+        with:
+          name: saar-prod-build-${{ github.sha }}
+
+      # ──────────────────────────────────────────────
+      # Replace the echo below with your real deploy
+      # command once infrastructure is provisioned.
+      # Examples:
+      #   - fly deploy --app saar-production
+      #   - railway up --environment production
+      #   - docker push ghcr.io/… && kubectl rollout restart deploy/saar-api
+      # ──────────────────────────────────────────────
+      - name: Deploy application to production
+        run: |
+          echo "=== SAAR Production Deploy ==="
+          echo "Ref    : ${{ github.event.inputs.git_ref }}"
+          echo "SHA    : ${{ github.sha }}"
+          echo "Actor  : ${{ github.actor }}"
+          echo "Time   : $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          echo "Status : Migrations complete — wire up your deploy provider here."
+        env:
+          PROD_API_KEY: ${{ secrets.PROD_DEPLOY_API_KEY }}
+
+      - name: Tag release in git
+        run: |
+          echo "Release SHA: ${{ github.sha }}"
+          echo "Tag would be: release-$(date -u '+%Y%m%d%H%M%S')"
+
+      - name: Notify success
+        if: success()
+        run: echo "✅ Production deploy SUCCEEDED — ${{ github.sha }}"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ Production deploy FAILED — manual rollback may be required."
+          echo "Rollback: re-run the previous successful deploy workflow OR:"
+          echo "  1. Revert: git revert <sha>"
+          echo "  2. Re-trigger this workflow with the previous stable tag."
+          exit 1

@@ -1,0 +1,139 @@
+name: Deploy — Staging
+
+on:
+  push:
+    branches:
+      - develop
+
+# Only one staging deploy at a time; cancel in-flight if new commit arrives
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────────────
+  # Gate: the full CI suite must be green before we deploy
+  # ──────────────────────────────────────────────────────
+  wait-for-ci:
+    name: Wait for CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CI status
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          check-name: 'CI Pipeline'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 15
+
+  # ──────────────────────────────────────────────────────
+  # Build — compile and package the application
+  # ──────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: wait-for-ci
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm build
+        env:
+          NODE_ENV: production
+
+      - name: Upload build artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: saar-build-${{ github.sha }}
+          path: |
+            dist/
+            prisma/
+            package.json
+            pnpm-lock.yaml
+          retention-days: 3
+
+  # ──────────────────────────────────────────────────────
+  # Deploy — push to staging environment
+  # ──────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: staging
+      url: https://staging.saar.dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download build artefact
+        uses: actions/download-artifact@v4
+        with:
+          name: saar-build-${{ github.sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install production dependencies
+        run: pnpm install --frozen-lockfile --prod
+
+      # Run pending migrations against staging DB before the new code goes live
+      - name: Run DB migrations (staging)
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+
+      # ──────────────────────────────────────────────
+      # Replace the echo below with your real deploy
+      # command once infrastructure is provisioned.
+      # Examples:
+      #   - fly deploy --app saar-staging
+      #   - railway up --environment staging
+      #   - docker push + kubectl rollout restart
+      # ──────────────────────────────────────────────
+      - name: Deploy application
+        run: |
+          echo "=== SAAR Staging Deploy ==="
+          echo "Commit : ${{ github.sha }}"
+          echo "Branch : ${{ github.ref_name }}"
+          echo "Actor  : ${{ github.actor }}"
+          echo "Time   : $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          echo "Status : Build artefact ready — wire up your deploy provider here."
+        env:
+          STAGING_API_KEY: ${{ secrets.STAGING_DEPLOY_API_KEY }}
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Staging deploy complete for ${{ github.sha }}"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ Staging deploy FAILED for ${{ github.sha }}"
+          exit 1

@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "SAAR",
+    "slug": "saar",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "saar",
+    "platforms": ["ios", "android"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      ["expo-notifications", { "icon": "./assets/notification-icon.png", "color": "#ffffff" }]
+    ],
+    "experiments": { "typedRoutes": true }
+  }
+}

@@ -1,0 +1,597 @@
+SAAR — Product Requirements Document
+PRD v1.0 • Founding Product Specification • India-first
+Owner: Sujal Kumar, Co-founder | Strategic/Technical M.D.: GPT
+Document purpose: convert the SAAR founding thesis into an implementation-ready product contract covering product behavior, workflows, data flows, pipelines, architecture boundaries, MVP scope, safety, privacy, metrics, and go-to-market readiness.
+1. Executive Summary
+SAAR is an India-first Personal Growth Intelligence product. It is not positioned as a conventional habit tracker, task manager, meditation app, or generic AI assistant. Its core job is to continuously compare a user's Current Self with their Future Self, identify meaningful gaps, understand behavioral causes, recommend a small number of interventions, observe outcomes, and adapt.
+The core loop is: Future Self → Current Self → Measure → Find Gap → Understand → Recommend → Act → Observe → Learn → Adapt.
+The MVP must prove one hypothesis: SAAR can help real users make measurable positive changes in their behavior over 30 days. Downloads, streaks, time spent in app, and AI message volume are secondary.
+Product promise
+Know how you live. Understand where you're going. Become who you want to be.
+Category
+Personal Growth Intelligence
+Primary market
+India, initially focused on digitally active Gen Z and young adults roughly 18–30; the product architecture should not hard-code this age segment so it can expand later.
+2. Product Vision & Principles
+Principle
+Requirement
+Growth over productivity
+Do not optimize task volume at the expense of health, relationships, recovery, or meaning.
+Reality over intention
+Observed behavior and completed actions are stronger signals than planned actions.
+Balance over optimization
+The system must account for finite time and trade-offs.
+Truth over empty motivation
+Insights must be evidence-based and explain their reasoning.
+Adaptation over rigidity
+Repeated failure should trigger investigation and plan adaptation.
+Privacy over monetization
+Collect only what is necessary; give users meaningful data controls.
+User autonomy
+AI recommends; the user remains the decision-maker.
+Long-term transformation
+Success is measured by outcomes outside the app, not addiction to the app.
+3. User Problem
+Users know what they want but struggle to translate intentions into consistent behavior.
+Planning, fitness, journaling, calendars, habits, and AI conversations are fragmented.
+Most tools record completion but do not explain why patterns occur.
+Rigid plans fail when real life changes.
+Productivity systems can unintentionally encourage overwork.
+Users lack a longitudinal model of how their behavior affects their goals.
+4. Target Users
+Segment
+Need
+Initial relevance
+Self-improving student
+Consistency, study, fitness, identity formation
+High
+Young professional
+Work-life balance, career growth, routines
+Very high
+Creator / entrepreneur
+Structure, energy management, accountability
+High
+Fitness-oriented user
+Training consistency and recovery
+High
+General adult user
+Balanced personal growth
+Later expansion
+Initial acquisition should be narrow enough to learn quickly. 'Everyone in India' is the long-term market, not the first marketing audience.
+5. Jobs To Be Done
+When I know what I want to improve but keep failing to act consistently, help me understand why and change the plan.
+When my day becomes chaotic, help me decide what actually matters.
+When I repeatedly miss a habit, help me distinguish motivation problems from schedule/design problems.
+When I feel overwhelmed, help me see the trade-offs instead of adding more tasks.
+When I reflect on my week, show me what actually changed and what pattern caused it.
+When I talk to the AI, use my context responsibly instead of giving generic advice.
+6. Product Scope
+MVP modules
+Authentication and profile
+Future Self setup
+Life domains
+Goals
+Tasks and schedule
+Habits
+Reminders
+Behavioral alarm / intervention
+Mood and energy check-in
+SAAR Daily
+Weekly Growth Review
+AI Companion (text)
+Basic Gap Engine
+Basic adaptive scheduling
+Basic behavioral insights
+Privacy and data controls
+Post-MVP
+Voice companion
+Advanced personal memory
+Wearable integrations
+Advanced Life Trade-off Engine
+Advanced behavioral intervention library
+Evolution reports
+Creator/community programs
+B2B / university offerings
+Advanced avatar
+7. Future Self Framework
+During onboarding, the user describes who they want to become. SAAR converts this into domain-level aspirations and measurable behaviors.
+Domain
+Examples of outcomes
+Possible measurable signals
+Mind
+Calmer, more reflective
+check-ins, journaling, meditation
+Health
+Stronger, healthier
+workouts, sleep, movement
+Career
+More capable
+learning sessions, deep work
+Relationships
+More present
+protected relationship time, check-ins
+Personal
+More fulfilled
+hobbies, personal time
+Finance
+More disciplined
+later: savings/spending signals
+Purpose
+More aligned
+values/reflection, later stage
+8. Core Growth Model
+Every recommendation must be traceable to a user goal, observed signal, or explicit user input. Generic motivational output is not considered a growth insight.
+9. Core Functional Requirements
+9.1 Authentication
+Email/password and a supported social sign-in provider.
+Server-side authorization for every protected resource.
+Short-lived access tokens and revocable sessions.
+Secure device storage for tokens on mobile.
+Account recovery and device/session management.
+Security baseline: OWASP MASVS treats authentication, secure storage, network security, and privacy as core mobile security control groups. SAAR should use MASVS as a verification baseline, not as a substitute for a full threat model. citeturn0search0turn0search2
+9.2 Future Self
+Create/update aspirations by domain.
+Define 1–3 priority goals during onboarding.
+Allow goals to be measurable or behavior-based.
+Allow users to pause, archive, or replace goals.
+Never force every life domain.
+9.3 Goals
+Goal title, domain, reason/why, target date, priority, measurement method, status.
+Goal-to-habit/task relationships.
+Goal progress snapshots.
+Goal history must remain auditable for AI reasoning.
+9.4 Tasks / Schedule
+One-time and recurring tasks.
+Flexible rescheduling.
+Completion, skip, snooze, cancel, reschedule events.
+Calendar-style view.
+Conflict detection.
+Time-budget awareness.
+9.5 Habits
+Frequency, preferred time window, minimum viable action, target, tracking mode.
+Track completion and misses.
+Distinguish skipped, failed, rescheduled, and completed.
+Support habit experiments rather than permanent streak pressure.
+9.6 Behavioral Alarm
+User chooses an intervention type.
+Alarm creates a behavior event when triggered.
+Dismissal may require an action such as confirmation, movement, QR/NFC, or micro-task depending on device capabilities.
+Do not use dangerous or punitive interventions.
+Repeated failure triggers adaptation analysis rather than escalating punishment.
+9.7 Check-in
+Mood: lightweight categorical scale.
+Energy: simple numeric scale.
+Optional free-text reflection.
+User controls whether check-ins are required.
+9.8 SAAR Daily
+Triggered at user-selected local time.
+Collects relevant day events.
+Asks a minimal check-in.
+Computes key deviations from plan.
+Generates up to three high-value insights/actions.
+Offers tomorrow plan adjustment.
+9.9 Weekly Growth Review
+Compare current week with prior baseline.
+Highlight improvements and declines.
+Show meaningful patterns with supporting evidence.
+Propose 1–3 changes for the next week.
+Allow user feedback on whether an insight was useful.
+10. AI Companion Requirements
+Capability
+Requirement
+Context
+Use authorized user context only; retrieve only relevant data.
+Reasoning
+Explain the evidence behind meaningful behavioral insights.
+Memory
+Separate durable user facts/preferences from transient conversation context.
+Tone
+Warm, direct, non-judgmental, culturally aware.
+Disagreement
+May challenge a plan when evidence shows a trade-off or risk.
+Autonomy
+Recommendations are not commands.
+Safety
+Escalate high-risk situations to appropriate safety guidance.
+Privacy
+Do not expose unrelated personal data in responses.
+AI output must not become the system of record. Deterministic services remain authoritative for schedules, permissions, metrics, billing, and safety rules.
+11. Gap Engine
+The Gap Engine transforms Future Self aspirations into measurable or behavior-linked gaps.
+Stage
+Input
+Output
+1. Define
+Future Self + goals
+Desired state
+2. Observe
+Tasks, habits, check-ins, events
+Current state
+3. Compare
+Desired vs current
+Gap
+4. Explain
+Historical patterns + context
+Likely contributors
+5. Intervene
+Recommendation library + AI
+Action
+6. Measure
+Post-intervention behavior
+Effectiveness
+7. Adapt
+Outcome + feedback
+Updated plan
+12. Life Trade-off Engine
+Calculate available time against planned commitments.
+Protect explicit sleep/recovery constraints.
+Detect overbooked days.
+Surface conflicts between domains.
+Recommend trade-offs rather than silently stacking tasks.
+Explain what will be displaced when adding a new commitment.
+13. Adaptive Scheduling
+Maintain a history of scheduled vs actual execution.
+Estimate completion propensity by time window where sufficient data exists.
+Detect repeated misses.
+Suggest alternative times rather than automatically moving important commitments without consent.
+Learn user preference after each accepted/rejected suggestion.
+14. Workflows
+14.1 Onboarding
+Acceptance criteria
+User can reach a first meaningful plan in one session.
+User understands why SAAR asks about Future Self.
+Privacy permissions are explicit and granular.
+At least one goal and one actionable item exist after activation.
+14.2 Daily Growth Session
+Acceptance criteria
+Session can be completed in approximately 3–7 minutes.
+Insights cite relevant evidence.
+No more than three primary recommendations are shown by default.
+User can dismiss, accept, edit, or postpone recommendations.
+14.3 Behavioral Alarm
+Schedule → Trigger → Intervention → User action → Completion/Failure event → Outcome analysis → Adaptation suggestion.
+14.4 Recommendation lifecycle
+Signal detected → eligibility rules → context retrieval → deterministic checks → AI interpretation if needed → safety/policy filter → recommendation → user decision → outcome tracking → effectiveness score.
+14.5 Account deletion
+Request deletion → re-authenticate → show deletion scope → grace period if legally/operationally appropriate → revoke sessions → delete/anonymize data by retention policy → delete AI memory/indexes → confirm completion.
+14.6 Safety escalation
+Risk signal → safety classifier/rules → restrict unsafe coaching behavior → supportive response → encourage appropriate human/professional help where relevant → record minimal safety event → protect access to sensitive data.
+15. Data Flow Diagrams
+15.1 DFD Level 0 — System Context
+Primary external entities: user, AI provider, notification/OS services, and payment provider. The platform remains the system of record for user data and product decisions.
+15.2 DFD Level 1 — Internal Data Movement
+Event data should be normalized before it can influence the growth model. AI receives only the minimum relevant context required for the task.
+16. Data Classification
+Class
+Examples
+Controls
+Public
+App content, marketing copy
+Normal controls
+Account
+Email, profile
+Access control, encryption
+Behavioral
+Tasks, habits, schedules
+Strict authorization, auditability
+Sensitive personal
+Mood, journal, relationship context
+Minimization, encryption, strict access, explicit policy
+Security
+Tokens, sessions
+Secure storage, rotation, never log secrets
+OWASP's mobile privacy guidance emphasizes minimizing sensitive-data access, transparency about collection/use, and user control over data. SAAR should design these controls from the beginning rather than retrofitting them. citeturn0search1turn0search3
+17. AI / Data Pipeline
+Pipeline rules
+Raw events are immutable where practical and are never directly trusted as AI instructions.
+Normalize timestamps to a canonical server format while preserving user timezone.
+Separate factual user data from inferred insights.
+Attach provenance to insights: source events, time window, model/rule version.
+Do not write an AI inference into durable memory without an explicit confidence/validation policy.
+Run safety and privacy filtering before user delivery.
+18. Notification Pipeline
+Scheduled event → notification eligibility → quiet hours / user preference check → relevance check → deduplication → delivery provider → delivery result → interaction event → effectiveness analysis.
+Respect local timezone.
+Respect quiet hours.
+Prevent notification storms.
+Allow per-category controls.
+Use notification outcome as a behavioral signal only with appropriate privacy controls.
+19. CI/CD Pipeline
+Developers work on feature branches.
+Pull requests require automated quality gates.
+Main is protected.
+Production deployments require successful CI and explicit approval during early stages.
+Secrets are injected through environment/secret management, never committed.
+Database migrations are versioned and reversible where feasible.
+Production releases must be observable and rollback-ready.
+20. Technical Architecture
+Layer
+Responsibility
+Mobile/Web
+Presentation, local UX, secure token handling, offline-safe transient state
+API/Auth
+Authentication, authorization, validation, rate limits
+Core Services
+Goals, tasks, habits, schedules, check-ins, billing
+Growth Engine
+Gap analysis, trade-offs, interventions, behavioral metrics
+AI Orchestrator
+Context retrieval, model routing, prompt construction, output validation
+PostgreSQL
+System of record
+Redis
+Queues, caching, rate limits, ephemeral jobs
+pgvector
+Semantic retrieval for approved long-term context
+Object Storage
+User-uploaded files if/when introduced
+21. Security & Privacy Requirements
+Server-side authentication and authorization; never trust client-side role/permission checks.
+HTTPS/TLS for all network communication.
+Secure mobile token storage using platform mechanisms.
+No secrets, passwords, API keys, or sensitive journal text in logs.
+Least-privilege access to sensitive data.
+Data retention and deletion policies must be explicit.
+Audit access to highly sensitive administrative operations.
+Rate-limit authentication, AI, and abuse-prone endpoints.
+Threat-model the mobile/web/API/AI boundaries before public launch.
+OWASP's current mobile guidance explicitly recommends secure-by-design architecture, server-side authorization, secure token handling, HTTPS, least privilege, and protection against sensitive-data leakage. citeturn0search6turn0search9
+22. API Domains
+/auth
+/users
+/future-self
+/domains
+/goals
+/tasks
+/habits
+/schedules
+/alarms
+/check-ins
+/events
+/daily
+/weekly-review
+/insights
+/recommendations
+/ai/conversations
+/ai/memory
+/notifications
+/billing
+/privacy
+/safety
+Actual endpoint naming/versioning is an implementation decision and should be frozen during the technical design phase.
+23. Core Event Model
+Every meaningful behavior should create a normalized event where appropriate.
+Event
+Examples
+task.created
+User creates a task
+task.completed
+Task completed
+task.skipped
+Task skipped
+task.rescheduled
+Task moved
+habit.completed
+Habit completed
+alarm.triggered
+Alarm fired
+alarm.intervention_completed
+Required intervention completed
+checkin.completed
+Mood/energy submitted
+daily.completed
+Daily session completed
+recommendation.accepted
+Recommendation accepted
+recommendation.rejected
+Recommendation rejected
+recommendation.outcome
+Observed result after recommendation
+goal.updated
+Goal changed
+24. Observability
+Structured application logs with sensitive-data redaction.
+Metrics for API latency, error rate, job failures, notification delivery, AI latency, and model/provider failures.
+Tracing across API → growth engine → AI orchestrator → database.
+Product analytics separate from security logs.
+Alerts for authentication anomalies, data-access anomalies, repeated job failures, and cost spikes.
+25. Non-Functional Requirements
+Area
+MVP target
+Availability
+Design for high availability; exact SLO to be set before public launch.
+API latency
+p95 target should be defined per endpoint class; interactive reads should be fast and predictable.
+AI latency
+Provide streaming or progress feedback for longer operations.
+Security
+OWASP-informed baseline plus threat model.
+Privacy
+Data minimization and user controls from first release.
+Scalability
+Stateless API services; async workers for heavy processing.
+Reliability
+Idempotent jobs and notification delivery.
+Accessibility
+Mobile/web flows must be keyboard/screen-reader aware where applicable.
+26. Analytics & North Star
+North Star: Meaningful Growth Days. A Meaningful Growth Day should be defined empirically rather than fabricated. Candidate signals include meaningful action toward a stated goal, successful completion of a deliberately chosen behavior, or a completed reflection that results in an accepted action.
+Metric
+Purpose
+Activation rate
+Can users reach first value?
+D1/D7/D30 retention
+Does SAAR become useful?
+Meaningful Growth Days
+Are users making progress?
+Recommendation acceptance
+Do users trust suggestions?
+Recommendation effectiveness
+Do accepted suggestions help?
+Daily completion
+Is reflection useful?
+Goal progress
+Are goals moving?
+Paid conversion
+Will users pay?
+Churn
+Is value durable?
+27. Experimentation Plan
+Test onboarding length.
+Test whether Future Self should be required or progressively introduced.
+Test daily-session duration.
+Test recommendation count: 1 vs 3 vs adaptive.
+Test intervention types.
+Test free vs paid AI limits.
+Test annual vs monthly pricing.
+Test different Indian-language messaging after English product fundamentals are stable.
+Every experiment needs a hypothesis, target metric, guardrail metric, sample definition, duration, and decision rule.
+28. Monetization
+Free
+Core planning
+Basic habits
+Basic check-ins
+Limited AI
+Basic Daily
+SAAR Plus — hypothesis
+Deep insights
+Longer-term memory
+Adaptive scheduling
+Advanced Daily/Weekly
+Voice companion when launched
+Initial price hypotheses can be tested around ₹199–₹399/month and a discounted annual plan. Pricing is not considered validated until users demonstrate willingness to pay.
+29. Go-To-Market
+Stage
+Goal
+Channel
+0–100 users
+Learn
+Founder outreach, communities, friends, targeted creators
+100–1,000
+Retention + positioning
+Instagram, YouTube, student communities, referrals
+1,000–10,000
+Repeatable acquisition
+Creators, referral loops, content, campus ambassadors
+10,000+
+Scale
+Paid acquisition only after retention economics are understood
+Messaging
+Who do you want to become?
+Is your daily life actually taking you there?
+Your calendar says one thing. Your life says another.
+Don't just track your life. Understand it.
+30. MVP Roadmap
+Phase
+Scope
+Exit criteria
+Phase 0
+Product + UX + architecture
+PRD approved; threat model; technical design
+Phase 1
+Foundation
+Auth, DB, CI/CD, observability, security baseline
+Phase 2
+Core planning
+Future Self, goals, tasks, habits, schedules
+Phase 3
+Behavior
+Events, alarms, check-ins, notifications
+Phase 4
+Growth
+Gap Engine, Daily, Weekly, adaptive scheduling
+Phase 5
+AI
+Companion, context retrieval, insights
+Phase 6
+Alpha
+50 users; critical bugs controlled
+Phase 7
+Beta
+100–300 users; retention and behavior evidence
+Phase 8
+Launch
+Public India launch with monetization experiment
+31. Roles & Ownership
+Role
+Primary responsibility
+Sujal — Co-founder
+Product vision, engineering leadership, user research, final decisions
+GPT — Strategic/Technical M.D.
+Strategy support, architecture reviews, research, specifications, critique, planning
+Designer — future hire
+UX/UI system and usability
+Mobile engineer — future hire
+Mobile performance and platform integrations
+AI/ML engineer — future hire
+Behavioral models, evaluation, retrieval, model optimization
+Growth — future hire
+Acquisition, creator partnerships, experimentation
+32. Risks & Mitigations
+Risk
+Impact
+Mitigation
+Feature bloat
+High
+Strict MVP boundary and quarterly pruning
+Generic AI advice
+High
+Evidence-linked insights + evaluations
+Privacy breach
+Critical
+Data minimization, encryption, access controls, audits
+Low retention
+Critical
+Optimize for behavior change, not feature volume
+Notification fatigue
+High
+Quiet hours, relevance, dedupe
+AI hallucination
+High
+Deterministic data layer + provenance + output validation
+Unhealthy productivity
+High
+Trade-off/recovery constraints
+Emotional dependency
+High
+Companion boundaries and safety design
+High AI cost
+Medium
+Model routing, caching, context minimization
+Copycats
+Medium
+Behavioral data, intervention learning, brand, trust
+33. Definition of Done — MVP
+A new user can sign up and create a Future Self.
+User can create goals and actionable tasks.
+User can schedule and receive reminders.
+User can complete/skip/reschedule actions.
+Behavioral alarm can trigger at least one safe intervention type.
+Daily session summarizes the day using real product data.
+AI can answer contextual questions using authorized data.
+Gap Engine can produce at least one evidence-backed insight.
+Weekly Review compares current behavior with a baseline.
+User can export/delete their data through supported flows.
+All protected APIs enforce authorization server-side.
+Sensitive data is not emitted into normal application logs.
+CI passes lint/typecheck/tests/security checks before deployment.
+Observability exists for API, jobs, notifications, and AI failures.
+34. Open Decisions Before Coding
+Mobile-first vs web-first release sequence.
+Exact authentication providers.
+Exact notification infrastructure.
+LLM provider(s) and fallback strategy.
+Long-term memory policy and retention windows.
+Exact Meaningful Growth Day formula.
+Exact pricing and free limits.
+Language rollout: English first vs English + Hindi at beta.
+Alarm capabilities by Android/iOS platform constraints.
+Legal/privacy review scope for India and future international markets.
+35. Final Product Contract
+SAAR is successful only if it creates value in the user's real life. The product team must resist the temptation to measure success by AI message volume, screen time, streak length, or feature count. Every major product decision should answer one question: does this make SAAR better at helping the user understand their behavior and make a meaningful improvement?
+This PRD is the product contract for the next technical design stage. Architecture, schemas, API contracts, UX specifications, event taxonomy, AI evaluation, security controls, and implementation tickets should be derived from it rather than invented independently.
+36. Research / Security References
+OWASP Mobile Application Security Verification Standard (MASVS): authentication, storage, network, privacy, code, platform, and resilience controls.
+OWASP MASVS Privacy: data minimization, transparency, and user control.
+OWASP Mobile Application Security Cheat Sheet: secure-by-design architecture, server-side authorization, secure tokens, HTTPS, least privilege, and data leakage prevention.
+Web sources consulted for the security baseline: OWASP MASVS and related OWASP mobile security guidance. citeturn0search0turn0search3turn0search6

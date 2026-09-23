@@ -1,0 +1,501 @@
+SAARDatabase & API Contract Pack v1.0
+ERD • Prisma schema blueprint • REST contracts • DTOs • errors • events • RBAC • seed data
+Implementation source for Claude Code / Antigravity
+1. Contract Purpose
+This document freezes the first implementation contract between SAAR clients, backend modules, database and asynchronous workers. It is designed to prevent agents from inventing inconsistent schemas or endpoints while development proceeds in parallel.
+PostgreSQL is authoritative for transactional state.
+REST /api/v1 is the initial external contract.
+All IDs are UUIDv7/time-sortable UUIDs.
+All timestamps are stored in UTC.
+Client-visible timestamps are converted to the user's configured timezone.
+Every resource is tenantless in v1 but always user-owned; organization support can be introduced later without rewriting ownership semantics.
+Sensitive AI/conversation content is deliberately excluded from product analytics events.
+2. ERD — Logical Relationship Map
+users ├── 1:1 user_profiles ├── 1:N devices ├── 1:N life_areas │       └── 1:N goals │               └── 1:N goal_metrics ├── 1:N plans │       └── 1:N tasks ├── 1:N routines ├── 1:N behavior_events ├── 1:N checkins ├── 1:N insights │       └── 1:N interventions ├── 1:N conversations │       └── 1:N messages ├── 1:N memories ├── 1:N notifications └── 1:N audit_logsgoals ──< tasksgoals ──< insightsbehavior_events ──> analytics/growth workers (async)all transactional mutations ──> outbox_events ──> queues/workers
+3. PostgreSQL Schema Blueprint
+The following Prisma-oriented model is the canonical starting point. Exact provider-specific types can be adjusted during Phase 0, but field semantics should remain stable.
+enum UserStatus { ACTIVE SUSPENDED DELETED }enum GoalStatus { ACTIVE COMPLETED PAUSED ARCHIVED }enum TaskStatus { TODO IN_PROGRESS COMPLETED SKIPPED CANCELLED }enum InsightStatus { NEW VIEWED ACCEPTED DISMISSED EXPIRED }enum InterventionStatus { PROPOSED ACCEPTED COMPLETED FAILED DISMISSED }enum MemoryStatus { ACTIVE REVOKED EXPIRED }enum NotificationStatus { SCHEDULED SENT DELIVERED FAILED CANCELLED }model User {  id              String   @id @default(uuid()) @db.Uuid  email           String   @unique  status          UserStatus @default(ACTIVE)  timezone        String   @default("Asia/Kolkata")  locale          String   @default("en-IN")  createdAt       DateTime @default(now())  updatedAt       DateTime @updatedAt  profile         UserProfile?  devices         Device[]  lifeAreas       LifeArea[]  goals           Goal[]  plans           Plan[]  routines        Routine[]  behaviorEvents  BehaviorEvent[]  checkins        Checkin[]  insights        Insight[]  conversations   Conversation[]  memories        Memory[]  notifications   Notification[]  auditLogs       AuditLog[]  sessions        Session[]  outboxEvents    OutboxEvent[]}model UserProfile {  id             String   @id @default(uuid()) @db.Uuid  userId         String   @unique @db.Uuid  displayName    String?  avatarUrl      String?  preferences    Json?  createdAt      DateTime @default(now())  updatedAt      DateTime @updatedAt  user           User @relation(fields:[userId], references:[id], onDelete:Cascade)}model Session {  id             String   @id @default(uuid()) @db.Uuid  userId         String   @db.Uuid  refreshHash    String  deviceId       String?  @db.Uuid  expiresAt      DateTime  revokedAt      DateTime?  createdAt      DateTime @default(now())  user           User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([userId, expiresAt])}model Device {  id            String   @id @default(uuid()) @db.Uuid  userId        String   @db.Uuid  platform      String  pushTokenHash String?  appVersion    String?  lastSeenAt    DateTime?  createdAt     DateTime @default(now())  user          User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([userId, lastSeenAt])}model LifeArea {  id          String   @id @default(uuid()) @db.Uuid  userId      String   @db.Uuid  type        String  title       String  targetState String?  weight      Decimal? @db.Decimal(5,2)  createdAt   DateTime @default(now())  updatedAt   DateTime @updatedAt  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  goals       Goal[]  @@index([userId, type])}model Goal {  id          String   @id @default(uuid()) @db.Uuid  userId      String   @db.Uuid  lifeAreaId  String?  @db.Uuid  title       String  description String?  status      GoalStatus @default(ACTIVE)  targetDate  DateTime?  createdAt   DateTime @default(now())  updatedAt   DateTime @updatedAt  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  lifeArea    LifeArea? @relation(fields:[lifeAreaId], references:[id], onDelete:SetNull)  metrics     GoalMetric[]  tasks       Task[]  @@index([userId, status])  @@index([lifeAreaId, status])}model GoalMetric {  id          String   @id @default(uuid()) @db.Uuid  goalId      String   @db.Uuid  metricType  String  targetValue Decimal? @db.Decimal(14,4)  currentValue Decimal? @db.Decimal(14,4)  unit        String?  goal        Goal @relation(fields:[goalId], references:[id], onDelete:Cascade)  @@index([goalId])}model Plan {  id          String   @id @default(uuid()) @db.Uuid  userId      String   @db.Uuid  localDate   DateTime @db.Date  generatedBy String  version     Int      @default(1)  createdAt   DateTime @default(now())  updatedAt   DateTime @updatedAt  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  tasks       Task[]  @@unique([userId, localDate, version])  @@index([userId, localDate])}model Task {  id          String   @id @default(uuid()) @db.Uuid  userId      String   @db.Uuid  planId      String?  @db.Uuid  goalId      String?  @db.Uuid  title       String  description String?  status      TaskStatus @default(TODO)  priority    Int      @default(3)  dueAt       DateTime?  estimatedMinutes Int?  completedAt DateTime?  createdAt   DateTime @default(now())  updatedAt   DateTime @updatedAt  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  plan        Plan? @relation(fields:[planId], references:[id], onDelete:SetNull)  goal        Goal? @relation(fields:[goalId], references:[id], onDelete:SetNull)  @@index([userId, dueAt, status])  @@index([goalId, status])}model Routine {  id             String   @id @default(uuid()) @db.Uuid  userId         String   @db.Uuid  title          String  recurrenceRule String  timezone       String  preferredTime  String?  active         Boolean @default(true)  createdAt      DateTime @default(now())  updatedAt      DateTime @updatedAt  user           User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([userId, active])}model BehaviorEvent {  id            String   @id @default(uuid()) @db.Uuid  userId        String   @db.Uuid  eventType     String  occurredAt    DateTime  source        String  entityType    String?  entityId      String? @db.Uuid  metadata      Json?  schemaVersion Int @default(1)  createdAt     DateTime @default(now())  user          User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([userId, occurredAt])  @@index([userId, eventType, occurredAt])}model Checkin {  id         String   @id @default(uuid()) @db.Uuid  userId     String   @db.Uuid  localDate  DateTime @db.Date  mood       Int?  energy     Int?  reflection String?  createdAt  DateTime @default(now())  updatedAt  DateTime @updatedAt  user       User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@unique([userId, localDate])}model Insight {  id             String @id @default(uuid()) @db.Uuid  userId         String @db.Uuid  type           String  status         InsightStatus @default(NEW)  title          String  summary        String  evidence       Json  recommendation Json  confidence     Decimal? @db.Decimal(5,4)  expiresAt      DateTime?  createdAt      DateTime @default(now())  updatedAt      DateTime @updatedAt  user           User @relation(fields:[userId], references:[id], onDelete:Cascade)  interventions  Intervention[]  @@index([userId, status, createdAt])}model Intervention {  id          String @id @default(uuid()) @db.Uuid  userId      String @db.Uuid  insightId   String @db.Uuid  actionType  String  payload     Json  status      InterventionStatus @default(PROPOSED)  outcome     Json?  createdAt   DateTime @default(now())  completedAt DateTime?  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  insight     Insight @relation(fields:[insightId], references:[id], onDelete:Cascade)  @@index([userId, status])}model Conversation {  id        String @id @default(uuid()) @db.Uuid  userId    String @db.Uuid  title     String?  createdAt DateTime @default(now())  updatedAt DateTime @updatedAt  user      User @relation(fields:[userId], references:[id], onDelete:Cascade)  messages  Message[]  @@index([userId, updatedAt])}model Message {  id             String @id @default(uuid()) @db.Uuid  conversationId String @db.Uuid  role           String  content        String  model          String?  promptVersion  String?  createdAt      DateTime @default(now())  conversation   Conversation @relation(fields:[conversationId], references:[id], onDelete:Cascade)  @@index([conversationId, createdAt])}model Memory {  id           String @id @default(uuid()) @db.Uuid  userId       String @db.Uuid  type         String  summary      String  sourceRefs   Json  status       MemoryStatus @default(ACTIVE)  consentedAt  DateTime?  expiresAt    DateTime?  createdAt    DateTime @default(now())  updatedAt    DateTime @updatedAt  user         User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([userId, type, status])}model Notification {  id          String @id @default(uuid()) @db.Uuid  userId      String @db.Uuid  type        String  title       String  body        String  scheduledAt DateTime  sentAt      DateTime?  status      NotificationStatus @default(SCHEDULED)  metadata    Json?  createdAt   DateTime @default(now())  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([status, scheduledAt])  @@index([userId, scheduledAt])}model AuditLog {  id         String @id @default(uuid()) @db.Uuid  userId     String?  actorType  String  action     String  entityType String  entityId   String?  metadata   Json?  createdAt  DateTime @default(now())  user       User? @relation(fields:[userId], references:[id], onDelete:SetNull)  @@index([entityType, entityId, createdAt])  @@index([userId, createdAt])}model OutboxEvent {  id          String @id @default(uuid()) @db.Uuid  userId      String? @db.Uuid  eventType   String  aggregateType String  aggregateId String  payload     Json  status      String @default("PENDING")  attempts    Int @default(0)  availableAt DateTime @default(now())  processedAt DateTime?  createdAt   DateTime @default(now())  user        User? @relation(fields:[userId], references:[id], onDelete:SetNull)  @@index([status, availableAt])}
+4. API Standards
+Base URL: /api/v1.
+Content-Type: application/json.
+Request ID: X-Request-Id; server generates one if absent.
+Idempotency-Key required for retry-prone POST mutations.
+Authorization: Bearer access token.
+Pagination: cursor-based for timelines; limit capped server-side.
+Dates: ISO-8601 UTC; date-only fields explicitly documented as local dates.
+Never return password hashes, refresh token hashes, internal provider credentials or raw security metadata.
+5. Standard Error Contract
+{  "error": {    "code": "GOAL_NOT_FOUND",    "message": "Goal was not found.",    "requestId": "req_01...",    "details": {},    "retryable": false  }}
+HTTP
+Use
+400
+Malformed request / validation failure
+401
+Missing/invalid authentication
+403
+Authenticated but not authorized
+404
+Resource not found or intentionally hidden
+409
+Conflict / idempotency / state transition
+422
+Semantically invalid business request
+429
+Rate limit exceeded
+500
+Unexpected server error
+503
+Dependency/service temporarily unavailable
+6. Auth API
+Method
+Endpoint
+Purpose
+POST
+/auth/register
+Create account
+POST
+/auth/login
+Create session
+POST
+/auth/refresh
+Rotate refresh token
+POST
+/auth/logout
+Revoke current session
+POST
+/auth/logout-all
+Revoke all sessions
+GET
+/auth/sessions
+List current user's sessions
+DELETE
+/auth/sessions/:id
+Revoke selected session
+POST /auth/register{  "email": "user@example.com",  "password": "••••••••",  "displayName": "Sujal"}201{  "user": {"id":"uuid","email":"user@example.com","status":"ACTIVE"},  "session": {"accessToken":"...","expiresIn":900}}
+7. Profile & Preferences API
+Method
+Endpoint
+Purpose
+GET
+/me
+Current user
+PATCH
+/me
+Update safe profile fields
+GET
+/me/preferences
+Read preferences
+PATCH
+/me/preferences
+Update preferences
+GET
+/me/devices
+List devices
+DELETE
+/me/devices/:id
+Revoke device
+8. Future Self & Life Areas
+Method
+Endpoint
+Purpose
+GET
+/life-areas
+List life areas
+POST
+/life-areas
+Create life area
+PATCH
+/life-areas/:id
+Update own life area
+DELETE
+/life-areas/:id
+Archive/delete
+GET
+/future-self
+Get current Future Self
+PUT
+/future-self
+Create/replace desired-state definition
+PUT /future-self{  "statement": "Who I want to become...",  "horizonMonths": 12,  "areas": [    {"lifeAreaId":"uuid","desiredState":"...","priority":5}  ]}
+9. Goals & Metrics API
+Method
+Endpoint
+Purpose
+GET
+/goals
+List/filter goals
+POST
+/goals
+Create goal
+GET
+/goals/:id
+Get goal + metrics
+PATCH
+/goals/:id
+Update goal
+POST
+/goals/:id/archive
+Archive goal
+POST
+/goals/:id/metrics
+Add metric
+PATCH
+/goals/:id/metrics/:metricId
+Update metric
+POST /goals{  "title":"Run a 10K",  "lifeAreaId":"uuid",  "targetDate":"2027-03-01T00:00:00Z",  "metrics":[    {"metricType":"distance","targetValue":10,"unit":"km"}  ]}
+10. Planning & Tasks API
+Method
+Endpoint
+Purpose
+GET
+/plans/:localDate
+Get day's plan
+POST
+/plans
+Create/manual plan
+POST
+/plans/generate
+Generate candidate plan
+GET
+/tasks
+List tasks
+POST
+/tasks
+Create task
+PATCH
+/tasks/:id
+Update task
+POST
+/tasks/:id/complete
+Complete task
+POST
+/tasks/:id/skip
+Skip task
+POST
+/tasks/:id/reschedule
+Reschedule task
+POST /tasks/:id/complete{  "completedAt":"2026-09-23T13:30:00Z",  "source":"mobile"}Side effects:1. validate task ownership/state2. update task3. write behavior_event task.completed4. write outbox event5. async growth/analytics processing
+11. Behavior Event API
+POST /behavior-events{  "eventType":"task.snoozed",  "occurredAt":"2026-09-23T13:00:00Z",  "source":"mobile",  "entityType":"task",  "entityId":"uuid",  "metadata":{"minutes":10},  "schemaVersion":1}
+Reject unknown event types unless the event is explicitly marked extensible.
+Validate metadata against event schema where available.
+Do not accept userId in request body; derive it from authentication.
+Deduplicate using an idempotency key for device-generated retries.
+12. Daily Growth API
+Method
+Endpoint
+Purpose
+GET
+/daily-growth/session
+Get current/most recent session
+POST
+/daily-growth/checkin
+Create/update daily check-in
+POST
+/daily-growth/session/start
+Start session
+POST
+/daily-growth/session/complete
+Complete session
+GET
+/daily-growth/history
+Past sessions
+POST /daily-growth/checkin{  "localDate":"2026-09-23",  "mood":4,  "energy":3,  "reflection":"..."}
+13. Growth Insights API
+Method
+Endpoint
+Purpose
+GET
+/growth/summary
+Current growth snapshot
+GET
+/growth/gaps
+Current Future Self gaps
+GET
+/growth/insights
+List insights
+GET
+/growth/insights/:id
+Insight + evidence
+POST
+/growth/insights/:id/view
+Mark viewed
+POST
+/growth/insights/:id/accept
+Accept recommendation
+POST
+/growth/insights/:id/dismiss
+Dismiss recommendation
+Insight response{  "id":"uuid",  "type":"timing_pattern",  "title":"Your workouts succeed more often in the morning",  "summary":"...",  "evidence":[    {"metric":"completion_rate","morning":0.89,"evening":0.43}  ],  "recommendation":{    "actionType":"move_routine",    "requiresConfirmation":true  },  "confidence":0.91}
+14. Companion API
+Method
+Endpoint
+Purpose
+POST
+/companion/conversations
+Create conversation
+GET
+/companion/conversations
+List conversations
+GET
+/companion/conversations/:id
+Get conversation
+POST
+/companion/conversations/:id/messages
+Send message
+POST
+/companion/memories/:id/revoke
+Revoke memory
+POST /companion/conversations/:id/messages{  "content":"I feel stuck with my routine.",  "clientMessageId":"device-generated-id"}Response:{  "message":{"id":"uuid","role":"assistant","content":"..."},  "actions":[    {      "type":"suggest_task",      "requiresConfirmation":true,      "payload":{}    }  ]}
+AI response is never allowed to execute arbitrary database mutations.
+Action proposals are validated against typed schemas.
+Sensitive/high-risk conversations follow the safety policy and may be excluded from normal memory.
+15. Privacy API
+Method
+Endpoint
+Purpose
+GET
+/privacy/data-summary
+Show stored data categories
+POST
+/privacy/export
+Start export job
+GET
+/privacy/export/:jobId
+Check export
+POST
+/privacy/delete-request
+Start account deletion
+GET
+/privacy/delete-request/:id
+Check deletion status
+16. Notifications API
+Method
+Endpoint
+Purpose
+GET
+/notifications/preferences
+Get notification settings
+PATCH
+/notifications/preferences
+Update settings
+GET
+/notifications
+List recent notifications
+POST
+/notifications/test
+Send test notification to own device
+17. Event Catalog
+Event
+Producer
+Consumers
+user.registered
+Auth
+onboarding, analytics
+goal.created
+Goals
+growth, analytics
+goal.completed
+Goals
+growth, analytics
+task.created
+Planning
+analytics
+task.completed
+Planning
+growth, analytics
+task.skipped
+Planning
+growth
+task.snoozed
+Planning
+adaptive scheduling
+routine.completed
+Planning
+growth
+alarm.dismissed
+Notifications/mobile
+behavior
+checkin.completed
+Daily Growth
+growth
+daily_growth.completed
+Daily Growth
+growth, analytics
+insight.viewed
+Growth
+analytics
+insight.accepted
+Growth
+intervention
+intervention.completed
+Growth
+outcome analysis
+companion.message.sent
+Companion
+analytics aggregate only
+memory.created
+Companion
+memory index
+notification.delivered
+Notifications
+analytics
+subscription.changed
+Billing
+entitlements
+18. Event Envelope
+{  "id":"uuid",  "type":"task.completed",  "schemaVersion":1,  "occurredAt":"2026-09-23T13:30:00Z",  "producer":"planning-service",  "actor":{"type":"user","id":"uuid"},  "aggregate":{"type":"task","id":"uuid"},  "payload":{},  "traceId":"..."}
+19. RBAC & Ownership Matrix
+Capability
+User
+Support
+Admin/System
+Own profile/goals/tasks
+CRUD
+Read only when explicitly authorized
+System
+Own conversations
+CRUD
+No default access
+System
+Own memories
+CRUD/revoke
+No default access
+System
+System health
+No
+Read limited
+Read/operate
+User suspension
+No
+Escalate
+Yes, audited
+Privacy deletion
+Request/confirm
+Process workflow
+Execute workflow
+AI model config
+No
+No
+Yes, audited
+Production database
+No
+No direct access
+Restricted ops only
+Important: role checks never replace resource ownership checks.
+20. Seed Data Contract
+Seed only development/test data:- demo user- six life areas- three sample goals- seven sample tasks- sample routine- synthetic behavior events- sample insight- sample daily check-inNever seed real email addresses, credentials, tokens or production-like personal data.
+21. Database Migration Rules
+Every schema change is a migration committed to source control.
+Backward-compatible changes first when mobile clients may lag behind backend deployment.
+Destructive changes require a separate migration and explicit rollback/backup plan.
+Never edit an already-applied production migration.
+Use migration checks in CI against a clean database.
+Production migrations run through deployment automation with lock/timeout safeguards.
+22. Pagination / Filtering Contract
+GET /tasks?status=TODO&limit=50&cursor=<opaque>{  "data":[...],  "page":{    "nextCursor":"...",    "hasMore":true  }}
+Default limit: 20.
+Maximum limit: 100.
+Cursor values are opaque.
+Sort order is deterministic.
+Do not use offset pagination for large behavioral timelines.
+23. Validation Rules
+All request bodies validated server-side with typed DTO schemas.
+Unknown fields rejected for security-sensitive endpoints.
+String lengths, numeric ranges, enum values and date ranges validated.
+Goal/task titles normalized for whitespace but original user meaning preserved.
+Reflection and conversation content are treated as sensitive text.
+Timezone must be a valid IANA timezone.
+24. Idempotency Contract
+Header:Idempotency-Key: <client-generated unique value>Server:1. hash normalized request2. store key + user + endpoint + response status/body3. return same response for safe retries4. reject same key with different request body5. expire keys after defined retention window
+25. API Security Checklist
+Authentication on every protected route.
+Authorization + ownership check on every resource route.
+Rate limits per user/device/IP where appropriate.
+Request body size limits.
+Output filtering for sensitive fields.
+Audit critical mutations.
+CSRF protection where cookie-based auth is used.
+Strict CORS.
+Secure headers.
+Dependency and secret scanning in CI.
+26. Direct Agent Implementation Order
+Step
+Agent task
+Must produce
+1
+Create monorepo skeleton
+workspace + lint + typecheck
+2
+Bootstrap API
+NestJS + health/readiness
+3
+Add Prisma
+schema + first migration
+4
+Implement auth
+register/login/refresh/logout/session tests
+5
+Implement profile
+/me + preferences
+6
+Implement life areas
+CRUD + ownership tests
+7
+Implement Future Self
+contract + persistence
+8
+Implement goals
+CRUD + metrics
+9
+Implement tasks/plans
+planning contracts + events
+10
+Implement behavior events
+append + validation + idempotency
+11
+Implement outbox
+transactional event publishing
+12
+Implement daily growth
+checkin/session APIs
+13
+Implement growth read model
+summary/gaps/insights
+14
+Add companion gateway
+policy + context + structured output
+15
+Add privacy flows
+export/delete
+27. Contract Testing Requirements
+Every endpoint has success, validation, authentication and authorization tests.
+Every mutation has an idempotency/retry test where applicable.
+Every resource route has owner vs non-owner test.
+OpenAPI contract is generated/updated from DTO definitions.
+Mobile client must consume generated types rather than duplicate API interfaces.
+Breaking API changes require a version bump or compatibility layer.
+28. What Claude Code Must NOT Do
+Do not replace PostgreSQL with localStorage for real user state.
+Do not create a second source of truth for goals/tasks.
+Do not expose Prisma/database access directly to controllers.
+Do not allow the LLM to call arbitrary SQL.
+Do not store secrets in source control.
+Do not bypass authorization because the UI hides a button.
+Do not create microservices merely to make the architecture look enterprise.
+Do not introduce a new dependency without explaining why it is necessary.
+Do not modify unrelated modules while implementing a phase.
+29. Phase 0 Acceptance Criteria
+Repository builds from a clean checkout.
+Local PostgreSQL migration succeeds.
+API health and readiness endpoints work.
+Auth flow works from a fresh database.
+Session revocation works.
+Profile persists across devices/sessions.
+CI runs lint/typecheck/tests.
+Secrets are externalized.
+Request correlation appears in logs.
+Unauthorized resource access returns 403/404 according to policy.
+Initial OpenAPI contract is generated and versioned.
+30. Final Contract
+This pack is the implementation contract for SAAR's first engineering cycle. The schema and API boundaries intentionally favor correctness, ownership enforcement, observability and future evolution over premature complexity. Claude Code and Antigravity should treat this document together with the Technical Design Specification and PRD as the authoritative baseline; any deviation should be recorded as an ADR before implementation.

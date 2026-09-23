@@ -1,0 +1,47 @@
+# ─── Dependencies ────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+
+# ─── Build outputs ───────────────────────────────────────────
+dist/
+build/
+.next/
+.expo/
+out/
+coverage/
+*.tsbuildinfo
+
+# ─── Environment ─────────────────────────────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.staging.local
+.env.production.local
+
+# ─── Logs ────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── IDE ─────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── Turbo ───────────────────────────────────────────────────
+.turbo/
+
+# ─── Prisma ──────────────────────────────────────────────────
+prisma/generated/
+
+# ─── Test ────────────────────────────────────────────────────
+junit.xml
+test-results/

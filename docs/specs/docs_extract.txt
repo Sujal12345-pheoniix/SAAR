@@ -1,0 +1,499 @@
+﻿=== PRD ===
+SAAR ΓÇö Product Requirements Document
+PRD v1.0 ΓÇó Founding Product Specification ΓÇó India-first
+Owner: Sujal Kumar, Co-founder | Strategic/Technical M.D.: GPT
+Document purpose: convert the SAAR founding thesis into an implementation-ready product contract covering product behavior, workflows, data flows, pipelines, architecture boundaries, MVP scope, safety, privacy, metrics, and go-to-market readiness.
+1. Executive Summary
+SAAR is an India-first Personal Growth Intelligence product. It is not positioned as a conventional habit tracker, task manager, meditation app, or generic AI assistant. Its core job is to continuously compare a user's Current Self with their Future Self, identify meaningful gaps, understand behavioral causes, recommend a small number of interventions, observe outcomes, and adapt.
+The core loop is: Future Self ΓåÆ Current Self ΓåÆ Measure ΓåÆ Find Gap ΓåÆ Understand ΓåÆ Recommend ΓåÆ Act ΓåÆ Observe ΓåÆ Learn ΓåÆ Adapt.
+The MVP must prove one hypothesis: SAAR can help real users make measurable positive changes in their behavior over 30 days. Downloads, streaks, time spent in app, and AI message volume are secondary.
+Product promise
+Know how you live. Understand where you're going. Become who you want to be.
+Category
+Personal Growth Intelligence
+Primary market
+India, initially focused on digitally active Gen Z and young adults roughly 18ΓÇô30; the product architecture should not hard-code this age segment so it can expand later.
+2. Product Vision & Principles
+Principle
+Requirement
+Growth over productivity
+Do not optimize task volume at the expense of health, relationships, recovery, or meaning.
+Reality over intention
+Observed behavior and completed actions are stronger signals than planned actions.
+Balance over optimization
+The system must account for finite time and trade-offs.
+Truth over empty motivation
+Insights must be evidence-based and explain their reasoning.
+Adaptation over rigidity
+Repeated failure should trigger investigation and plan adaptation.
+Privacy over monetization
+Collect only what is necessary; give users meaningful data controls.
+User autonomy
+AI recommends; the user remains the decision-maker.
+Long-term transformation
+Success is measured by outcomes outside the app, not addiction to the app.
+3. User Problem
+Users know what they want but struggle to translate intentions into consistent behavior.
+Planning, fitness, journaling, calendars, habits, and AI conversations are fragmented.
+Most tools record completion but do not explain why patterns occur.
+Rigid plans fail when real life changes.
+Productivity systems can unintentionally encourage overwork.
+Users lack a longitudinal model of how their behavior affects their goals.
+4. Target Users
+Segment
+Need
+Initial relevance
+Self-improving student
+Consistency, study, fitness, identity formation
+High
+Young professional
+Work-life balance, career growth, routines
+Very high
+Creator / entrepreneur
+Structure, energy management, accountability
+High
+Fitness-oriented user
+Training consistency and recovery
+High
+General adult user
+Balanced personal growth
+Later expansion
+Initial acquisition should be narrow enough to learn quickly. 'Everyone in India' is the long-term market, not the first marketing audience.
+5. Jobs To Be Done
+When I know what I want to improve but keep failing to act consistently, help me understand why and change the plan.
+When my day becomes chaotic, help me decide what actually matters.
+When I repeatedly miss a habit, help me distinguish motivation problems from schedule/design problems.
+When I feel overwhelmed, help me see the trade-offs instead of adding more tasks.
+When I reflect on my week, show me what actually changed and what pattern caused it.
+When I talk to the AI, use my context responsibly instead of giving generic advice.
+6. Product Scope
+MVP modules
+Authentication and profile
+Future Self setup
+Life domains
+Goals
+Tasks and schedule
+Habits
+Reminders
+Behavioral alarm / intervention
+Mood and energy check-in
+SAAR Daily
+Weekly Growth Review
+AI Companion (text)
+Basic Gap Engine
+Basic adaptive scheduling
+Basic behavioral insights
+Privacy and data controls
+Post-MVP
+Voice companion
+Advanced personal memory
+Wearable integrations
+Advanced Life Trade-off Engine
+Advanced behavioral intervention library
+Evolution reports
+Creator/community programs
+B2B / university offerings
+Advanced avatar
+7. Future Self Framework
+During onboarding, the user describes who they want to become. SAAR converts this into domain-level aspirations and measurable behaviors.
+Domain
+Examples of outcomes
+Possible measurable signals
+Mind
+Calmer, more reflective
+check-ins, journaling, meditation
+Health
+Stronger, healthier
+workouts, sleep, movement
+Career
+More capable
+learning sessions, deep work
+Relationships
+More present
+protected relationship time, check-ins
+Personal
+More fulfilled
+hobbies, personal time
+Finance
+More disciplined
+later: savings/spending signals
+Purpose
+More aligned
+values/reflection, later stage
+8. Core Growth Model
+Every recommendation must be traceable to a user goal, observed signal, or explicit user input. Generic motivational output is not considered a growth insight.
+9. Core Functional Requirements
+9.1 Authentication
+Email/password and a supported social sign-in provider.
+Server-side authorization for every protected resource.
+Short-lived access tokens and revocable sessions.
+Secure device storage for tokens on mobile.
+Account recovery and device/session management.
+Security baseline: OWASP MASVS treats authentication, secure storage, network security, and privacy as core mobile security control groups. SAAR should use MASVS as a verification baseline, not as a substitute for a full threat model. εêÇciteεêéturn0search0εêéturn0search2εêü
+9.2 Future Self
+Create/update aspirations by domain.
+Define 1ΓÇô3 priority goals during onboarding.
+Allow goals to be measurable or behavior-based.
+Allow users to pause, archive, or replace goals.
+Never force every life domain.
+9.3 Goals
+Goal title, domain, reason/why, target date, priority, measurement method, status.
+Goal-to-habit/task relationships.
+Goal progress snapshots.
+Goal history must remain auditable for AI reasoning.
+9.4 Tasks / Schedule
+One-time and recurring tasks.
+Flexible rescheduling.
+Completion, skip, snooze, cancel, reschedule events.
+Calendar-style view.
+Conflict detection.
+Time-budget awareness.
+9.5 Habits
+Frequency, preferred time window, minimum viable action, target, tracking mode.
+Track completion and misses.
+Distinguish skipped, failed, rescheduled, and completed.
+Support habit experiments rather than permanent streak pressure.
+9.6 Behavioral Alarm
+User chooses an intervention type.
+Alarm creates a behavior event when triggered.
+Dismissal may require an action such as confirmation, movement, QR/NFC, or micro-task depending on device capabilities.
+Do not use dangerous or punitive interventions.
+Repeated failure triggers adaptation analysis rather than escalating punishment.
+9.7 Check-in
+Mood: lightweight categorical scale.
+Energy: simple numeric scale.
+Optional free-text reflection.
+User controls whether check-ins are required.
+9.8 SAAR Daily
+Triggered at user-selected local time.
+Collects relevant day events.
+Asks a minimal check-in.
+Computes key deviations from plan.
+Generates up to three high-value insights/actions.
+Offers tomorrow plan adjustment.
+9.9 Weekly Growth Review
+Compare current week with prior baseline.
+Highlight improvements and declines.
+Show meaningful patterns with supporting evidence.
+Propose 1ΓÇô3 changes for the next week.
+Allow user feedback on whether an insight was useful.
+10. AI Companion Requirements
+Capability
+Requirement
+Context
+Use authorized user context only; retrieve only relevant data.
+Reasoning
+Explain the evidence behind meaningful behavioral insights.
+Memory
+Separate durable user facts/preferences from transient conversation context.
+Tone
+Warm, direct, non-judgmental, culturally aware.
+Disagreement
+May challenge a plan when evidence shows a trade-off or risk.
+Autonomy
+Recommendations are not commands.
+Safety
+Escalate high-risk situations to appropriate safety guidance.
+Privacy
+Do not expose unrelated personal data in responses.
+AI output must not become the system of record. Deterministic services remain authoritative for schedules, permissions, metrics, billing, and safety rules.
+11. Gap Engine
+The Gap Engine transforms Future Self aspirations into measurable or behavior-linked gaps.
+Stage
+Input
+Output
+1. Define
+Future Self + goals
+Desired state
+2. Observe
+Tasks, habits, check-ins, events
+Current state
+3. Compare
+Desired vs current
+Gap
+4. Explain
+Historical patterns + context
+Likely contributors
+5. Intervene
+Recommendation library + AI
+Action
+6. Measure
+Post-intervention behavior
+Effectiveness
+7. Adapt
+Outcome + feedback
+Updated plan
+12. Life Trade-off Engine
+Calculate available time against planned commitments.
+Protect explicit sleep/recovery constraints.
+Detect overbooked days.
+Surface conflicts between domains.
+Recommend trade-offs rather than silently stacking tasks.
+Explain what will be displaced when adding a new commitment.
+13. Adaptive Scheduling
+Maintain a history of scheduled vs actual execution.
+Estimate completion propensity by time window where sufficient data exists.
+Detect repeated misses.
+Suggest alternative times rather than automatically moving important commitments without consent.
+Learn user preference after each accepted/rejected suggestion.
+14. Workflows
+14.1 Onboarding
+Acceptance criteria
+User can reach a first meaningful plan in one session.
+User understands why SAAR asks about Future Self.
+Privacy permissions are explicit and granular.
+At least one goal and one actionable item exist after activation.
+14.2 Daily Growth Session
+Acceptance criteria
+Session can be completed in approximately 3ΓÇô7 minutes.
+Insights cite relevant evidence.
+No more than three primary recommendations are shown by default.
+User can dismiss, accept, edit, or postpone recommendations.
+14.3 Behavioral Alarm
+Schedule ΓåÆ Trigger ΓåÆ Intervention ΓåÆ User action ΓåÆ Completion/Fail
+--- END OF PREVIEW ---
+=== TDS ===
+SAARTechnical Design Specification v1.0
+Implementation blueprint: architecture ΓåÆ database ΓåÆ APIs ΓåÆ events ΓåÆ AI ΓåÆ security ΓåÆ CI/CD
+Co-founder: Sujal Kumar  |  Strategic / Technical M.D.: GPT  |  Status: Draft for implementation
+1. Purpose
+This specification converts the SAAR Product Requirements Document into an implementation-level technical blueprint. ""It is intentionally opinionated: the first release should be modular, secure, observable, testable and capable of evolving from an MVP into a multi-region consumer product without rewriting its core domain model.
+Primary product loop:
+Current You ΓåÆ Desired You ΓåÆ Gap ΓåÆ Action ΓåÆ Behavior ΓåÆ Evidence ΓåÆ Insight ΓåÆ Adaptation ΓåÆ Repeat.
+SAAR is not a generic task manager. The technical architecture must preserve longitudinal behavioral context and turn it into explainable, bounded interventions.
+AI is an orchestration layer over trusted application dataΓÇönot the source of truth.
+2. Architecture Principles
+Modular monolith first: keep domain boundaries strict while avoiding premature microservice complexity.
+API-first: mobile/web clients consume stable versioned contracts.
+PostgreSQL is the system of record; Redis is acceleration/state, never authoritative business storage.
+Event-driven side effects: reminders, analytics, AI analysis and weekly reports are asynchronous.
+AI never mutates critical user state directly. It proposes actions; policy + domain services validate and commit them.
+Privacy by design: collect the minimum data necessary, make sensitive features opt-in, support export/delete.
+Every important behavioral event is timestamped and attributable to a device/session/source.
+Observability is a feature: every workflow must be diagnosable with correlation IDs.
+Feature flags protect risky releases and permit controlled experiments.
+Figure 1 ΓÇö Recommended SAAR logical architecture.
+3. Recommended Technology Baseline
+Layer
+Recommended choice
+Reason
+Mobile
+React Native + Expo
+Fast cross-platform iteration; native capabilities for notifications, biometrics and sensors.
+Web/Admin
+Next.js
+Marketing site, account/settings, internal operations and future web client.
+Backend
+NestJS + TypeScript
+Strong modular architecture, DI, validation, guards, background integrations.
+Database
+PostgreSQL
+Transactional integrity, JSONB where useful, mature indexing and analytics support.
+ORM
+Prisma
+Fast developer workflow and typed schema access; raw SQL allowed for tuned queries.
+Cache/Jobs
+Redis + BullMQ
+Rate limits, short-lived cache, delayed jobs, queues.
+Object storage
+S3-compatible storage
+Encrypted attachments/media with signed URLs.
+Auth
+OIDC/OAuth + email/password
+Flexible sign-in with MFA/passkeys later; server-side authorization.
+AI gateway
+Provider-agnostic internal adapter
+Avoid hard coupling to one model vendor.
+Observability
+OpenTelemetry + structured logs
+Trace requests and asynchronous workflows end-to-end.
+CI/CD
+GitHub Actions + preview/staging/prod
+Branch protection, automated checks and controlled releases.
+4. Repository / Monorepo Structure
+saar/Γö£ΓöÇ apps/Γöé  Γö£ΓöÇ mobile/                 # React Native / Expo clientΓöé  Γö£ΓöÇ web/                    # Next.js marketing + authenticated webΓöé  ΓööΓöÇ api/                    # NestJS applicationΓö£ΓöÇ packages/Γöé  Γö£ΓöÇ contracts/              # OpenAPI-generated types / DTO contractsΓöé  Γö£ΓöÇ domain/                 # Pure domain types, rules, scoringΓöé  Γö£ΓöÇ config/                 # Typed environment/config packageΓöé  Γö£ΓöÇ ui/                     # Shared design system where applicableΓöé  Γö£ΓöÇ analytics/              # Event names + schemasΓöé  ΓööΓöÇ ai-core/                # Prompt templates, tool schemas, AI adaptersΓö£ΓöÇ infra/Γöé  Γö£ΓöÇ docker/Γöé  Γö£ΓöÇ terraform/              # Optional after MVP infrastructure stabilizesΓöé  ΓööΓöÇ scripts/Γö£ΓöÇ prisma/Γöé  Γö£ΓöÇ schema.prismaΓöé  Γö£ΓöÇ migrations/Γöé  ΓööΓöÇ seed/Γö£ΓöÇ docs/Γöé  Γö£ΓöÇ adr/Γöé  Γö£ΓöÇ api/Γöé  Γö£ΓöÇ security/Γöé  ΓööΓöÇ runbooks/Γö£ΓöÇ .github/workflows/Γö£ΓöÇ turbo.jsonΓööΓöÇ package.json
+5. Domain Modules
+Module
+Owns
+Key rule
+Identity
+users, sessions, credentials, devices
+Authentication is separate from authorization.
+Profile
+preferences, timezone, locale, notification settings
+User controls what is collected and used.
+Future Self
+vision, life areas, targets, values
+Desired state must be measurable where possible.
+Goals
+goals, milestones, metrics
+Goals have lifecycle and evidence.
+Planning
+tasks, routines, schedules, time blocks
+Planner is not the source of truth for historical behavior.
+Behavior
+events, completions, skips, snoozes, interventions
+Immutable event history; corrections are compensating events.
+Growth Engine
+scores, gaps, recommendations, experiments
+Recommendations are explainable and versioned.
+Daily Growth
+check-ins, daily review, reflection
+User-owned reflections; sensitive content needs strict access control.
+Companion
+conversations, summaries, approved memories
+AI context is scoped; no unrestricted database access.
+Notifications
+templates, preferences, delivery attempts
+Respect quiet hours and consent.
+Analytics
+product events, aggregates, experiments
+Do not expose raw sensitive content to product analytics.
+Safety
+risk signals, escalation policy, audit trail
+High-risk outputs must follow predefined safety policy.
+6. Database Design
+Core relational entities:
+Entity
+Important fields
+Indexes / constraints
+users
+id, email, status, timezone, created_at
+unique email; status index
+user_profiles
+user_id, display_name, locale, preferences_json
+1:1 user
+devices
+id, user_id, platform, push_token, last_seen_at
+user + active index
+life_areas
+id, user_id, type, title, target_state
+user + type
+goals
+id, user_id, life_area_id, title, status, target_date
+user + status; target date
+goal_metrics
+id, goal_id, metric_type, target_value, unit
+goal index
+plans
+id, user_id, date, generated_by
+unique user/date
+tasks
+id, plan_id, goal_id, title, due_at, status, priority
+user + due_at/status
+routines
+id, user_id, recurrence_rule, active
+user + active
+behavior_events
+id, user_id, event_type, occurred_at, source, metadata_json
+user + occurred_at; event_type
+checkins
+id, user_id, date, mood, energy, notes
+unique user/date
+insights
+id, user_id, type, evidence_json, recommendation_json, confidence, expires_at
+user + created_at
+interventions
+id, user_id, insight_id, action_type, status
+user + status
+conversations
+id, user_id, created_at
+user index
+messages
+id, conversation_id, role, content_ref, created_at
+conversation + created_at
+memories
+id, user_id, type, summary, source_refs, consent_status
+user + type
+notifications
+id, user_id, type, scheduled_at, status
+user + scheduled_at
+audit_logs
+id, user_id, actor_type, action, entity_type, entity_id, created_at
+entity + created_at
+Recommended event model:
+BehaviorEvent {  id: UUID  userId: UUID  eventType: string  occurredAt: timestamptz  source: mobile | web | system | integration  entityType?: string  entityId?: UUID  metadata: JSONB  schemaVersion: integer}
+7. Data Architecture
+Figure 2 ΓÇö Data ownership and storage boundaries.
+8. API Architecture
+All authenticated APIs are versioned under /api/v1. Use REST for transactional operations and server-sent events/websockets only where real-time UX materially benefits.
+Area
+Representative endpoints
+Notes
+Auth
+POST /auth/register, /login, /refresh, /logout
+Short-lived access token + rotating refresh token.
+Profile
+GET/PATCH /me
+Never expose internal/security fields.
+Future Self
+GET/POST/PATCH /future-self
+Version target changes.
+Goals
+GET/POST/PATCH /goals
+Validate ownership and life-area membership.
+Plans
+GET /plans/:date, POST /plans/generate
+Generated plans require idempotency.
+Tasks
+POST /tasks, PATCH /tasks/:id
+Completion creates behavior event.
+Behavior
+POST /behavior-events, GET /behavior/timeline
+Write path should be cheap and append-oriented.
+Growth
+GET /growth/dashboard, /growth/gaps, /growth/insights
+Read models can be cached.
+Daily Growth
+GET /daily-growth/session, POST /daily-growth/checkin
+Session is user-timezone aware.
+Companion
+POST /companion/conversations, POST /companion/messages
+AI calls go through policy/orchestrator.
+Notifications
+GET /notifications/preferences, PATCH /notifications/preferences
+No silent override of user settings.
+Privacy
+GET /privacy/export, POST /privacy/delete-request
+Deletion is asynchronous and auditable.
+9. Authentication & Authorization
+Use short-lived access tokens and rotating refresh tokens stored in secure platform storage.
+Device/session records enable revocation and anomaly detection.
+Authorization must be server-side on every protected resource.
+Use RBAC internally (user/admin/support) but keep domain ownership checks mandatory.
+Prepare for passkeys and MFA; do not hard-code password-only assumptions.
+Never trust client-provided user_id, role, organization_id or ownership fields.
+Rate-limit login, OTP, password reset, companion messaging and expensive AI endpoints.
+Sensitive operations require step-up authentication when appropriate.
+10. AI Architecture
+The AI layer is a controlled decision-support system with four stages:
+Context Builder: retrieves only the minimum approved context needed for the task.
+Policy Engine: checks permissions, safety, privacy, age/eligibility and tool constraints.
+Model Router: selects model/provider based on task complexity, latency and cost.
+Action Validator: converts AI output into a strict schema and allows only whitelisted mutations.
+AI tools should be explicit, typed and permission-scoped, for example:
+get_today_plan()get_recent_behavior(days)get_goal_progress(goal_id)get_balance_snapshot()create_task(proposed_task)          # requires user confirmation for sensitive changesreschedule_task(task_id, new_time)  # policy checkedcreate_insight(insight_payload)save_memory(memory_payload)         # explicit memory policy / consent
+Do not expose a generic SQL tool or unrestricted application database to the model.
+11. Growth / Gap Engine
+Reference pipeline:
+Observed State    ΓåôNormalize events    ΓåôBuild behavior features    ΓåôCompare with Desired State    ΓåôDetect gaps    ΓåôRank gaps by impact + co
+--- END OF PREVIEW ---
+=== DB ===
+SAARDatabase & API Contract Pack v1.0
+ERD ΓÇó Prisma schema blueprint ΓÇó REST contracts ΓÇó DTOs ΓÇó errors ΓÇó events ΓÇó RBAC ΓÇó seed data
+Implementation source for Claude Code / Antigravity
+1. Contract Purpose
+This document freezes the first implementation contract between SAAR clients, backend modules, database and asynchronous workers. It is designed to prevent agents from inventing inconsistent schemas or endpoints while development proceeds in parallel.
+PostgreSQL is authoritative for transactional state.
+REST /api/v1 is the initial external contract.
+All IDs are UUIDv7/time-sortable UUIDs.
+All timestamps are stored in UTC.
+Client-visible timestamps are converted to the user's configured timezone.
+Every resource is tenantless in v1 but always user-owned; organization support can be introduced later without rewriting ownership semantics.
+Sensitive AI/conversation content is deliberately excluded from product analytics events.
+2. ERD ΓÇö Logical Relationship Map
+users Γö£ΓöÇΓöÇ 1:1 user_profiles Γö£ΓöÇΓöÇ 1:N devices Γö£ΓöÇΓöÇ 1:N life_areas Γöé       ΓööΓöÇΓöÇ 1:N goals Γöé               ΓööΓöÇΓöÇ 1:N goal_metrics Γö£ΓöÇΓöÇ 1:N plans Γöé       ΓööΓöÇΓöÇ 1:N tasks Γö£ΓöÇΓöÇ 1:N routines Γö£ΓöÇΓöÇ 1:N behavior_events Γö£ΓöÇΓöÇ 1:N checkins Γö£ΓöÇΓöÇ 1:N insights Γöé       ΓööΓöÇΓöÇ 1:N interventions Γö£ΓöÇΓöÇ 1:N conversations Γöé       ΓööΓöÇΓöÇ 1:N messages Γö£ΓöÇΓöÇ 1:N memories Γö£ΓöÇΓöÇ 1:N notifications ΓööΓöÇΓöÇ 1:N audit_logsgoals ΓöÇΓöÇ< tasksgoals ΓöÇΓöÇ< insightsbehavior_events ΓöÇΓöÇ> analytics/growth workers (async)all transactional mutations ΓöÇΓöÇ> outbox_events ΓöÇΓöÇ> queues/workers
+3. PostgreSQL Schema Blueprint
+The following Prisma-oriented model is the canonical starting point. Exact provider-specific types can be adjusted during Phase 0, but field semantics should remain stable.
+enum UserStatus { ACTIVE SUSPENDED DELETED }enum GoalStatus { ACTIVE COMPLETED PAUSED ARCHIVED }enum TaskStatus { TODO IN_PROGRESS COMPLETED SKIPPED CANCELLED }enum InsightStatus { NEW VIEWED ACCEPTED DISMISSED EXPIRED }enum InterventionStatus { PROPOSED ACCEPTED COMPLETED FAILED DISMISSED }enum MemoryStatus { ACTIVE REVOKED EXPIRED }enum NotificationStatus { SCHEDULED SENT DELIVERED FAILED CANCELLED }model User {  id              String   @id @default(uuid()) @db.Uuid  email           String   @unique  status          UserStatus @default(ACTIVE)  timezone        String   @default("Asia/Kolkata")  locale          String   @default("en-IN")  createdAt       DateTime @default(now())  updatedAt       DateTime @updatedAt  profile         UserProfile?  devices         Device[]  lifeAreas       LifeArea[]  goals           Goal[]  plans           Plan[]  routines        Routine[]  behaviorEvents  BehaviorEvent[]  checkins        Checkin[]  insights        Insight[]  conversations   Conversation[]  memories        Memory[]  notifications   Notification[]  auditLogs       AuditLog[]  sessions        Session[]  outboxEvents    OutboxEvent[]}model UserProfile {  id             String   @id @default(uuid()) @db.Uuid  userId         String   @unique @db.Uuid  displayName    String?  avatarUrl      String?  preferences    Json?  createdAt      DateTime @default(now())  updatedAt      DateTime @updatedAt  user           User @relation(fields:[userId], references:[id], onDelete:Cascade)}model Session {  id             String   @id @default(uuid()) @db.Uuid  userId         String   @db.Uuid  refreshHash    String  deviceId       String?  @db.Uuid  expiresAt      DateTime  revokedAt      DateTime?  createdAt      DateTime @default(now())  user           User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([userId, expiresAt])}model Device {  id            String   @id @default(uuid()) @db.Uuid  userId        String   @db.Uuid  platform      String  pushTokenHash String?  appVersion    String?  lastSeenAt    DateTime?  createdAt     DateTime @default(now())  user          User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([userId, lastSeenAt])}model LifeArea {  id          String   @id @default(uuid()) @db.Uuid  userId      String   @db.Uuid  type        String  title       String  targetState String?  weight      Decimal? @db.Decimal(5,2)  createdAt   DateTime @default(now())  updatedAt   DateTime @updatedAt  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  goals       Goal[]  @@index([userId, type])}model Goal {  id          String   @id @default(uuid()) @db.Uuid  userId      String   @db.Uuid  lifeAreaId  String?  @db.Uuid  title       String  description String?  status      GoalStatus @default(ACTIVE)  targetDate  DateTime?  createdAt   DateTime @default(now())  updatedAt   DateTime @updatedAt  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  lifeArea    LifeArea? @relation(fields:[lifeAreaId], references:[id], onDelete:SetNull)  metrics     GoalMetric[]  tasks       Task[]  @@index([userId, status])  @@index([lifeAreaId, status])}model GoalMetric {  id          String   @id @default(uuid()) @db.Uuid  goalId      String   @db.Uuid  metricType  String  targetValue Decimal? @db.Decimal(14,4)  currentValue Decimal? @db.Decimal(14,4)  unit        String?  goal        Goal @relation(fields:[goalId], references:[id], onDelete:Cascade)  @@index([goalId])}model Plan {  id          String   @id @default(uuid()) @db.Uuid  userId      String   @db.Uuid  localDate   DateTime @db.Date  generatedBy String  version     Int      @default(1)  createdAt   DateTime @default(now())  updatedAt   DateTime @updatedAt  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  tasks       Task[]  @@unique([userId, localDate, version])  @@index([userId, localDate])}model Task {  id          String   @id @default(uuid()) @db.Uuid  userId      String   @db.Uuid  planId      String?  @db.Uuid  goalId      String?  @db.Uuid  title       String  description String?  status      TaskStatus @default(TODO)  priority    Int      @default(3)  dueAt       DateTime?  estimatedMinutes Int?  completedAt DateTime?  createdAt   DateTime @default(now())  updatedAt   DateTime @updatedAt  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  plan        Plan? @relation(fields:[planId], references:[id], onDelete:SetNull)  goal        Goal? @relation(fields:[goalId], references:[id], onDelete:SetNull)  @@index([userId, dueAt, status])  @@index([goalId, status])}model Routine {  id             String   @id @default(uuid()) @db.Uuid  userId         String   @db.Uuid  title          String  recurrenceRule String  timezone       String  preferredTime  String?  active         Boolean @default(true)  createdAt      DateTime @default(now())  updatedAt      DateTime @updatedAt  user           User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([userId, active])}model BehaviorEvent {  id            String   @id @default(uuid()) @db.Uuid  userId        String   @db.Uuid  eventType     String  occurredAt    DateTime  source        String  entityType    String?  entityId      String? @db.Uuid  metadata      Json?  schemaVersion Int @default(1)  createdAt     DateTime @default(now())  user          User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([userId, occurredAt])  @@index([userId, eventType, occurredAt])}model Checkin {  id         String   @id @default(uuid()) @db.Uuid  userId     String   @db.Uuid  localDate  DateTime @db.Date  mood       Int?  energy     Int?  reflection String?  createdAt  DateTime @default(now())  updatedAt  DateTime @updatedAt  user       User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@unique([userId, localDate])}model Insight {  id             String @id @default(uuid()) @db.Uuid  userId         String @db.Uuid  type           String  status         InsightStatus @default(NEW)  title          String  summary        String  evidence       Json  recommendation Json  confidence     Decimal? @db.Decimal(5,4)  expiresAt      DateTime?  createdAt      DateTime @default(now())  updatedAt      DateTime @updatedAt  user           User @relation(fields:[userId], references:[id], onDelete:Cascade)  interventions  Intervention[]  @@index([userId, status, createdAt])}model Intervention {  id          String @id @default(uuid()) @db.Uuid  userId      String @db.Uuid  insightId   String @db.Uuid  actionType  String  payload     Json  status      InterventionStatus @default(PROPOSED)  outcome     Json?  createdAt   DateTime @default(now())  completedAt DateTime?  user        User @relation(fields:[userId], references:[id], onDelete:Cascade)  insight     Insight @relation(fields:[insightId], references:[id], onDelete:Cascade)  @@index([userId, status])}model Conversation {  id        String @id @default(uuid()) @db.Uuid  userId    String @db.Uuid  title     String?  createdAt DateTime @default(now())  updatedAt DateTime @updatedAt  user      User @relation(fields:[userId], references:[id], onDelete:Cascade)  messages  Message[]  @@index([userId, updatedAt])}model Message {  id             String @id @default(uuid()) @db.Uuid  conversationId String @db.Uuid  role           String  content        String  model          String?  promptVersion  String?  createdAt      DateTime @default(now())  conversation   Conversation @relation(fields:[conversationId], references:[id], onDelete:Cascade)  @@index([conversationId, createdAt])}model Memory {  id           String @id @default(uuid()) @db.Uuid  userId       String @db.Uuid  type         String  summary      String  sourceRefs   Json  status       MemoryStatus @default(ACTIVE)  consentedAt  DateTime?  expiresAt    DateTime?  createdAt    DateTime @default(now())  updatedAt    DateTime @updatedAt  user         User @relation(fields:[userId], references:[id], onDelete:Cascade)  @@index([userId, type, status])}model Notification {  id          String @id @default(uuid()) @db.Uuid  userId      String @db.Uuid  type        String  title       String  body        String  scheduledAt DateTime  sentAt      DateTime?  status      NotificationStatus @def
+--- END OF PREVIEW ---
