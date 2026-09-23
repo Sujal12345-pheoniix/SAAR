@@ -1,6 +1,5 @@
-import type { Config } from 'jest';
-
-const config: Config = {
+/** @type {import('jest').Config} */
+module.exports = {
   moduleFileExtensions: ['js', 'json', 'ts'],
   rootDir: 'src',
   testRegex: '.*\\.spec\\.ts$',
@@ -12,5 +11,3 @@ const config: Config = {
     '^@saar/contracts(.*)$': '<rootDir>/../../packages/contracts/src$1',
   },
 };
-
-export default config;

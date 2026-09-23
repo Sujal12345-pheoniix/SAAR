@@ -440,7 +440,7 @@ export class AuthService {
           actorType: 'user',
           action,
           entityType: 'Session',
-          metadata,
+          metadata: metadata as any,
         },
       });
     } catch (err) {

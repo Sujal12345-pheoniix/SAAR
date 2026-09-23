@@ -2,7 +2,7 @@
 const path = require('path');
 
 const nextConfig = {
-  output: 'standalone',
+  output: process.env.DOCKER_BUILD === 'true' ? 'standalone' : undefined,
   poweredByHeader: false,
   webpack(config) {
     config.resolve.alias = {

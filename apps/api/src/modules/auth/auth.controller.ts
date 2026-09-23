@@ -10,7 +10,6 @@ import {
   HttpStatus,
   Req,
   ParseUUIDPipe,
-  Version,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
@@ -24,8 +23,7 @@ import {
   type AuthenticatedUser,
 } from '../../common/decorators/current-user.decorator';
 
-@Controller('auth')
-@Version('1')
+@Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

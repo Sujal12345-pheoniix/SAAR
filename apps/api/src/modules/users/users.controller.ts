@@ -4,7 +4,6 @@ import {
   Patch,
   Body,
   UseGuards,
-  Version,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -17,8 +16,7 @@ import { UsersService } from './users.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 
-@Controller('me')
-@Version('1')
+@Controller({ path: 'me', version: '1' })
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

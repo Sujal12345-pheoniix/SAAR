@@ -153,7 +153,7 @@ export class UsersService {
 
     const updated = await this.prisma.userProfile.update({
       where: { userId },
-      data: { preferences: merged },
+      data: { preferences: merged as any },
       select: { preferences: true },
     });
 
