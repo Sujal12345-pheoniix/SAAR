@@ -79,6 +79,7 @@ model User {
   updatedAt    DateTime   @updatedAt
 
   profile        UserProfile?
+  futureSelf     FutureSelf?
   sessions       Session[]
   devices        Device[]
   lifeAreas      LifeArea[]
@@ -113,6 +114,23 @@ model UserProfile {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_profiles")
+}
+
+model FutureSelf {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @unique @db.Uuid
+  futureIdentity  String
+  horizonYears    Int      @default(5)
+  desiredStates   Json?
+  priorities      Json?
+  values          Json?
+  lifeAreaTargets Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("future_selves")
 }
 
 model Session {
@@ -166,6 +184,7 @@ model LifeArea {
 
   user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   goals Goal[]
+  tasks Task[]
 
   @@index([userId, type])
   @@map("life_areas")
@@ -239,6 +258,7 @@ model Task {
   userId           String     @db.Uuid
   planId           String?    @db.Uuid
   goalId           String?    @db.Uuid
+  lifeAreaId       String?    @db.Uuid
   title            String
   description      String?
   status           TaskStatus @default(TODO)
@@ -250,12 +270,14 @@ model Task {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan Plan? @relation(fields: [planId], references: [id], onDelete: SetNull)
-  goal Goal? @relation(fields: [goalId], references: [id], onDelete: SetNull)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan     Plan?     @relation(fields: [planId], references: [id], onDelete: SetNull)
+  goal     Goal?     @relation(fields: [goalId], references: [id], onDelete: SetNull)
+  lifeArea LifeArea? @relation(fields: [lifeAreaId], references: [id], onDelete: SetNull)
 
   @@index([userId, dueAt, status])
   @@index([goalId, status])
+  @@index([lifeAreaId, status])
   @@map("tasks")
 }
 
@@ -312,6 +334,7 @@ model Checkin {
   /// 1–5 energy scale
   energy     Int?
   reflection String?
+  dayRating  Int?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

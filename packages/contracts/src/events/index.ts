@@ -17,6 +17,7 @@ export enum EventType {
 
   // Goal lifecycle
   GOAL_CREATED = 'goal.created',
+  GOAL_UPDATED = 'goal.updated',
   GOAL_COMPLETED = 'goal.completed',
 
   // Task lifecycle
@@ -24,9 +25,11 @@ export enum EventType {
   TASK_COMPLETED = 'task.completed',
   TASK_SKIPPED = 'task.skipped',
   TASK_SNOOZED = 'task.snoozed',
+  TASK_RESCHEDULED = 'task.rescheduled',
 
   // Routine & habit tracking
   ROUTINE_COMPLETED = 'routine.completed',
+  ROUTINE_SKIPPED = 'routine.skipped',
 
   // Alarm / reminder
   ALARM_DISMISSED = 'alarm.dismissed',

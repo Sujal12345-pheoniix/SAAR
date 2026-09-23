@@ -73,6 +73,7 @@ export class UsersService {
   async updateMe(userId: string, dto: UpdateProfileDto): Promise<SafeUser> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      include: { profile: true },
     });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -84,18 +85,54 @@ export class UsersService {
       if (dto.timezone !== undefined) userUpdate.timezone = dto.timezone;
       if (dto.locale !== undefined) userUpdate.locale = dto.locale;
 
-      await tx.user.update({
-        where: { id: userId },
-        data: userUpdate,
-        include: { profile: true },
-      });
+      if (Object.keys(userUpdate).length > 0) {
+        await tx.user.update({
+          where: { id: userId },
+          data: userUpdate,
+        });
+      }
 
-      // Update profile-level fields (displayName)
-      if (dto.displayName !== undefined) {
+      const resolvedName = dto.displayName ?? dto.name;
+      const existingPrefs =
+        user.profile?.preferences && typeof user.profile.preferences === 'object' && !Array.isArray(user.profile.preferences)
+          ? (user.profile.preferences as Record<string, unknown>)
+          : {};
+
+      const newPrefs: Record<string, unknown> = { ...existingPrefs };
+      let hasPrefUpdates = false;
+
+      if (dto.dailyGrowthSessionTime !== undefined) {
+        newPrefs.dailyGrowthSessionTime = dto.dailyGrowthSessionTime;
+        hasPrefUpdates = true;
+      }
+      if (dto.notificationPreferences !== undefined) {
+        newPrefs.notificationPreferences = dto.notificationPreferences;
+        hasPrefUpdates = true;
+      }
+      if (dto.privacyPreferences !== undefined) {
+        newPrefs.privacyPreferences = dto.privacyPreferences;
+        hasPrefUpdates = true;
+      }
+
+      if (resolvedName !== undefined || hasPrefUpdates) {
+        const updateData: Prisma.UserProfileUpdateInput = {};
+        const createData: Prisma.UserProfileCreateInput = {
+          user: { connect: { id: userId } },
+        };
+
+        if (resolvedName !== undefined) {
+          updateData.displayName = resolvedName;
+          createData.displayName = resolvedName;
+        }
+        if (hasPrefUpdates) {
+          updateData.preferences = newPrefs as Prisma.InputJsonValue;
+          createData.preferences = newPrefs as Prisma.InputJsonValue;
+        }
+
         await tx.userProfile.upsert({
           where: { userId },
-          update: { displayName: dto.displayName },
-          create: { userId, displayName: dto.displayName },
+          update: updateData,
+          create: createData,
         });
       }
 
@@ -148,8 +185,18 @@ export class UsersService {
 
     const merged: Record<string, unknown> = {
       ...existing,
-      ...dto.preferences,
+      ...(dto.preferences ?? {}),
     };
+
+    if (dto.dailyGrowthSessionTime !== undefined) {
+      merged.dailyGrowthSessionTime = dto.dailyGrowthSessionTime;
+    }
+    if (dto.notificationPreferences !== undefined) {
+      merged.notificationPreferences = dto.notificationPreferences;
+    }
+    if (dto.privacyPreferences !== undefined) {
+      merged.privacyPreferences = dto.privacyPreferences;
+    }
 
     const updated = await this.prisma.userProfile.update({
       where: { userId },
