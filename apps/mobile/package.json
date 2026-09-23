@@ -10,7 +10,7 @@
     "build": "expo export",
     "lint": "eslint app --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "test": "jest"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "@saar/contracts": "workspace:*",

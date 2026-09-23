@@ -49,12 +49,12 @@ export interface AiProvider {
 // Phase 6: Real providers will implement AiProvider
 // Phase 1: Stub only
 export class StubAiProvider implements AiProvider {
-  async complete(_request: AiRequest): Promise<AiResponse> {
-    return {
+  complete(_request: AiRequest): Promise<AiResponse> {
+    return Promise.resolve({
       content: 'AI companion will be available in Phase 6.',
       model: 'stub',
       usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
       actions: [],
-    };
+    });
   }
 }

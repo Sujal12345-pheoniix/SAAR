@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useRouter, Link } from 'expo-router';
+import { Link } from 'expo-router';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -16,7 +16,6 @@ import { useAuth } from '../../hooks/useAuth';
 
 export default function RegisterScreen() {
   const { register, isLoading } = useAuth();
-  const router = useRouter();
 
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -117,7 +116,9 @@ export default function RegisterScreen() {
                 placeholderTextColor="#475569"
                 secureTextEntry
                 returnKeyType="done"
-                onSubmitEditing={handleRegister}
+                onSubmitEditing={() => {
+                  void handleRegister();
+                }}
                 editable={!isLoading}
               />
             </View>
@@ -125,7 +126,9 @@ export default function RegisterScreen() {
             <TouchableOpacity
               style={[styles.primaryButton, isLoading && styles.buttonDisabled]}
               activeOpacity={0.85}
-              onPress={handleRegister}
+              onPress={() => {
+                void handleRegister();
+              }}
               disabled={isLoading}
             >
               {isLoading ? (

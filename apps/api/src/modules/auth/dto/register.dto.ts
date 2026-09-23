@@ -3,7 +3,6 @@ import {
   IsString,
   IsOptional,
   MaxLength,
-  MinLength,
   IsStrongPassword,
 } from 'class-validator';
 import { Transform } from 'class-transformer';

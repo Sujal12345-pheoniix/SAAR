@@ -5,7 +5,6 @@ import {
   ConflictException,
   UnauthorizedException,
   NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { AuthService } from './auth.service';
@@ -280,6 +279,7 @@ describe('AuthService', () => {
       expect(prisma.session.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: 'session-uuid-1' },
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           data: expect.objectContaining({ revokedAt: expect.any(Date) }),
         }),
       );

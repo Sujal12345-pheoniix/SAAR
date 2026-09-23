@@ -6,7 +6,7 @@ import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import type { UpdateProfileDto } from './dto/update-profile.dto';
 import type { UpdatePreferencesDto } from './dto/update-preferences.dto';
-import type { SafeUser, SafeProfile } from '../auth/auth.service';
+import type { SafeUser } from '../auth/auth.service';
 
 function stripSensitive(user: {
   id: string;
@@ -84,7 +84,7 @@ export class UsersService {
       if (dto.timezone !== undefined) userUpdate.timezone = dto.timezone;
       if (dto.locale !== undefined) userUpdate.locale = dto.locale;
 
-      const updatedUser = await tx.user.update({
+      await tx.user.update({
         where: { id: userId },
         data: userUpdate,
         include: { profile: true },
@@ -139,7 +139,7 @@ export class UsersService {
       throw new NotFoundException('Profile not found');
     }
 
-    const existing =
+    const existing: Record<string, unknown> =
       profile.preferences !== null &&
       typeof profile.preferences === 'object' &&
       !Array.isArray(profile.preferences)
@@ -153,7 +153,7 @@ export class UsersService {
 
     const updated = await this.prisma.userProfile.update({
       where: { userId },
-      data: { preferences: merged as any },
+      data: { preferences: merged as Prisma.InputJsonValue },
       select: { preferences: true },
     });
 

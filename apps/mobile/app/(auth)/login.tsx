@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useRouter, Link } from 'expo-router';
+import { Link } from 'expo-router';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -16,7 +16,6 @@ import { useAuth } from '../../hooks/useAuth';
 
 export default function LoginScreen() {
   const { login, isLoading } = useAuth();
-  const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -94,7 +93,9 @@ export default function LoginScreen() {
                 placeholderTextColor="#475569"
                 secureTextEntry
                 returnKeyType="done"
-                onSubmitEditing={handleLogin}
+                onSubmitEditing={() => {
+                  void handleLogin();
+                }}
                 editable={!isLoading}
               />
             </View>
@@ -102,7 +103,9 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={[styles.primaryButton, isLoading && styles.buttonDisabled]}
               activeOpacity={0.85}
-              onPress={handleLogin}
+              onPress={() => {
+                void handleLogin();
+              }}
               disabled={isLoading}
             >
               {isLoading ? (

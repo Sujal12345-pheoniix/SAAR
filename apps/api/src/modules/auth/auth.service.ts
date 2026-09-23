@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { randomBytes } from 'crypto';
-import type { Session, User, UserProfile } from '@prisma/client';
+import type { Session, User, UserProfile, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import type { RegisterDto } from './dto/register.dto';
 import type { LoginDto } from './dto/login.dto';
@@ -276,28 +276,28 @@ export class AuthService {
 
     const newSession = await this.prisma.$transaction(async (tx) => {
       await tx.session.update({
-        where: { id: matchedSession!.id },
+        where: { id: matchedSession.id },
         data: { revokedAt: now },
       });
 
       const created = await tx.session.create({
         data: {
-          userId: matchedSession!.userId,
+          userId: matchedSession.userId,
           refreshHash: hash,
           expiresAt,
-          userAgent: matchedSession!.userAgent,
-          ipAddress: matchedSession!.ipAddress,
+          userAgent: matchedSession.userAgent,
+          ipAddress: matchedSession.ipAddress,
         },
       });
 
       await tx.auditLog.create({
         data: {
-          userId: matchedSession!.userId,
+          userId: matchedSession.userId,
           actorType: 'user',
           action: 'auth.refresh',
           entityType: 'Session',
           entityId: created.id,
-          metadata: { previousSessionId: matchedSession!.id },
+          metadata: { previousSessionId: matchedSession.id },
         },
       });
 
@@ -440,7 +440,7 @@ export class AuthService {
           actorType: 'user',
           action,
           entityType: 'Session',
-          metadata: metadata as any,
+          metadata: metadata as Prisma.InputJsonValue,
         },
       });
     } catch (err) {

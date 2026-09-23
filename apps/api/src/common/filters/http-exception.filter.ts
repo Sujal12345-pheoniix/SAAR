@@ -6,7 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import type { RequestWithId } from '../interceptors/request-id.interceptor';
 import type { Logger as PinoLogger } from 'pino';
 
@@ -55,7 +55,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const isProduction = process.env['NODE_ENV'] === 'production';
 
     const requestId = req.requestId ?? 'unknown';
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let status: number = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'An unexpected error occurred';
     let code = 'INTERNAL_SERVER_ERROR';
 

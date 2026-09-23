@@ -20,14 +20,16 @@ export default function ProfileScreen() {
       {
         text: 'Sign out',
         style: 'destructive',
-        onPress: async () => {
-          setLoggingOut(true);
-          try {
-            await logout();
-            // AuthGuard will redirect to (auth) automatically
-          } finally {
-            setLoggingOut(false);
-          }
+        onPress: () => {
+          void (async () => {
+            setLoggingOut(true);
+            try {
+              await logout();
+              // AuthGuard will redirect to (auth) automatically
+            } finally {
+              setLoggingOut(false);
+            }
+          })();
         },
       },
     ]);
