@@ -38,6 +38,7 @@ async function validateSessionToken(token: string): Promise<SessionPayload | nul
     const response = await fetch(`${getApiBaseUrl()}/auth/session`, {
       method: 'GET',
       headers: {
+        Authorization: `Bearer ${token}`,
         Cookie: `${SESSION_COOKIE_NAME}=${token}`,
         Accept: 'application/json',
       },

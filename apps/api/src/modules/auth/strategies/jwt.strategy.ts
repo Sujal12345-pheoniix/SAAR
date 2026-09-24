@@ -15,7 +15,20 @@ interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(config: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        (req: any) => {
+          let token: string | null = null;
+          if (req && req.cookies && typeof req.cookies['saar_session'] === 'string') {
+            token = req.cookies['saar_session'];
+          }
+          if (!token && req && req.headers && typeof req.headers.cookie === 'string') {
+            const match = req.headers.cookie.match(/(?:^|;\s*)saar_session=([^;]+)/);
+            if (match) token = decodeURIComponent(match[1]);
+          }
+          return token;
+        },
+      ]),
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
     });

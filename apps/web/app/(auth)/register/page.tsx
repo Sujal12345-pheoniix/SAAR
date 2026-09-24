@@ -110,9 +110,24 @@ export default function RegisterPage() {
       return;
     }
 
-    // Success — API sets the session cookie; navigate into the app.
-    router.push('/dashboard');
-    router.refresh();
+    // Success — persist session cookie on our domain
+    const authData = result.data as unknown as { session?: { accessToken?: string }; accessToken?: string };
+    const token = authData?.session?.accessToken || authData?.accessToken;
+
+    if (token) {
+      try {
+        await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+      } catch {
+        // Ignore network failure on internal session sync
+      }
+      document.cookie = `saar_session=${encodeURIComponent(token)}; path=/; max-age=604800; SameSite=Lax${typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : ''}`;
+    }
+
+    window.location.href = '/dashboard';
   }
 
   const { errors, submitting } = state;
