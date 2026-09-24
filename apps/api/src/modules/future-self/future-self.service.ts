@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import type { UpsertFutureSelfDto } from './dto/upsert-future-self.dto';
 
@@ -13,22 +14,27 @@ export class FutureSelfService {
   }
 
   async upsertFutureSelf(userId: string, dto: UpsertFutureSelfDto) {
-    const data = {
+    const data: Prisma.FutureSelfCreateInput = {
+      user: { connect: { id: userId } },
       futureIdentity: dto.futureIdentity,
       horizonYears: dto.horizonYears ?? 5,
-      desiredStates: (dto.desiredStates ?? {}) as any,
-      priorities: (dto.priorities ?? []) as any,
-      values: (dto.values ?? []) as any,
-      lifeAreaTargets: (dto.lifeAreaTargets ?? {}) as any,
+      desiredStates: (dto.desiredStates ?? {}) as unknown as Prisma.InputJsonValue,
+      priorities: (dto.priorities ?? []) as unknown as Prisma.InputJsonValue,
+      values: (dto.values ?? []) as unknown as Prisma.InputJsonValue,
+      lifeAreaTargets: (dto.lifeAreaTargets ?? {}) as unknown as Prisma.InputJsonValue,
     };
 
     return this.prisma.futureSelf.upsert({
       where: { userId },
-      update: data,
-      create: {
-        userId,
-        ...data,
+      update: {
+        futureIdentity: data.futureIdentity,
+        horizonYears: data.horizonYears,
+        desiredStates: data.desiredStates,
+        priorities: data.priorities,
+        values: data.values,
+        lifeAreaTargets: data.lifeAreaTargets,
       },
+      create: data,
     });
   }
 }

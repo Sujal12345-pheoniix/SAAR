@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 
 export interface LogEventParams {
@@ -19,6 +20,7 @@ export class BehaviorEventsService {
   async logEvent(params: LogEventParams) {
     const { userId, eventType, entityType, entityId, metadata = {}, source = 'api' } = params;
     const occurredAt = new Date();
+    const jsonMetadata = metadata as unknown as Prisma.InputJsonValue;
 
     try {
       return await this.prisma.$transaction(async (tx) => {
@@ -29,11 +31,19 @@ export class BehaviorEventsService {
             source,
             entityType,
             entityId,
-            metadata: metadata as any,
+            metadata: jsonMetadata,
             occurredAt,
             schemaVersion: 1,
           },
         });
+
+        const outboxPayload: Prisma.InputJsonObject = {
+          eventId: event.id,
+          userId,
+          eventType,
+          metadata: jsonMetadata,
+          occurredAt: occurredAt.toISOString(),
+        };
 
         // Also record to outbox for transactional event publishing
         await tx.outboxEvent.create({
@@ -42,13 +52,7 @@ export class BehaviorEventsService {
             eventType,
             aggregateType: entityType ?? 'Unknown',
             aggregateId: entityId ?? event.id,
-            payload: {
-              eventId: event.id,
-              userId,
-              eventType,
-              metadata,
-              occurredAt: occurredAt.toISOString(),
-            },
+            payload: outboxPayload,
             status: 'PENDING',
           },
         });

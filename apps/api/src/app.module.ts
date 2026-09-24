@@ -6,6 +6,13 @@ import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { BehaviorEventsModule } from './modules/behavior-events/behavior-events.module';
+import { LifeAreasModule } from './modules/life-areas/life-areas.module';
+import { FutureSelfModule } from './modules/future-self/future-self.module';
+import { GoalsModule } from './modules/goals/goals.module';
+import { TasksModule } from './modules/tasks/tasks.module';
+import { RoutinesModule } from './modules/routines/routines.module';
+import { DailyGrowthModule } from './modules/daily-growth/daily-growth.module';
 
 @Module({
   imports: [
@@ -36,6 +43,13 @@ import { UsersModule } from './modules/users/users.module';
     HealthModule,
     AuthModule,
     UsersModule,
+    BehaviorEventsModule,
+    LifeAreasModule,
+    FutureSelfModule,
+    GoalsModule,
+    TasksModule,
+    RoutinesModule,
+    DailyGrowthModule,
   ],
 })
 export class AppModule {}
