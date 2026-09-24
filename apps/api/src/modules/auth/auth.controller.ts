@@ -85,6 +85,16 @@ export class AuthController {
   }
 
   /**
+   * GET /api/v1/auth/session
+   * Returns current authenticated user and session payload
+   */
+  @Get('session')
+  @UseGuards(JwtAuthGuard)
+  async getSession(@CurrentUser() user: AuthenticatedUser) {
+    return this.authService.getSession(user.userId, user.sessionId);
+  }
+
+  /**
    * GET /api/v1/auth/sessions
    */
   @Get('sessions')

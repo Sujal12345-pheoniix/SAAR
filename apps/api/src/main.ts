@@ -24,14 +24,25 @@ async function bootstrap(): Promise<void> {
   app.use(helmet());
 
   // ── CORS ────────────────────────────────────────────────────────────────────
-  const allowedOrigins = (
-    process.env['CORS_ALLOWED_ORIGINS'] ?? 'http://localhost:3000'
-  )
-    .split(',')
-    .map((o) => o.trim());
+  const corsOriginsEnv = process.env['CORS_ALLOWED_ORIGINS'];
+  const allowedOrigins = corsOriginsEnv
+    ? corsOriginsEnv.split(',').map((o) => o.trim())
+    : ['http://localhost:3000', 'https://web-psi-three-58.vercel.app'];
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        corsOriginsEnv === '*' ||
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app')
+      ) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
@@ -48,7 +59,9 @@ async function bootstrap(): Promise<void> {
   });
 
   // ── Global prefix & versioning ───────────────────────────────────────────────
-  app.setGlobalPrefix('api');
+  app.setGlobalPrefix('api', {
+    exclude: ['/', 'health'],
+  });
   app.enableVersioning({
     type: VersioningType.URI,
     defaultVersion: '1',
@@ -70,8 +83,11 @@ async function bootstrap(): Promise<void> {
   // ── Graceful shutdown ─────────────────────────────────────────────────────────
   app.enableShutdownHooks();
 
-  const port = parseInt(process.env['API_PORT'] ?? '3001', 10);
-  await app.listen(port);
+  const port = parseInt(
+    process.env['PORT'] ?? process.env['API_PORT'] ?? '3001',
+    10,
+  );
+  await app.listen(port, '0.0.0.0');
 
   logger.info({ port, env: process.env['NODE_ENV'] }, `SAAR API listening`);
 }

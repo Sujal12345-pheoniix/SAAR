@@ -394,6 +394,33 @@ export class AuthService {
     await this.auditAuth('auth.revoke_session', userId, { sessionId });
   }
 
+  // ── Get Current Session & User ───────────────────────────────────────────
+
+  async getSession(userId: string, sessionId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { profile: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+    });
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        displayName: user.profile?.displayName ?? user.email.split('@')[0],
+        createdAt: user.createdAt.toISOString(),
+      },
+      expiresAt: session?.expiresAt?.toISOString() ?? new Date().toISOString(),
+    };
+  }
+
   // ── Private helpers ──────────────────────────────────────────────────────
 
   private signAccessToken(

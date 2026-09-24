@@ -23,7 +23,7 @@ interface MetaResponse {
   timestamp: string;
 }
 
-@Controller({ version: VERSION_NEUTRAL })
+@Controller({ version: [VERSION_NEUTRAL, '1'] })
 export class HealthController {
   private readonly redis: Redis;
 
@@ -42,8 +42,20 @@ export class HealthController {
   }
 
   /**
+   * Root welcome endpoint
+   */
+  @Get()
+  root(): { name: string; status: string; version: string } {
+    return {
+      name: 'SAAR API',
+      status: 'online',
+      version: '1.0.0',
+    };
+  }
+
+  /**
    * Liveness probe — always returns 200 if the process is alive.
-   * GET /health
+   * GET /health or /api/health or /api/v1/health
    */
   @Get('health')
   health(): HealthResponse {
