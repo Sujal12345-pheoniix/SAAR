@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'SUSPENDED', 'DELETED');
 
 -- CreateEnum
@@ -44,6 +44,22 @@ CREATE TABLE "user_profiles" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "user_profiles_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "future_selves" (
+    "id" UUID NOT NULL,
+    "userId" UUID NOT NULL,
+    "futureIdentity" TEXT NOT NULL,
+    "horizonYears" INTEGER NOT NULL DEFAULT 5,
+    "desiredStates" JSONB,
+    "priorities" JSONB,
+    "values" JSONB,
+    "lifeAreaTargets" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "future_selves_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -138,6 +154,7 @@ CREATE TABLE "tasks" (
     "userId" UUID NOT NULL,
     "planId" UUID,
     "goalId" UUID,
+    "lifeAreaId" UUID,
     "title" TEXT NOT NULL,
     "description" TEXT,
     "status" "TaskStatus" NOT NULL DEFAULT 'TODO',
@@ -190,6 +207,7 @@ CREATE TABLE "checkins" (
     "mood" INTEGER,
     "energy" INTEGER,
     "reflection" TEXT,
+    "dayRating" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -327,6 +345,9 @@ CREATE INDEX "users_status_idx" ON "users"("status");
 CREATE UNIQUE INDEX "user_profiles_userId_key" ON "user_profiles"("userId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "future_selves_userId_key" ON "future_selves"("userId");
+
+-- CreateIndex
 CREATE INDEX "sessions_userId_expiresAt_idx" ON "sessions"("userId", "expiresAt");
 
 -- CreateIndex
@@ -355,6 +376,9 @@ CREATE INDEX "tasks_userId_dueAt_status_idx" ON "tasks"("userId", "dueAt", "stat
 
 -- CreateIndex
 CREATE INDEX "tasks_goalId_status_idx" ON "tasks"("goalId", "status");
+
+-- CreateIndex
+CREATE INDEX "tasks_lifeAreaId_status_idx" ON "tasks"("lifeAreaId", "status");
 
 -- CreateIndex
 CREATE INDEX "routines_userId_active_idx" ON "routines"("userId", "active");
@@ -402,6 +426,9 @@ CREATE INDEX "outbox_events_status_availableAt_idx" ON "outbox_events"("status",
 ALTER TABLE "user_profiles" ADD CONSTRAINT "user_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "future_selves" ADD CONSTRAINT "future_selves_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -430,6 +457,9 @@ ALTER TABLE "tasks" ADD CONSTRAINT "tasks_planId_fkey" FOREIGN KEY ("planId") RE
 
 -- AddForeignKey
 ALTER TABLE "tasks" ADD CONSTRAINT "tasks_goalId_fkey" FOREIGN KEY ("goalId") REFERENCES "goals"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_lifeAreaId_fkey" FOREIGN KEY ("lifeAreaId") REFERENCES "life_areas"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "routines" ADD CONSTRAINT "routines_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
