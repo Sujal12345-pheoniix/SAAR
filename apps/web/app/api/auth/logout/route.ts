@@ -10,8 +10,13 @@ import { buildClearSessionCookieHeader } from '@/lib/session-store';
  * Called via the sign-out form in the app layout (method=POST keeps it CSRF-safe).
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const apiBase =
-    process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001';
+  const apiBase = (
+    process.env['INTERNAL_API_URL'] ??
+    process.env['NEXT_PUBLIC_API_URL'] ??
+    (process.env['NODE_ENV'] === 'production'
+      ? 'https://saar-a494.onrender.com/api/v1'
+      : 'http://localhost:3001/api/v1')
+  ).replace(/\/$/, '');
 
   // Best-effort: tell the API to invalidate the session server-side.
   // We don't block on failure — the cookie clear is the authoritative action.

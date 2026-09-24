@@ -52,11 +52,25 @@ interface RequestOptions {
 // ---------------------------------------------------------------------------
 
 export class ApiClient {
-  private readonly baseUrl: string;
+  private readonly configuredBaseUrl?: string;
 
-  constructor(baseUrl: string) {
-    // Strip trailing slash once
-    this.baseUrl = baseUrl.replace(/\/$/, '');
+  constructor(baseUrl?: string) {
+    if (baseUrl) {
+      this.configuredBaseUrl = baseUrl.replace(/\/$/, '');
+    }
+  }
+
+  private get baseUrl(): string {
+    if (this.configuredBaseUrl) {
+      return this.configuredBaseUrl;
+    }
+    if (process.env['NEXT_PUBLIC_API_URL']) {
+      return process.env['NEXT_PUBLIC_API_URL'].replace(/\/$/, '');
+    }
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+      return 'https://saar-a494.onrender.com/api/v1';
+    }
+    return 'http://localhost:3001/api/v1';
   }
 
   // ---- Core request method ------------------------------------------------
@@ -187,6 +201,4 @@ export class ApiClient {
 // Singleton — use this in Client Components
 // ---------------------------------------------------------------------------
 
-export const apiClient = new ApiClient(
-  process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001',
-);
+export const apiClient = new ApiClient();

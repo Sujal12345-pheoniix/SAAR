@@ -21,10 +21,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const apiBase =
+  const apiBase = (
     process.env['INTERNAL_API_URL'] ??
     process.env['NEXT_PUBLIC_API_URL'] ??
-    'http://localhost:3001';
+    (process.env['NODE_ENV'] === 'production'
+      ? 'https://saar-a494.onrender.com/api/v1'
+      : 'http://localhost:3001/api/v1')
+  ).replace(/\/$/, '');
 
   try {
     const upstream = await fetch(`${apiBase}/auth/session`, {

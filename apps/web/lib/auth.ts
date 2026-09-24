@@ -20,11 +20,13 @@ import { SESSION_COOKIE_NAME } from '@/lib/session-store';
 
 /** Base URL for server-to-server calls (never exposed to the browser). */
 function getApiBaseUrl(): string {
-  return (
+  const url =
     process.env['INTERNAL_API_URL'] ??
     process.env['NEXT_PUBLIC_API_URL'] ??
-    'http://localhost:3001'
-  );
+    (process.env['NODE_ENV'] === 'production'
+      ? 'https://saar-a494.onrender.com/api/v1'
+      : 'http://localhost:3001/api/v1');
+  return url.replace(/\/$/, '');
 }
 
 /**
