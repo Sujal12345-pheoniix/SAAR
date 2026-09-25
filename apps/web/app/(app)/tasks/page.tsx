@@ -5,8 +5,10 @@ import { apiClient } from '@/lib/api-client';
 
 interface LifeArea {
   id: string;
-  name: string;
-  color: string;
+  name?: string;
+  title?: string;
+  type?: string;
+  color?: string;
 }
 
 interface Goal {
@@ -234,7 +236,7 @@ export default function TasksPage() {
           <option value="all">All Life Areas</option>
           {lifeAreas.map((area) => (
             <option key={area.id} value={area.id}>
-              {area.name}
+              {area.name || area.title || area.type || 'Untitled Area'}
             </option>
           ))}
         </select>
@@ -544,7 +546,7 @@ export default function TasksPage() {
                     <option value="">None</option>
                     {lifeAreas.map((area) => (
                       <option key={area.id} value={area.id}>
-                        {area.name}
+                        {area.name || area.title || area.type || 'Untitled Area'}
                       </option>
                     ))}
                   </select>

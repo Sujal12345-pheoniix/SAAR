@@ -9,6 +9,7 @@ import {
 import type { Response } from 'express';
 import type { RequestWithId } from '../interceptors/request-id.interceptor';
 import type { Logger as PinoLogger } from 'pino';
+import { errorTracker } from '../services/error-tracker.service';
 
 interface ErrorResponse {
   error: {
@@ -93,6 +94,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       };
       if (status >= 500) {
         this.nestLogger.error(logPayload);
+        errorTracker.captureException(exception, {
+          requestId,
+          route: req.url,
+          method: req.method,
+          statusCode: status,
+        });
       } else {
         this.nestLogger.warn(logPayload);
       }

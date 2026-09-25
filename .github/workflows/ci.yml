@@ -86,11 +86,18 @@ jobs:
       # 4. Secret scan (must run before any build)
       # ─────────────────────────────────────────────
       - name: Secret scan (TruffleHog)
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3.88.2
         with:
           path: ./
           base: ${{ github.event.repository.default_branch }}
           extra_args: --only-verified
+
+      # ─────────────────────────────────────────────
+      # 4b. Dependency vulnerability scan
+      # ─────────────────────────────────────────────
+      - name: Dependency vulnerability scan
+        run: pnpm audit --prod --audit-level=high
+        continue-on-error: true
 
       # ─────────────────────────────────────────────
       # 5. Lint
@@ -137,7 +144,16 @@ jobs:
           CI: true
 
       # ─────────────────────────────────────────────
-      # 11. Upload test coverage (optional artefact)
+      # 11. Docker build validation
+      # ─────────────────────────────────────────────
+      - name: Validate API Docker build
+        run: docker build -f apps/api/Dockerfile -t saar-api:test .
+
+      - name: Validate Web Docker build
+        run: docker build -f apps/web/Dockerfile -t saar-web:test .
+
+      # ─────────────────────────────────────────────
+      # 12. Upload test coverage (optional artefact)
       # ─────────────────────────────────────────────
       - name: Upload coverage report
         if: always()

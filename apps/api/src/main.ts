@@ -102,8 +102,17 @@ async function bootstrap(): Promise<void> {
   // ── Global exception filter ───────────────────────────────────────────────────
   app.useGlobalFilters(new HttpExceptionFilter(logger));
 
-  // ── Graceful shutdown ─────────────────────────────────────────────────────────
+  // ── Graceful shutdown & process exception handlers ───────────────────────────
   app.enableShutdownHooks();
+
+  process.on('unhandledRejection', (reason: unknown) => {
+    logger.fatal({ err: reason }, 'Unhandled Promise Rejection');
+  });
+
+  process.on('uncaughtException', (err: Error) => {
+    logger.fatal({ err }, 'Uncaught Exception');
+    process.exit(1);
+  });
 
   const port = parseInt(
     process.env['PORT'] ?? process.env['API_PORT'] ?? '3001',

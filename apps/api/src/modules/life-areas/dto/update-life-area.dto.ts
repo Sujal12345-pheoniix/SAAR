@@ -11,6 +11,14 @@ export class UpdateLifeAreaDto {
 
   @IsOptional()
   @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @IsOptional()
+  @IsString()
   targetState?: string;
 
   @IsOptional()

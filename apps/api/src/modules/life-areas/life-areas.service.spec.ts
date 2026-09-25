@@ -36,7 +36,9 @@ describe('LifeAreasService (Unit & Multi-tenant Isolation)', () => {
       mockPrisma.lifeArea.findMany.mockResolvedValueOnce(existing);
 
       const result = await service.findAll('user-a');
-      expect(result).toEqual(existing);
+      expect(result).toEqual([
+        expect.objectContaining({ id: 'la-1', userId: 'user-a', type: 'health', title: 'Health', name: 'Health' }),
+      ]);
       expect(mockPrisma.lifeArea.createMany).not.toHaveBeenCalled();
     });
 

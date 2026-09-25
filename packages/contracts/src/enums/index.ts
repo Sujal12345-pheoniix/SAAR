@@ -22,6 +22,14 @@ export enum TaskStatus {
   COMPLETED = 'COMPLETED',
   SKIPPED = 'SKIPPED',
   CANCELLED = 'CANCELLED',
+  RESCHEDULED = 'RESCHEDULED',
+}
+
+export enum RoutineOccurrenceStatus {
+  PENDING = 'PENDING',
+  COMPLETED = 'COMPLETED',
+  SKIPPED = 'SKIPPED',
+  MISSED = 'MISSED',
 }
 
 export enum InsightStatus {

@@ -35,10 +35,12 @@ interface FutureSelf {
 
 interface LifeArea {
   id: string;
-  name: string;
-  color: string;
+  name?: string;
+  title?: string;
+  type?: string;
+  color?: string;
   icon?: string;
-  isSystem: boolean;
+  isSystem?: boolean;
 }
 
 export default function SettingsPage() {
@@ -195,8 +197,12 @@ export default function SettingsPage() {
     if (!newAreaName.trim()) return;
 
     setSaving(true);
+    const title = newAreaName.trim();
+    const type = title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'custom';
     const res = await apiClient.post<LifeArea>('/life-areas', {
-      name: newAreaName.trim(),
+      title,
+      name: title,
+      type,
       color: newAreaColor,
     });
     setSaving(false);
@@ -389,7 +395,7 @@ export default function SettingsPage() {
                       }}
                     />
                     <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827' }}>
-                      {area.name}
+                      {area.name || area.title || area.type || 'Untitled Area'}
                     </span>
                   </div>
                   {area.isSystem && (

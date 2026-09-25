@@ -1,6 +1,6 @@
 // SAAR — Prisma Schema
-// Source of truth: SAAR Database & API Contract Pack v1.0
-// All 20 entities. PostgreSQL. UUIDv4 (upgrade to UUIDv7 when Prisma supports it natively).
+// Source of truth: SAAR Database & API Contract Pack v1.0 + Part 2A Domain Hardening
+// All 20 entities + MetricObservation + RoutineOccurrence. PostgreSQL.
 // Timestamps: UTC stored, user-timezone rendered at API layer.
 
 generator client {
@@ -33,6 +33,14 @@ enum TaskStatus {
   COMPLETED
   SKIPPED
   CANCELLED
+  RESCHEDULED
+}
+
+enum RoutineOccurrenceStatus {
+  PENDING
+  COMPLETED
+  SKIPPED
+  MISSED
 }
 
 enum InsightStatus {
@@ -78,24 +86,25 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  profile        UserProfile?
-  futureSelf     FutureSelf?
-  sessions       Session[]
-  devices        Device[]
-  lifeAreas      LifeArea[]
-  goals          Goal[]
-  plans          Plan[]
-  routines       Routine[]
-  behaviorEvents BehaviorEvent[]
-  checkins       Checkin[]
-  insights       Insight[]
-  interventions  Intervention[]
-  conversations  Conversation[]
-  memories       Memory[]
-  notifications  Notification[]
-  auditLogs      AuditLog[]
-  outboxEvents   OutboxEvent[]
-  tasks          Task[]
+  profile            UserProfile?
+  futureSelf         FutureSelf?
+  sessions           Session[]
+  devices            Device[]
+  lifeAreas          LifeArea[]
+  goals              Goal[]
+  plans              Plan[]
+  routines           Routine[]
+  routineOccurrences RoutineOccurrence[]
+  behaviorEvents     BehaviorEvent[]
+  checkins           Checkin[]
+  insights           Insight[]
+  interventions      Intervention[]
+  conversations      Conversation[]
+  memories           Memory[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  outboxEvents       OutboxEvent[]
+  tasks              Task[]
 
   @@index([status])
   @@map("users")
@@ -136,7 +145,7 @@ model FutureSelf {
 model Session {
   id            String    @id @default(uuid()) @db.Uuid
   userId        String    @db.Uuid
-  /// bcrypt hash of the raw refresh token — raw token only returned once at creation
+  /// hash of the raw refresh token — raw token only returned once at creation
   refreshHash   String
   deviceId      String?   @db.Uuid
   userAgent     String?
@@ -182,6 +191,9 @@ model LifeArea {
   targetState String?
   /// 0.00–100.00 user-assigned weight
   weight      Decimal? @db.Decimal(5, 2)
+  color       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -190,6 +202,7 @@ model LifeArea {
   tasks Task[]
 
   @@index([userId, type])
+  @@index([userId, isActive, sortOrder])
   @@map("life_areas")
 }
 
@@ -229,10 +242,29 @@ model GoalMetric {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  goal         Goal                @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  observations MetricObservation[]
 
   @@index([goalId])
   @@map("goal_metrics")
+}
+
+model MetricObservation {
+  id         String   @id @default(uuid()) @db.Uuid
+  metricId   String   @db.Uuid
+  value      Decimal  @db.Decimal(14, 4)
+  observedAt DateTime @default(now())
+  /// user | device | integration | calculation
+  source     String   @default("user")
+  unit       String?
+  confidence Decimal? @db.Decimal(5, 4)
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  metric GoalMetric @relation(fields: [metricId], references: [id], onDelete: Cascade)
+
+  @@index([metricId, observedAt])
+  @@map("metric_observations")
 }
 
 // ─── Planning ─────────────────────────────────────────────────────────────────
@@ -245,6 +277,8 @@ model Plan {
   /// user | system | ai
   generatedBy String
   version     Int      @default(1)
+  /// ACTIVE | SUPERSEDED | ARCHIVED
+  status      String   @default("ACTIVE")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -252,26 +286,35 @@ model Plan {
   tasks Task[]
 
   @@unique([userId, localDate, version])
-  @@index([userId, localDate])
+  @@index([userId, localDate, status])
   @@map("plans")
 }
 
 model Task {
-  id               String     @id @default(uuid()) @db.Uuid
-  userId           String     @db.Uuid
-  planId           String?    @db.Uuid
-  goalId           String?    @db.Uuid
-  lifeAreaId       String?    @db.Uuid
-  title            String
-  description      String?
-  status           TaskStatus @default(TODO)
+  id                     String     @id @default(uuid()) @db.Uuid
+  userId                 String     @db.Uuid
+  planId                 String?    @db.Uuid
+  goalId                 String?    @db.Uuid
+  lifeAreaId             String?    @db.Uuid
+  title                  String
+  description            String?
+  status                 TaskStatus @default(TODO)
   /// 1=highest, 5=lowest
-  priority         Int        @default(3)
-  dueAt            DateTime?
-  estimatedMinutes Int?
-  completedAt      DateTime?
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
+  priority               Int        @default(3)
+  dueAt                  DateTime?
+  scheduledAt            DateTime?
+  originalDueAt          DateTime?
+  startedAt              DateTime?
+  completedAt            DateTime?
+  skippedAt              DateTime?
+  rescheduledAt          DateTime?
+  rescheduleCount        Int        @default(0)
+  estimatedMinutes       Int?
+  actualDurationMinutes  Int?
+  skipReason             String?
+  rescheduleReason       String?
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan     Plan?     @relation(fields: [planId], references: [id], onDelete: SetNull)
@@ -279,6 +322,7 @@ model Task {
   lifeArea LifeArea? @relation(fields: [lifeAreaId], references: [id], onDelete: SetNull)
 
   @@index([userId, dueAt, status])
+  @@index([userId, scheduledAt, status])
   @@index([goalId, status])
   @@index([lifeAreaId, status])
   @@map("tasks")
@@ -297,10 +341,36 @@ model Routine {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  occurrences RoutineOccurrence[]
 
   @@index([userId, active])
   @@map("routines")
+}
+
+model RoutineOccurrence {
+  id             String                  @id @default(uuid()) @db.Uuid
+  routineId      String                  @db.Uuid
+  userId         String                  @db.Uuid
+  /// User-local calendar date
+  localDate      DateTime                @db.Date
+  expectedAt     DateTime
+  status         RoutineOccurrenceStatus @default(PENDING)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  skippedAt      DateTime?
+  actualDuration Int?
+  reason         String?
+  metadata       Json?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  routine Routine @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([routineId, localDate])
+  @@index([userId, localDate, status])
+  @@map("routine_occurrences")
 }
 
 // ─── Behavior ─────────────────────────────────────────────────────────────────
@@ -344,28 +414,31 @@ model Checkin {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, localDate])
+  @@index([userId, localDate])
   @@map("checkins")
 }
 
 // ─── Growth Engine ────────────────────────────────────────────────────────────
 
 model Insight {
-  id             String        @id @default(uuid()) @db.Uuid
-  userId         String        @db.Uuid
-  goalId         String?       @db.Uuid
+  id                String        @id @default(uuid()) @db.Uuid
+  userId            String        @db.Uuid
+  goalId            String?       @db.Uuid
   /// timing_pattern | consistency | load_imbalance | goal_stall | friction
-  type           String
-  status         InsightStatus @default(NEW)
-  title          String
-  summary        String
+  type              String
+  status            InsightStatus @default(NEW)
+  title             String
+  summary           String
   /// JSONB array of evidence items with metric + values
-  evidence       Json
+  evidence          Json
   /// JSONB recommended action payload
-  recommendation Json
-  confidence     Decimal?      @db.Decimal(5, 4)
-  expiresAt      DateTime?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  recommendation    Json
+  confidence        Decimal?      @db.Decimal(5, 4)
+  generationVersion String?       @default("1.0.0")
+  sourceDataRef     Json?
+  expiresAt         DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   goal          Goal?          @relation(fields: [goalId], references: [id], onDelete: SetNull)
@@ -376,16 +449,18 @@ model Insight {
 }
 
 model Intervention {
-  id          String             @id @default(uuid()) @db.Uuid
-  userId      String             @db.Uuid
-  insightId   String             @db.Uuid
+  id             String             @id @default(uuid()) @db.Uuid
+  userId         String             @db.Uuid
+  insightId      String             @db.Uuid
   /// move_routine | adjust_target | add_accountability | rest_day
-  actionType  String
-  payload     Json
-  status      InterventionStatus @default(PROPOSED)
-  outcome     Json?
-  createdAt   DateTime           @default(now())
-  completedAt DateTime?
+  actionType     String
+  payload        Json
+  status         InterventionStatus @default(PROPOSED)
+  decisionReason String?
+  executedAt     DateTime?
+  outcome        Json?
+  createdAt      DateTime           @default(now())
+  completedAt    DateTime?
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   insight Insight @relation(fields: [insightId], references: [id], onDelete: Cascade)
@@ -418,6 +493,8 @@ model Message {
   content        String
   model          String?
   promptVersion  String?
+  tokenUsage     Int?
+  latencyMs      Int?
   createdAt      DateTime @default(now())
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -427,18 +504,23 @@ model Message {
 }
 
 model Memory {
-  id          String       @id @default(uuid()) @db.Uuid
-  userId      String       @db.Uuid
+  id              String       @id @default(uuid()) @db.Uuid
+  userId          String       @db.Uuid
   /// preference | goal_context | behavioral_pattern | reflection | companion_context
-  type        String
-  summary     String
+  type            String
+  summary         String
   /// JSONB array of source references (event IDs, conversation IDs)
-  sourceRefs  Json
-  status      MemoryStatus @default(ACTIVE)
-  consentedAt DateTime?
-  expiresAt   DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  sourceRefs      Json
+  status          MemoryStatus @default(ACTIVE)
+  confidence      Decimal?     @db.Decimal(5, 4)
+  sensitivity     String       @default("NORMAL")
+  lastValidatedAt DateTime?
+  userVisible     Boolean      @default(true)
+  userEditable    Boolean      @default(true)
+  consentedAt     DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -449,17 +531,19 @@ model Memory {
 // ─── Notifications ────────────────────────────────────────────────────────────
 
 model Notification {
-  id          String             @id @default(uuid()) @db.Uuid
-  userId      String             @db.Uuid
+  id            String             @id @default(uuid()) @db.Uuid
+  userId        String             @db.Uuid
   /// reminder | insight | alarm | daily_growth | weekly_review
-  type        String
-  title       String
-  body        String
-  scheduledAt DateTime
-  sentAt      DateTime?
-  status      NotificationStatus @default(SCHEDULED)
-  metadata    Json?
-  createdAt   DateTime           @default(now())
+  type          String
+  title         String
+  body          String
+  scheduledAt   DateTime
+  sentAt        DateTime?
+  failedAt      DateTime?
+  failureReason String?
+  status        NotificationStatus @default(SCHEDULED)
+  metadata      Json?
+  createdAt     DateTime           @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -492,6 +576,7 @@ model OutboxEvent {
   id            String    @id @default(uuid()) @db.Uuid
   userId        String?   @db.Uuid
   eventType     String
+  schemaVersion Int       @default(1)
   aggregateType String
   aggregateId   String
   payload       Json

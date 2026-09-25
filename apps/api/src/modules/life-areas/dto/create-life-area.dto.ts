@@ -1,13 +1,27 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min, Max } from 'class-validator';
 
 export class CreateLifeAreaDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  type!: string;
+  type?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  title!: string;
+  title?: string;
+
+  /**
+   * Alias for title sent by web frontend form
+   */
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  /**
+   * UI Accent color hex
+   */
+  @IsOptional()
+  @IsString()
+  color?: string;
 
   @IsOptional()
   @IsString()

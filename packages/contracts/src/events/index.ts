@@ -19,19 +19,23 @@ export enum EventType {
   GOAL_CREATED = 'goal.created',
   GOAL_UPDATED = 'goal.updated',
   GOAL_COMPLETED = 'goal.completed',
+  GOAL_PROGRESS_UPDATED = 'goal.progress_updated',
 
   // Task lifecycle
   TASK_CREATED = 'task.created',
+  TASK_STARTED = 'task.started',
   TASK_COMPLETED = 'task.completed',
   TASK_SKIPPED = 'task.skipped',
   TASK_SNOOZED = 'task.snoozed',
   TASK_RESCHEDULED = 'task.rescheduled',
 
   // Routine & habit tracking
+  ROUTINE_STARTED = 'routine.started',
   ROUTINE_COMPLETED = 'routine.completed',
   ROUTINE_SKIPPED = 'routine.skipped',
 
   // Alarm / reminder
+  ALARM_TRIGGERED = 'alarm.triggered',
   ALARM_DISMISSED = 'alarm.dismissed',
 
   // Check-in
@@ -46,6 +50,7 @@ export enum EventType {
   INSIGHT_ACCEPTED = 'insight.accepted',
 
   // Interventions
+  INTERVENTION_ACCEPTED = 'intervention.accepted',
   INTERVENTION_COMPLETED = 'intervention.completed',
 
   // Companion / AI
@@ -53,6 +58,7 @@ export enum EventType {
 
   // Memory
   MEMORY_CREATED = 'memory.created',
+  MEMORY_REVOKED = 'memory.revoked',
 
   // Notifications
   NOTIFICATION_DELIVERED = 'notification.delivered',

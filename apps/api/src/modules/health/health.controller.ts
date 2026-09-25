@@ -1,4 +1,4 @@
-import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common';
+import { Controller, Get, OnModuleDestroy, VERSION_NEUTRAL } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../database/prisma.service';
 import Redis from 'ioredis';
@@ -24,7 +24,7 @@ interface MetaResponse {
 }
 
 @Controller({ version: [VERSION_NEUTRAL, '1'] })
-export class HealthController {
+export class HealthController implements OnModuleDestroy {
   private readonly redis: Redis;
 
   constructor(
@@ -39,6 +39,14 @@ export class HealthController {
       commandTimeout: 3000,
       maxRetriesPerRequest: 0,
     });
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    try {
+      await this.redis.quit();
+    } catch {
+      this.redis.disconnect();
+    }
   }
 
   /**

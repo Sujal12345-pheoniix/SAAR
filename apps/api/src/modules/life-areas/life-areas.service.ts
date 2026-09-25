@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { LifeArea } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import type { CreateLifeAreaDto } from './dto/create-life-area.dto';
 import type { UpdateLifeAreaDto } from './dto/update-life-area.dto';
@@ -12,9 +13,20 @@ const DEFAULT_LIFE_AREAS = [
   { type: 'recovery_rest', title: 'Recovery / Rest', weight: 15 },
 ];
 
+const SYSTEM_TYPES = new Set(['health', 'career', 'relationships', 'family', 'personal_growth', 'recovery_rest']);
+
 @Injectable()
 export class LifeAreasService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private mapLifeArea(area: LifeArea, overrideColor?: string) {
+    return {
+      ...area,
+      name: area.title || area.type,
+      color: overrideColor || '#6366f1',
+      isSystem: SYSTEM_TYPES.has(area.type),
+    };
+  }
 
   async findAll(userId: string) {
     let areas = await this.prisma.lifeArea.findMany({
@@ -38,19 +50,24 @@ export class LifeAreasService {
       });
     }
 
-    return areas;
+    return areas.map((a) => this.mapLifeArea(a));
   }
 
   async create(userId: string, dto: CreateLifeAreaDto) {
-    return this.prisma.lifeArea.create({
+    const rawTitle = (dto.title || dto.name || 'Untitled Area').trim();
+    const rawType = (dto.type || rawTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'custom').trim();
+
+    const created = await this.prisma.lifeArea.create({
       data: {
         userId,
-        type: dto.type,
-        title: dto.title,
+        type: rawType,
+        title: rawTitle,
         targetState: dto.targetState,
         weight: dto.weight !== undefined ? dto.weight : null,
       },
     });
+
+    return this.mapLifeArea(created, dto.color);
   }
 
   async update(userId: string, id: string, dto: UpdateLifeAreaDto) {
@@ -61,15 +78,18 @@ export class LifeAreasService {
       throw new NotFoundException('Life area not found');
     }
 
-    return this.prisma.lifeArea.update({
+    const title = dto.title || dto.name;
+    const updated = await this.prisma.lifeArea.update({
       where: { id },
       data: {
-        ...(dto.type !== undefined ? { type: dto.type } : {}),
-        ...(dto.title !== undefined ? { title: dto.title } : {}),
+        ...(dto.type !== undefined ? { type: dto.type.trim() } : {}),
+        ...(title !== undefined ? { title: title.trim() } : {}),
         ...(dto.targetState !== undefined ? { targetState: dto.targetState } : {}),
         ...(dto.weight !== undefined ? { weight: dto.weight } : {}),
       },
     });
+
+    return this.mapLifeArea(updated, dto.color);
   }
 
   async remove(userId: string, id: string) {

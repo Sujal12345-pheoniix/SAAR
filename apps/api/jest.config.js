@@ -8,6 +8,8 @@ module.exports = {
   coverageDirectory: '../coverage',
   testEnvironment: 'node',
   moduleNameMapper: {
-    '^@saar/contracts(.*)$': '<rootDir>/../../packages/contracts/src$1',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^@saar/contracts$': '<rootDir>/../../../packages/contracts/src/index.ts',
+    '^@saar/contracts/(.*)$': '<rootDir>/../../../packages/contracts/src/$1',
   },
 };
