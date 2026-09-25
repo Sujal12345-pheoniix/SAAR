@@ -37,22 +37,22 @@ export function InsightsSection() {
   const [activeInsight, setActiveInsight] = useState(0);
 
   return (
-    <section id="insights" className="py-32 px-6" style={{ background: 'var(--surface)' }}>
-      <div className="max-w-6xl mx-auto">
-        <FadeIn className="text-center mb-20">
-          <p className="text-sm font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--accent)', letterSpacing: '0.1em' }}>
+    <section id="insights" className="py-32 px-6 w-full flex flex-col items-center justify-center" style={{ background: 'var(--surface)' }}>
+      <div className="w-full max-w-6xl mx-auto" style={{ width: '100%', maxWidth: '72rem', marginLeft: 'auto', marginRight: 'auto' }}>
+        <FadeIn className="text-center mb-20 w-full flex flex-col items-center">
+          <p className="text-sm font-semibold tracking-widest uppercase mb-4 text-center" style={{ color: 'var(--accent)', letterSpacing: '0.1em' }}>
             Intelligence in Action
           </p>
-          <h2 className="text-5xl font-bold mb-5" style={{ letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+          <h2 className="text-5xl font-bold mb-5 text-center" style={{ letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
             Raw data becomes<br />
             <span className="gradient-text">real clarity.</span>
           </h2>
-          <p className="text-xl max-w-md mx-auto" style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          <p className="text-xl max-w-md mx-auto text-center" style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginLeft: 'auto', marginRight: 'auto' }}>
             SAAR transforms what you do into insights you can actually act on.
           </p>
         </FadeIn>
 
-        <div ref={ref} className="grid lg:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
+        <div ref={ref} className="grid lg:grid-cols-2 gap-8 items-stretch w-full max-w-5xl mx-auto" style={{ width: '100%', maxWidth: '64rem', marginLeft: 'auto', marginRight: 'auto' }}>
           {/* Left: Raw signals */}
           <div>
             <p className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: 'var(--text-tertiary)', letterSpacing: '0.1em' }}>
@@ -128,7 +128,7 @@ export function InsightsSection() {
                   >
                     <p
                       className="text-sm font-semibold mb-2"
-                      style={{ color: activeInsight === i ? 'rgba(255,255,255,0.9)' : 'var(--text-primary)', lineHeight: 1.5 }}
+                      style={{ color: activeInsight === i ? '#FFFFFF' : 'var(--text-primary)', lineHeight: 1.5 }}
                     >
                       &ldquo;{insight.observation}&rdquo;
                     </p>
@@ -138,7 +138,7 @@ export function InsightsSection() {
                         animate={{ opacity: 1, height: 'auto' }}
                         transition={{ duration: 0.3 }}
                       >
-                        <p className="text-sm mt-2 mb-4" style={{ color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
+                        <p className="text-sm mt-2 mb-4" style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
                           {insight.action}
                         </p>
                         <div className="flex items-center gap-3">
@@ -151,7 +151,7 @@ export function InsightsSection() {
                               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                             />
                           </div>
-                          <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                          <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.5)' }}>
                             {insight.confidence}% confidence
                           </span>
                         </div>
@@ -171,14 +171,15 @@ export function InsightsSection() {
 /* ---- CTA Section ---- */
 export function CtaSection() {
   return (
-    <section className="py-32 px-6" style={{ background: 'var(--bg)' }}>
-      <div className="max-w-3xl mx-auto text-center">
-        <FadeIn>
+    <section className="py-32 px-6 w-full flex flex-col items-center justify-center" style={{ background: 'var(--bg)' }}>
+      <div className="w-full max-w-4xl mx-auto text-center" style={{ width: '100%', maxWidth: '56rem', marginLeft: 'auto', marginRight: 'auto' }}>
+        <FadeIn className="w-full flex flex-col items-center">
           <div
-            className="rounded-3xl p-16 relative overflow-hidden"
+            className="w-full rounded-3xl p-10 sm:p-16 relative overflow-hidden"
             style={{
               background: 'linear-gradient(145deg, #0B1020 0%, #1a1f3a 100%)',
               boxShadow: '0 30px 80px rgba(11,16,32,0.25)',
+              width: '100%',
             }}
           >
             {/* Glow */}
@@ -189,13 +190,13 @@ export function CtaSection() {
               }}
             />
 
-            <div className="relative z-10">
+            <div className="relative z-10 flex flex-col items-center text-center">
               <div
                 className="inline-block px-4 py-2 rounded-full text-xs font-semibold tracking-wider uppercase mb-8"
                 style={{
                   background: 'rgba(99,102,241,0.2)',
-                  color: '#818CF8',
-                  border: '1px solid rgba(99,102,241,0.25)',
+                  color: '#A5B4FC',
+                  border: '1px solid rgba(99,102,241,0.3)',
                   letterSpacing: '0.1em',
                 }}
               >
@@ -203,19 +204,19 @@ export function CtaSection() {
               </div>
 
               <h2
-                className="text-5xl font-bold text-white mb-6"
-                style={{ letterSpacing: '-0.03em', lineHeight: 1.1 }}
+                className="text-4xl sm:text-5xl font-bold text-white mb-6 text-center"
+                style={{ letterSpacing: '-0.03em', lineHeight: 1.15, color: '#FFFFFF' }}
               >
                 Understand yourself.<br />
                 Build what comes next.
               </h2>
 
-              <p className="text-xl mb-10" style={{ color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
+              <p className="text-lg sm:text-xl mb-10 text-center max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, marginLeft: 'auto', marginRight: 'auto' }}>
                 SAAR is the intelligence layer between where you are and who you want to become.
               </p>
 
               <div className="flex flex-wrap gap-4 justify-center">
-                <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }}>
+                <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }}>
                   <a
                     href="/register"
                     className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl font-semibold text-base text-white"
@@ -223,6 +224,7 @@ export function CtaSection() {
                       background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
                       boxShadow: '0 4px 20px rgba(99,102,241,0.4)',
                       textDecoration: 'none',
+                      color: '#FFFFFF',
                     }}
                   >
                     Start for free
@@ -242,10 +244,10 @@ export function CtaSection() {
 export function Footer() {
   return (
     <footer
-      className="py-10 px-6 border-t"
+      className="py-10 px-6 border-t w-full flex justify-center"
       style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
     >
-      <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4" style={{ width: '100%', maxWidth: '72rem', marginLeft: 'auto', marginRight: 'auto' }}>
         <div className="flex items-center gap-2.5">
           <div
             className="w-7 h-7 rounded-lg flex items-center justify-center"

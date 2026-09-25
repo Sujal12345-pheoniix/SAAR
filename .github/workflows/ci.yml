@@ -76,6 +76,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # ─────────────────────────────────────────────
+      # 3b. Generate Prisma Client
+      # ─────────────────────────────────────────────
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      # ─────────────────────────────────────────────
       # 4. Secret scan (must run before any build)
       # ─────────────────────────────────────────────
       - name: Secret scan (TruffleHog)

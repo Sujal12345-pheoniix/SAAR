@@ -1,4 +1,8 @@
 @import "tailwindcss";
+@source "../app/**/*.{js,ts,jsx,tsx,mdx}";
+@source "../components/**/*.{js,ts,jsx,tsx,mdx}";
+@source "../lib/**/*.{js,ts,jsx,tsx,mdx}";
+@source "../../packages/ui/src/**/*.{js,ts,jsx,tsx}";
 
 /* =============================================================
    SAAR — Design System v2

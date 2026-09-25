@@ -98,21 +98,21 @@ export function HabitEcosystem() {
   const activeArea = LIFE_AREAS.find((a) => a.id === active);
 
   return (
-    <section className="py-32 px-6" style={{ background: 'var(--bg)' }}>
-      <div className="max-w-6xl mx-auto">
-        <FadeIn className="text-center mb-20">
-          <p className="text-sm font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--accent)', letterSpacing: '0.1em' }}>
+    <section className="py-32 px-6 w-full flex flex-col items-center justify-center" style={{ background: 'var(--bg)' }}>
+      <div className="w-full max-w-6xl mx-auto" style={{ width: '100%', maxWidth: '72rem', marginLeft: 'auto', marginRight: 'auto' }}>
+        <FadeIn className="text-center mb-20 w-full flex flex-col items-center">
+          <p className="text-sm font-semibold tracking-widest uppercase mb-4 text-center" style={{ color: 'var(--accent)', letterSpacing: '0.1em' }}>
             Life Intelligence Map
           </p>
-          <h2 className="text-5xl font-bold mb-5" style={{ letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+          <h2 className="text-5xl font-bold mb-5 text-center" style={{ letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
             Every area of your life,<br />connected.
           </h2>
-          <p className="text-xl max-w-md mx-auto" style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          <p className="text-xl max-w-md mx-auto text-center" style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginLeft: 'auto', marginRight: 'auto' }}>
             SAAR tracks all six pillars of your life and shows how they interact and reinforce each other.
           </p>
         </FadeIn>
 
-        <div ref={ref} className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 justify-center max-w-5xl mx-auto">
+        <div ref={ref} className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 justify-center w-full max-w-5xl mx-auto" style={{ width: '100%', maxWidth: '64rem', marginLeft: 'auto', marginRight: 'auto' }}>
           {/* Radial ecosystem */}
           <motion.div
             className="relative flex-shrink-0"

@@ -8,6 +8,9 @@
     "pnpm": ">=12.0.0"
   },
   "scripts": {
+    "postinstall": "prisma generate --schema=prisma/schema.prisma",
+    "prelint": "pnpm db:generate",
+    "prebuild": "pnpm db:generate",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",

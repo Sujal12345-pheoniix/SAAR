@@ -22,13 +22,14 @@ export function Navbar() {
 
   return (
     <motion.header
-      className="fixed top-0 left-0 right-0 z-50"
+      className="fixed top-0 left-0 right-0 z-50 flex justify-center w-full"
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
     >
       <motion.div
-        className="mx-auto max-w-6xl px-4 sm:px-6"
+        className="w-full max-w-6xl mx-auto px-4 sm:px-6"
+        style={{ width: '100%', maxWidth: '72rem', marginLeft: 'auto', marginRight: 'auto' }}
       >
         <motion.nav
           animate={{

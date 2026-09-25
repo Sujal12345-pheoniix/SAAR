@@ -81,24 +81,24 @@ export function HowSaarThinks() {
   const [activeNode, setActiveNode] = useState<number | null>(null);
 
   return (
-    <section id="how-it-works" className="py-32 px-6" style={{ background: 'var(--surface)' }}>
-      <div className="max-w-6xl mx-auto">
-        <FadeIn className="text-center mb-20">
-          <p className="text-sm font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--accent)', letterSpacing: '0.1em' }}>
+    <section id="how-it-works" className="py-32 px-6 w-full flex flex-col items-center justify-center" style={{ background: 'var(--surface)' }}>
+      <div className="w-full max-w-6xl mx-auto" style={{ width: '100%', maxWidth: '72rem', marginLeft: 'auto', marginRight: 'auto' }}>
+        <FadeIn className="text-center mb-20 w-full flex flex-col items-center">
+          <p className="text-sm font-semibold tracking-widest uppercase mb-4 text-center" style={{ color: 'var(--accent)', letterSpacing: '0.1em' }}>
             Intelligence Pipeline
           </p>
           <h2
-            className="text-5xl font-bold mb-6"
+            className="text-5xl font-bold mb-6 text-center"
             style={{ letterSpacing: '-0.03em', color: 'var(--text-primary)' }}
           >
             How SAAR thinks
           </h2>
-          <p className="text-xl max-w-lg mx-auto" style={{ color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          <p className="text-xl max-w-lg mx-auto text-center" style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginLeft: 'auto', marginRight: 'auto' }}>
             Every signal you generate becomes part of a living intelligence that helps you grow faster.
           </p>
         </FadeIn>
 
-        <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-start max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-start w-full max-w-5xl mx-auto" style={{ width: '100%', maxWidth: '64rem', marginLeft: 'auto', marginRight: 'auto' }}>
           {/* Pipeline */}
           <div>
             {PIPELINE_NODES.map((node, i) => (
@@ -137,14 +137,14 @@ export function HowSaarThinks() {
               >
                 {activeNode === null && (
                   <>
-                    <p className="text-2xl font-bold text-white mb-3" style={{ letterSpacing: '-0.02em' }}>
+                    <p className="text-2xl font-bold text-white mb-3" style={{ letterSpacing: '-0.02em', color: '#FFFFFF' }}>
                       Hover the pipeline to see how each layer builds your intelligence.
                     </p>
                     <div className="mt-6 flex flex-col gap-3">
                       {['Patterns detected', 'Insights generated', 'Actions prioritized'].map((t) => (
                         <div key={t} className="flex items-center gap-3">
                           <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'rgba(99,102,241,0.6)' }} />
-                          <span className="text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{t}</span>
+                          <span className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>{t}</span>
                         </div>
                       ))}
                     </div>
@@ -158,7 +158,7 @@ export function HowSaarThinks() {
                     >
                       Layer {activeNode + 1} — {PIPELINE_NODES[activeNode].label}
                     </div>
-                    <p className="text-xl font-semibold text-white mb-4" style={{ lineHeight: 1.5 }}>
+                    <p className="text-xl font-semibold text-white mb-4" style={{ lineHeight: 1.5, color: '#FFFFFF' }}>
                       {activeNode === 0 && '"You completed 4 out of 5 habits today. Morning sessions had 94% completion."'}
                       {activeNode === 1 && '"Health & Fitness is your highest engagement area this week at 82%."'}
                       {activeNode === 2 && '"Your current actions are 73% aligned with your Future Self identity."'}
