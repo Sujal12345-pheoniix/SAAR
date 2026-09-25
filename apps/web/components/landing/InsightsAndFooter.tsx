@@ -4,6 +4,7 @@ import { motion, useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { FadeIn } from '@/components/motion/FadeIn';
 import { ArrowRight } from 'lucide-react';
+import { SaarLogo } from '@/components/ui/SaarLogo';
 
 const RAW_SIGNALS = [
   { label: '7 workouts logged', icon: '💪', color: '#22C55E' },
@@ -248,19 +249,7 @@ export function Footer() {
       style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
     >
       <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4" style={{ width: '100%', maxWidth: '72rem', marginLeft: 'auto', marginRight: 'auto' }}>
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="3" fill="white" opacity="0.9"/>
-              <circle cx="12" cy="12" r="7" stroke="white" strokeWidth="1.5" opacity="0.5"/>
-              <circle cx="19" cy="12" r="1.5" fill="white" opacity="0.8"/>
-            </svg>
-          </div>
-          <span className="font-bold text-sm" style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>SAAR</span>
-        </div>
+        <SaarLogo href="/home" size="xs" />
         <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
           &copy; {new Date().getFullYear()} SAAR. Personal Growth Intelligence.
         </p>

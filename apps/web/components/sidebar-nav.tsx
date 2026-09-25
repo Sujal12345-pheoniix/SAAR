@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { NavItem } from '@/types';
+import { SaarLogo } from '@/components/ui/SaarLogo';
 
 // ---------------------------------------------------------------------------
 // Icon map — lightweight SVG strings, no icon library required
@@ -80,18 +81,7 @@ export function SidebarNav({ items, userDisplayName }: SidebarNavProps) {
           borderBottom: '1px solid #f3f4f6',
         }}
       >
-        <Link
-          href="/dashboard"
-          style={{
-            fontWeight: 800,
-            fontSize: '1.25rem',
-            color: '#6366f1',
-            textDecoration: 'none',
-            letterSpacing: '-0.025em',
-          }}
-        >
-          SAAR
-        </Link>
+        <SaarLogo href="/dashboard" size="sm" />
         <p
           style={{
             marginTop: '0.25rem',

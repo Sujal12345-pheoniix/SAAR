@@ -3,6 +3,7 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { SaarLogo } from '@/components/ui/SaarLogo';
 
 const NAV_LINKS = [
   { label: 'Product', href: '#product' },
@@ -50,33 +51,7 @@ export function Navbar() {
           }}
         >
           {/* Logo */}
-          <Link href="/home" style={{ textDecoration: 'none' }}>
-            <motion.div
-              className="flex items-center gap-2.5"
-              whileHover={{ scale: 1.02 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            >
-              <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="3" fill="white" opacity="0.9"/>
-                  <circle cx="12" cy="12" r="7" stroke="white" strokeWidth="1.5" opacity="0.5"/>
-                  <circle cx="12" cy="12" r="11" stroke="white" strokeWidth="1" opacity="0.25"/>
-                  <circle cx="19" cy="12" r="1.5" fill="white" opacity="0.8"/>
-                  <circle cx="5" cy="12" r="1.5" fill="white" opacity="0.8"/>
-                  <circle cx="12" cy="5" r="1.5" fill="white" opacity="0.8"/>
-                </svg>
-              </div>
-              <span
-                className="font-bold text-[1.0625rem] tracking-tight"
-                style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
-              >
-                SAAR
-              </span>
-            </motion.div>
-          </Link>
+          <SaarLogo href="/home" size="md" />
 
           {/* Nav links — desktop */}
           <div className="hidden md:flex items-center gap-1">

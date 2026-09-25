@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SaarLogo } from '@/components/ui/SaarLogo';
 import {
   LayoutDashboard, Target, CheckSquare, BarChart2,
   Settings, Brain, ChevronLeft, ChevronRight,
@@ -48,33 +49,10 @@ export function Sidebar({ userDisplayName, userEmail }: SidebarProps) {
     <div className="flex flex-col h-full">
       {/* Brand */}
       <div
-        className="flex items-center gap-3 px-4 py-5"
+        className="flex items-center gap-3 px-4 py-5 overflow-hidden"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="3" fill="white" opacity="0.9"/>
-            <circle cx="12" cy="12" r="7" stroke="white" strokeWidth="1.5" opacity="0.5"/>
-            <circle cx="12" cy="12" r="11" stroke="white" strokeWidth="1" opacity="0.25"/>
-            <circle cx="19" cy="12" r="1.5" fill="white" opacity="0.8"/>
-          </svg>
-        </div>
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.span
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              className="font-bold text-base overflow-hidden whitespace-nowrap"
-              style={{ color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
-            >
-              SAAR
-            </motion.span>
-          )}
-        </AnimatePresence>
+        <SaarLogo href="/dashboard" size="sm" showText={!collapsed} />
       </div>
 
       {/* Navigation */}
@@ -220,19 +198,7 @@ export function Sidebar({ userDisplayName, userEmail }: SidebarProps) {
           borderBottom: '1px solid var(--border)',
         }}
       >
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="3" fill="white" opacity="0.9"/>
-              <circle cx="12" cy="12" r="7" stroke="white" strokeWidth="1.5" opacity="0.5"/>
-              <circle cx="19" cy="12" r="1.5" fill="white" opacity="0.8"/>
-            </svg>
-          </div>
-          <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>SAAR</span>
-        </div>
+        <SaarLogo href="/dashboard" size="xs" />
         <button
           onClick={() => setMobileOpen(true)}
           className="p-2 rounded-xl"

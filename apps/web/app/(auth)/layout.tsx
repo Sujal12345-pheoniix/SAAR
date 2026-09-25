@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
+import { SaarLogo } from '@/components/ui/SaarLogo';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -52,29 +53,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         ))}
 
         <div className="relative z-10">
-          <Link href="/home" style={{ textDecoration: 'none' }}>
-            <div className="flex items-center gap-3">
-              <div
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 14,
-                  background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="3" fill="white" opacity="0.9"/>
-                  <circle cx="12" cy="12" r="7" stroke="white" strokeWidth="1.5" opacity="0.5"/>
-                  <circle cx="12" cy="12" r="11" stroke="white" strokeWidth="1" opacity="0.25"/>
-                  <circle cx="19" cy="12" r="1.5" fill="white" opacity="0.8"/>
-                </svg>
-              </div>
-              <span style={{ fontWeight: 800, fontSize: '1.0625rem', color: '#fff', letterSpacing: '-0.02em' }}>SAAR</span>
-            </div>
-          </Link>
+          <SaarLogo href="/home" size="lg" theme="dark" subtitle />
         </div>
 
         <div className="relative z-10">

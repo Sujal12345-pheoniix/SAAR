@@ -80,8 +80,9 @@ export const config = {
      * - _next/static  (static assets)
      * - _next/image   (image optimisation)
      * - favicon.ico
+     * - static images (.png, .jpg, .svg, .ico, .webp)
      * - /api routes   (handled by their own Route Handlers)
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$|api/).*)',
   ],
 };
