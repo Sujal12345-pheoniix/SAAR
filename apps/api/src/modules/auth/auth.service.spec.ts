@@ -225,28 +225,45 @@ describe('AuthService', () => {
   // ── refresh ───────────────────────────────────────────────────────────────
 
   describe('refresh', () => {
-    it('throws UnauthorizedException when no session matches', async () => {
-      prisma.session.findMany.mockResolvedValueOnce([]);
-
-      await expect(service.refresh('bad-token')).rejects.toThrow(
+    it('throws UnauthorizedException when token format is invalid', async () => {
+      await expect(service.refresh('not-an-rt-token')).rejects.toThrow(
         UnauthorizedException,
       );
     });
 
-    it('rotates session and returns new tokens on valid token', async () => {
-      const rawToken = 'valid-raw-refresh-token';
-      const hash = await argon2.hash(rawToken);
-      const fakeSession = makeSession({ refreshHash: hash });
-      const newSession = makeSession({ id: 'session-uuid-2' });
+    it('throws UnauthorizedException when session is not found', async () => {
+      prisma.session.findUnique.mockResolvedValueOnce(null);
 
-      prisma.session.findMany.mockResolvedValueOnce([fakeSession]);
+      await expect(
+        service.refresh('rt_00000000-0000-0000-0000-000000000001.secret123'),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rotates session and returns new compound tokens on valid token', async () => {
+      const sessionId = '00000000-0000-0000-0000-000000000001';
+      const secret = 'validsecret1234567890abcdef1234567890';
+      const rawToken = `rt_${sessionId}.${secret}`;
+      const hash = await argon2.hash(secret);
+      const fakeUser = makeUser();
+      const fakeSession = {
+        ...makeSession({ id: sessionId, refreshHash: hash }),
+        tokenFamilyId: sessionId,
+        rotatedAt: null,
+        user: { ...fakeUser, profile: null },
+      };
+      const newSession = {
+        ...makeSession({ id: '00000000-0000-0000-0000-000000000002' }),
+        tokenFamilyId: sessionId,
+      };
+
+      prisma.session.findUnique.mockResolvedValueOnce(fakeSession);
       prisma.$transaction.mockImplementation(
         async (fn: (tx: typeof prisma) => Promise<unknown>) => {
           return fn({
             ...prisma,
             session: {
               ...prisma.session,
-              update: jest.fn().mockResolvedValue({}),
+              updateMany: jest.fn().mockResolvedValue({ count: 1 }),
               create: jest.fn().mockResolvedValue(newSession),
             },
             auditLog: prisma.auditLog,
@@ -257,7 +274,46 @@ describe('AuthService', () => {
       const result = await service.refresh(rawToken);
 
       expect(result.accessToken).toBe('mock.access.token');
-      expect(result.refreshToken).toBeDefined();
+      expect(result.refreshToken).toMatch(/^rt_[0-9a-fA-F-]+\.[0-9a-fA-F]+$/);
+    });
+
+    it('detects token reuse and revokes entire token family', async () => {
+      const sessionId = '00000000-0000-0000-0000-000000000001';
+      const secret = 'compromised-secret-12345';
+      const rawToken = `rt_${sessionId}.${secret}`;
+      const hash = await argon2.hash(secret);
+      const fakeUser = makeUser();
+
+      // Session was ALREADY rotated 10 minutes ago
+      const rotatedSession = {
+        ...makeSession({ id: sessionId, refreshHash: hash }),
+        tokenFamilyId: 'family-uuid-1',
+        rotatedAt: new Date(Date.now() - 600000),
+        revokedAt: new Date(Date.now() - 600000),
+        user: { ...fakeUser, profile: null },
+      };
+
+      prisma.session.findUnique.mockResolvedValueOnce(rotatedSession);
+      prisma.session.updateMany.mockResolvedValueOnce({ count: 3 });
+
+      await expect(service.refresh(rawToken)).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      // Verify that the entire token family was revoked in response to reuse
+      expect(prisma.session.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { tokenFamilyId: 'family-uuid-1' },
+              { id: 'family-uuid-1' },
+            ],
+            revokedAt: null,
+          }),
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          data: expect.objectContaining({ revokedAt: expect.any(Date) }),
+        }),
+      );
     });
   });
 

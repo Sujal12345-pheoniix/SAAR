@@ -134,20 +134,23 @@ model FutureSelf {
 }
 
 model Session {
-  id          String    @id @default(uuid()) @db.Uuid
-  userId      String    @db.Uuid
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @db.Uuid
   /// bcrypt hash of the raw refresh token — raw token only returned once at creation
-  refreshHash String
-  deviceId    String?   @db.Uuid
-  userAgent   String?
-  ipAddress   String?
-  expiresAt   DateTime
-  revokedAt   DateTime?
-  createdAt   DateTime  @default(now())
+  refreshHash   String
+  deviceId      String?   @db.Uuid
+  userAgent     String?
+  ipAddress     String?
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  tokenFamilyId String?   @db.Uuid
+  rotatedAt     DateTime?
+  createdAt     DateTime  @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
+  @@index([tokenFamilyId])
   @@map("sessions")
 }
 

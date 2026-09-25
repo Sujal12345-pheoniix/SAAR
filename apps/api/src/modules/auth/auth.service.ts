@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
 import { randomBytes } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 import type { Session, User, UserProfile, Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import type { RegisterDto } from './dto/register.dto';
@@ -104,6 +105,21 @@ function toSafeSession(s: Session): SafeSession {
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
+  // Fast in-memory session revocation lookup (avoids per-request DB hit)
+  private static readonly revokedSessionIds = new Set<string>();
+  private static readonly revokedUserTimestamps = new Map<string, number>();
+
+  public static isSessionRevoked(sessionId: string): boolean {
+    return AuthService.revokedSessionIds.has(sessionId);
+  }
+
+  public static isUserRevokedSince(userId: string, tokenIssuedAtSeconds?: number): boolean {
+    const revokedAtMs = AuthService.revokedUserTimestamps.get(userId);
+    if (!revokedAtMs) return false;
+    if (!tokenIssuedAtSeconds) return true;
+    return (tokenIssuedAtSeconds * 1000) <= revokedAtMs;
+  }
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
@@ -140,13 +156,16 @@ export class AuthService {
           include: { profile: true },
         });
 
-        const { rawToken, hash } = await this.generateRefreshToken();
+        const sessionId = uuidv4();
+        const { rawToken, hash } = await this.generateRefreshToken(sessionId);
         const expiresAt = this.refreshExpiresAt();
 
         const newSession = await tx.session.create({
           data: {
+            id: sessionId,
             userId: newUser.id,
             refreshHash: hash,
+            tokenFamilyId: sessionId,
             expiresAt,
             userAgent: meta?.userAgent ?? null,
             ipAddress: meta?.ipAddress ?? null,
@@ -160,7 +179,7 @@ export class AuthService {
             action: 'auth.register',
             entityType: 'User',
             entityId: newUser.id,
-            metadata: { email: dto.email },
+            metadata: { email: dto.email, sessionId },
           },
         });
 
@@ -173,7 +192,7 @@ export class AuthService {
       displayName: dto.displayName ?? user.email.split('@')[0],
     });
 
-    this.logger.log({ event: 'auth.register', userId: user.id });
+    this.logger.log({ event: 'auth.register', userId: user.id, sessionId: session.id });
 
     return {
       user: toSafeUser(user as User & { profile: UserProfile | null }),
@@ -213,13 +232,16 @@ export class AuthService {
       throw new UnauthorizedException('Account is not active');
     }
 
-    const { rawToken, hash } = await this.generateRefreshToken();
+    const sessionId = uuidv4();
+    const { rawToken, hash } = await this.generateRefreshToken(sessionId);
     const expiresAt = this.refreshExpiresAt();
 
     const session = await this.prisma.session.create({
       data: {
+        id: sessionId,
         userId: user.id,
         refreshHash: hash,
+        tokenFamilyId: sessionId,
         expiresAt,
         userAgent: meta?.userAgent ?? null,
         ipAddress: meta?.ipAddress ?? null,
@@ -233,7 +255,7 @@ export class AuthService {
       displayName: user.profile?.displayName ?? user.email.split('@')[0],
     });
 
-    this.logger.log({ event: 'auth.login', userId: user.id });
+    this.logger.log({ event: 'auth.login', userId: user.id, sessionId: session.id });
 
     return {
       user: toSafeUser(user),
@@ -249,85 +271,152 @@ export class AuthService {
   // ── Refresh ───────────────────────────────────────────────────────────────
 
   async refresh(rawRefreshToken: string): Promise<TokenPair> {
-    // Find all non-revoked, non-expired sessions and verify against each hash
-    // We can't do a DB lookup by hash directly (it's argon2), so we load
-    // candidate sessions by time window and verify.
-    const now = new Date();
-
-    // Limit candidates to reasonable window to avoid full-scan
-    const candidates = await this.prisma.session.findMany({
-      where: {
-        revokedAt: null,
-        expiresAt: { gt: now },
-      },
-      take: 200,
-    });
-
-    let matchedSession: Session | null = null;
-    for (const s of candidates) {
-      const ok = await argon2.verify(s.refreshHash, rawRefreshToken);
-      if (ok) {
-        matchedSession = s;
-        break;
-      }
-    }
-
-    if (!matchedSession) {
+    if (!rawRefreshToken || typeof rawRefreshToken !== 'string') {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    // Rotate: revoke old session, create new one
-    const { rawToken, hash } = await this.generateRefreshToken();
-    const expiresAt = this.refreshExpiresAt();
+    // Expected format: rt_<sessionId>.<secret>
+    const match = rawRefreshToken.match(/^rt_([0-9a-fA-F-]+)\.(.+)$/);
+    if (!match || !match[1] || !match[2]) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    const sessionId = match[1];
+    const secret = match[2];
+
+    const session = await this.prisma.session.findUnique({
+      where: { id: sessionId },
+      include: { user: { include: { profile: true } } },
+    });
+
+    if (!session) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    // ── Token reuse detection ────────────────────────────────────────────────
+    if (session.revokedAt !== null || session.rotatedAt !== null) {
+      let isSecretMatch = false;
+      try {
+        isSecretMatch = await argon2.verify(session.refreshHash, secret);
+      } catch {
+        // Hash verification error
+      }
+
+      if (isSecretMatch) {
+        // TOKEN REUSE DETECTED: This rotated/revoked token was presented again!
+        // Immediately revoke the entire token family to protect user account
+        const familyId = session.tokenFamilyId ?? session.id;
+        await this.prisma.session.updateMany({
+          where: {
+            OR: [{ tokenFamilyId: familyId }, { id: familyId }],
+            revokedAt: null,
+          },
+          data: { revokedAt: new Date() },
+        });
+
+        // Invalidate in-memory session cache as well
+        AuthService.revokedSessionIds.add(session.id);
+
+        await this.auditAuth('auth.refresh.reuse_detected', session.userId, {
+          sessionId: session.id,
+          tokenFamilyId: familyId,
+        });
+
+        this.logger.warn({
+          event: 'auth.refresh.reuse_detected',
+          sessionId: session.id,
+          userId: session.userId,
+          tokenFamilyId: familyId,
+        });
+      }
+
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    // ── Expiration check ─────────────────────────────────────────────────────
+    if (session.expiresAt <= new Date()) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    // ── Hash verification ────────────────────────────────────────────────────
+    const isValid = await argon2.verify(session.refreshHash, secret);
+    if (!isValid) {
+      await this.auditAuth('auth.refresh.failed', session.userId, { sessionId: session.id });
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    // ── User account status check ────────────────────────────────────────────
+    if (session.user.status !== 'ACTIVE') {
+      throw new UnauthorizedException('Account is not active');
+    }
+
+    // ── Atomic rotation transaction ──────────────────────────────────────────
+    const now = new Date();
+    const newSessionId = uuidv4();
+    const { rawToken: newRawToken, hash: newHash } =
+      await this.generateRefreshToken(newSessionId);
+    const newExpiresAt = this.refreshExpiresAt();
+    const tokenFamilyId = session.tokenFamilyId ?? session.id;
 
     const newSession = await this.prisma.$transaction(async (tx) => {
-      await tx.session.update({
-        where: { id: matchedSession.id },
-        data: { revokedAt: now },
+      // Concurrency guard: only rotate if not already revoked or rotated
+      const updateResult = await tx.session.updateMany({
+        where: {
+          id: session.id,
+          revokedAt: null,
+          rotatedAt: null,
+        },
+        data: {
+          revokedAt: now,
+          rotatedAt: now,
+        },
       });
+
+      if (updateResult.count === 0) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
 
       const created = await tx.session.create({
         data: {
-          userId: matchedSession.userId,
-          refreshHash: hash,
-          expiresAt,
-          userAgent: matchedSession.userAgent,
-          ipAddress: matchedSession.ipAddress,
+          id: newSessionId,
+          userId: session.userId,
+          refreshHash: newHash,
+          tokenFamilyId,
+          expiresAt: newExpiresAt,
+          userAgent: session.userAgent,
+          ipAddress: session.ipAddress,
         },
       });
 
       await tx.auditLog.create({
         data: {
-          userId: matchedSession.userId,
+          userId: session.userId,
           actorType: 'user',
           action: 'auth.refresh',
           entityType: 'Session',
           entityId: created.id,
-          metadata: { previousSessionId: matchedSession.id },
+          metadata: { previousSessionId: session.id, tokenFamilyId },
         },
       });
 
       return created;
     });
 
-    const matchedUser = await this.prisma.user.findUnique({
-      where: { id: newSession.userId },
-      include: { profile: true },
+    const tokens = this.signAccessToken(newSession.userId, newSession.id, {
+      email: session.user.email,
+      displayName: session.user.profile?.displayName ?? session.user.email.split('@')[0],
     });
 
-    const tokens = this.signAccessToken(newSession.userId, newSession.id, {
-      email: matchedUser?.email,
-      displayName: matchedUser?.profile?.displayName ?? matchedUser?.email?.split('@')[0],
-    });
     this.logger.log({
       event: 'auth.refresh',
       userId: newSession.userId,
       newSessionId: newSession.id,
+      tokenFamilyId,
     });
 
     return {
       accessToken: tokens.accessToken,
-      refreshToken: rawToken,
+      refreshToken: newRawToken,
       expiresIn: this.accessExpiresIn(),
     };
   }
@@ -348,6 +437,9 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
+    // Invalidate in memory cache immediately for zero-delay JWT revocation
+    AuthService.revokedSessionIds.add(sessionId);
+
     await this.auditAuth('auth.logout', userId, { sessionId });
     this.logger.log({ event: 'auth.logout', userId, sessionId });
   }
@@ -359,6 +451,9 @@ export class AuthService {
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+
+    // Invalidate all tokens issued before now for this user
+    AuthService.revokedUserTimestamps.set(userId, Date.now());
 
     await this.auditAuth('auth.logout_all', userId, { count: result.count });
     this.logger.log({
@@ -435,6 +530,21 @@ export class AuthService {
     };
   }
 
+  // ── Get Authenticated User Profile (Bootstrap compatibility) ────────────
+
+  async getMe(userId: string): Promise<SafeUser> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { profile: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return toSafeUser(user);
+  }
+
   // ── Private helpers ──────────────────────────────────────────────────────
 
   private signAccessToken(
@@ -444,18 +554,31 @@ export class AuthService {
   ): { accessToken: string } {
     const expiresIn = this.accessExpiresIn();
     const accessToken = this.jwt.sign(
-      { sub: userId, sid: sessionId, ...claims },
+      {
+        sub: userId,
+        sid: sessionId,
+        iss: 'saar-api',
+        aud: 'saar-client',
+        typ: 'access',
+        ...claims,
+      },
       { expiresIn },
     );
     return { accessToken };
   }
 
-  private async generateRefreshToken(): Promise<{
+  private async generateRefreshToken(sessionId: string): Promise<{
     rawToken: string;
     hash: string;
   }> {
-    const rawToken = randomBytes(48).toString('base64url');
-    const hash = await argon2.hash(rawToken);
+    const secret = randomBytes(32).toString('hex');
+    const rawToken = `rt_${sessionId}.${secret}`;
+    const hash = await argon2.hash(secret, {
+      type: argon2.argon2id,
+      memoryCost: 65536,
+      timeCost: 3,
+      parallelism: 4,
+    });
     return { rawToken, hash };
   }
 

@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import { v4 as uuidv4 } from 'uuid';
+import { json, urlencoded } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -20,33 +21,54 @@ async function bootstrap(): Promise<void> {
     bufferLogs: true,
   });
 
+  // ── Request size limits ──────────────────────────────────────────────────────
+  app.use(json({ limit: '1mb' }));
+  app.use(urlencoded({ extended: true, limit: '1mb', parameterLimit: 1000 }));
+
   // ── Security headers ────────────────────────────────────────────────────────
-  app.use(helmet());
+  const isProduction = process.env['NODE_ENV'] === 'production';
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      hsts: isProduction
+        ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+        : false,
+      noSniff: true,
+      frameguard: { action: 'deny' },
+    }),
+  );
 
   // ── CORS ────────────────────────────────────────────────────────────────────
   const corsOriginsEnv = process.env['CORS_ALLOWED_ORIGINS'];
+  const defaultDevOrigins = [
+    'http://localhost:3000',
+    'http://localhost:8081',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:8081',
+  ];
   const allowedOrigins = corsOriginsEnv
-    ? corsOriginsEnv.split(',').map((o) => o.trim())
-    : ['http://localhost:3000', 'https://web-psi-three-58.vercel.app'];
+    ? corsOriginsEnv.split(',').map((o) => o.trim()).filter(Boolean)
+    : (isProduction ? [] : defaultDevOrigins);
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (
-        !origin ||
-        corsOriginsEnv === '*' ||
-        allowedOrigins.includes('*') ||
-        allowedOrigins.includes(origin) ||
-        origin.endsWith('.vercel.app')
-      ) {
-        callback(null, true);
-      } else {
-        callback(null, true);
+      // Allow requests with no origin (mobile native apps, curl, server-to-server)
+      if (!origin) {
+        return callback(null, true);
       }
+      if (!isProduction && allowedOrigins.includes('*')) {
+        return callback(null, true);
+      }
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} is not allowed by CORS`), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
     exposedHeaders: ['X-Request-Id'],
+    maxAge: 86400,
   });
 
   // ── X-Request-Id correlation ─────────────────────────────────────────────────

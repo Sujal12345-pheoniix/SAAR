@@ -44,6 +44,7 @@ jobs:
       DATABASE_URL: postgresql://saar_test:saar_test@localhost:5433/saar_test
       REDIS_URL: redis://localhost:6380
       NODE_ENV: test
+      JWT_ACCESS_SECRET: ci-test-jwt-secret-32-chars-minimum
       JWT_SECRET: ci-test-jwt-secret-32-chars-minimum
       JWT_REFRESH_SECRET: ci-test-refresh-secret-32-chars-ok
       ENCRYPTION_KEY: ci-test-encryption-key-32-chars!!

@@ -57,11 +57,23 @@ export class AuthController {
 
   /**
    * POST /api/v1/auth/refresh
+   * Rate limit: 20 requests / 60 s per IP
    */
   @Post('refresh')
+  @Throttle({ default: { ttl: 60000, limit: 20 } })
   @HttpCode(HttpStatus.OK)
   async refresh(@Body() dto: RefreshDto) {
     return this.authService.refresh(dto.refreshToken);
+  }
+
+  /**
+   * GET /api/v1/auth/me
+   * Direct alias for client bootstrap compatibility
+   */
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  async getMe(@CurrentUser() user: AuthenticatedUser) {
+    return this.authService.getMe(user.userId);
   }
 
   /**

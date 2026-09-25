@@ -3,12 +3,16 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import type { AuthenticatedUser } from '../../../common/decorators/current-user.decorator';
+import { AuthService } from '../auth.service';
 
 interface JwtPayload {
   sub: string;
   sid: string;
   iat: number;
   exp: number;
+  iss?: string;
+  aud?: string;
+  typ?: string;
 }
 
 @Injectable()
@@ -37,6 +41,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   validate(payload: JwtPayload): AuthenticatedUser {
     if (!payload.sub || !payload.sid) {
       throw new UnauthorizedException('Invalid token payload');
+    }
+    if (payload.typ && payload.typ !== 'access') {
+      throw new UnauthorizedException('Invalid token type');
+    }
+    if (AuthService.isSessionRevoked(payload.sid)) {
+      throw new UnauthorizedException('Session has been revoked');
+    }
+    if (AuthService.isUserRevokedSince(payload.sub, payload.iat)) {
+      throw new UnauthorizedException('Session has been revoked');
     }
     return { userId: payload.sub, sessionId: payload.sid };
   }

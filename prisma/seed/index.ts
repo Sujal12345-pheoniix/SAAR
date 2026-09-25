@@ -56,8 +56,9 @@ async function main(): Promise<void> {
     create: {
       email: 'demo@saar.dev',
       passwordHash,
-      displayName: 'Demo User',
-      isEmailVerified: true,
+      status: 'ACTIVE',
+      timezone: 'Asia/Kolkata',
+      locale: 'en-IN',
       createdAt: daysAgo(30),
     },
   });
@@ -71,10 +72,8 @@ async function main(): Promise<void> {
     update: {},
     create: {
       userId: demoUser.id,
-      timezone: 'Asia/Kolkata',
-      locale: 'en-IN',
+      displayName: 'Demo User',
       avatarUrl: null,
-      onboardingCompletedAt: daysAgo(29),
       preferences: {
         theme: 'system',
         weekStartsOn: 'monday',
