@@ -119,14 +119,20 @@ export default function LoginPage() {
 
   return (
     <>
-      <div style={{ marginBottom: '1.75rem', textAlign: 'center' }}>
+      <div style={{ marginBottom: '2rem' }}>
         <h1
-          style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '0.375rem' }}
+          style={{
+            fontSize: '1.75rem',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            marginBottom: '0.5rem',
+            letterSpacing: '-0.025em',
+          }}
         >
           Welcome back
         </h1>
-        <p style={{ fontSize: '0.9rem', color: '#6b7280' }}>
-          Sign in to your SAAR account
+        <p style={{ fontSize: '0.9375rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+          Sign in to continue your growth journey.
         </p>
       </div>
 

@@ -173,17 +173,18 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '300px', gap: '1rem' }}>
         <div className="spinner" />
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Loading your dashboard…</p>
       </div>
     );
   }
 
   if (error && !data) {
     return (
-      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1.5rem', color: '#dc2626' }}>
+      <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', color: 'var(--danger)' }}>
         <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>Unable to load dashboard</p>
-        <p style={{ fontSize: '0.875rem' }}>{error}</p>
+        <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{error}</p>
         <button onClick={() => { setLoading(true); fetchDashboardData(); }} className="btn btn-secondary" style={{ marginTop: '1rem' }}>
           Retry
         </button>
@@ -203,10 +204,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#111827', marginBottom: '0.25rem' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem', letterSpacing: '-0.025em' }}>
             Daily Growth Dashboard
           </h1>
-          <p style={{ color: '#6b7280', fontSize: '0.9375rem' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9375rem' }}>
             {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
@@ -214,31 +215,32 @@ export default function DashboardPage() {
         {/* Alignment Score Badge */}
         <div
           style={{
-            background: '#ffffff',
-            border: '1px solid #e5e7eb',
-            borderRadius: '12px',
-            padding: '0.75rem 1.25rem',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '0.875rem 1.375rem',
             display: 'flex',
             alignItems: 'center',
             gap: '1rem',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           <div>
-            <span style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600 }}>
               Life Alignment
             </span>
-            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: alignmentScore >= 70 ? '#16a34a' : '#6366f1' }}>
+            <div style={{ fontSize: '1.625rem', fontWeight: 800, color: alignmentScore >= 70 ? 'var(--green)' : 'var(--accent)', letterSpacing: '-0.025em', lineHeight: 1.1 }}>
               {Math.round(alignmentScore)}%
             </div>
           </div>
-          <div style={{ width: '60px', height: '6px', background: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
+          <div style={{ width: '64px', height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
             <div
               style={{
                 width: `${Math.min(100, Math.max(0, alignmentScore))}%`,
                 height: '100%',
-                background: alignmentScore >= 70 ? '#16a34a' : '#6366f1',
+                background: alignmentScore >= 70 ? 'var(--green)' : 'var(--accent)',
                 borderRadius: '3px',
+                transition: 'width 1s cubic-bezier(0.16,1,0.3,1)',
               }}
             />
           </div>
@@ -248,38 +250,49 @@ export default function DashboardPage() {
       {/* Future Self Banner */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-          borderRadius: '14px',
-          padding: '1.75rem',
+          background: 'linear-gradient(145deg, #0B1020 0%, #1a1f3a 100%)',
+          borderRadius: 'var(--radius-2xl)',
+          padding: '1.875rem 2rem',
           color: '#ffffff',
-          boxShadow: '0 4px 12px rgba(79, 70, 229, 0.15)',
+          boxShadow: '0 8px 32px rgba(11,16,32,0.18), 0 0 0 1px rgba(255,255,255,0.06)',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
+        {/* Glow accent */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'radial-gradient(ellipse 70% 60% at 0% 0%, rgba(99,102,241,0.18) 0%, transparent 60%)',
+          pointerEvents: 'none',
+        }} />
         {futureSelf ? (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '0.8125rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', opacity: 0.9 }}>
-                🌟 Future Self Vision ({futureSelf.horizonYears}-Year Horizon)
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.6 }}>
+                ✦ Future Self Vision · {futureSelf.horizonYears}-Year Horizon
               </span>
-              <Link href="/settings" style={{ fontSize: '0.8125rem', color: '#e0e7ff', textDecoration: 'underline' }}>
+              <Link href="/settings" style={{ fontSize: '0.8125rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.15)', padding: '0.3rem 0.75rem', borderRadius: '8px' }}>
                 Edit Vision
               </Link>
             </div>
-            <p style={{ fontSize: '1.1875rem', fontWeight: 600, lineHeight: 1.5, marginBottom: '1rem' }}>
+            <p style={{ fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.5, marginBottom: '1.25rem', color: 'rgba(255,255,255,0.95)' }}>
               &ldquo;{futureSelf.identityStatement}&rdquo;
             </p>
             {futureSelf.values && futureSelf.values.length > 0 && (
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.8125rem', opacity: 0.85 }}>Core Values:</span>
+                <span style={{ fontSize: '0.75rem', opacity: 0.5, letterSpacing: '0.04em' }}>CORE VALUES</span>
                 {futureSelf.values.map((v) => (
                   <span
                     key={v}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      padding: '0.2rem 0.6rem',
+                      background: 'rgba(99,102,241,0.25)',
+                      border: '1px solid rgba(99,102,241,0.3)',
+                      padding: '0.2rem 0.625rem',
                       borderRadius: '999px',
                       fontSize: '0.75rem',
                       fontWeight: 500,
+                      color: '#A5B4FC',
                     }}
                   >
                     {v}
@@ -289,23 +302,24 @@ export default function DashboardPage() {
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.25rem' }}>Define Your Future Self</h3>
-              <p style={{ fontSize: '0.875rem', opacity: 0.9 }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '0.375rem' }}>Define Your Future Self</h3>
+              <p style={{ fontSize: '0.875rem', opacity: 0.6, lineHeight: 1.6 }}>
                 Who do you want to become? Set your horizon and core values to guide all daily actions.
               </p>
             </div>
             <Link
               href="/settings"
               style={{
-                background: '#ffffff',
-                color: '#4f46e5',
-                padding: '0.5rem 1.25rem',
-                borderRadius: '8px',
+                background: 'rgba(99,102,241,0.9)',
+                color: '#fff',
+                padding: '0.625rem 1.25rem',
+                borderRadius: 'var(--radius-lg)',
                 fontWeight: 600,
                 fontSize: '0.875rem',
                 textDecoration: 'none',
+                boxShadow: '0 4px 12px rgba(99,102,241,0.3)',
               }}
             >
               Configure Future Self
@@ -317,20 +331,20 @@ export default function DashboardPage() {
       {/* Two Column Grid: Daily Session / Check-in & Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
         {/* Daily Growth Session Widget */}
-        <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.5rem' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', boxShadow: 'var(--shadow-card)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>🌱 Daily Growth Session</h2>
-            <span style={{ fontSize: '0.75rem', color: '#6b7280', background: '#f3f4f6', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-              5 Minutes
+            <h2 style={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-primary)' }}>🌱 Daily Growth Session</h2>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--accent)', background: 'var(--accent-subtle)', padding: '0.25rem 0.625rem', borderRadius: '999px', fontWeight: 600, letterSpacing: '0.04em' }}>
+              5 MIN
             </span>
           </div>
 
           {sessionActive ? (
             <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-              <div style={{ fontSize: '2.5rem', fontWeight: 700, color: '#6366f1', marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '2.75rem', fontWeight: 800, color: 'var(--accent)', marginBottom: '0.5rem', letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>
                 {Math.floor(sessionSeconds / 60)}:{String(sessionSeconds % 60).padStart(2, '0')}
               </div>
-              <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1rem' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', lineHeight: 1.6 }}>
                 Focus on high-leverage actions and reflect on your alignment with your future self.
               </p>
               <button
@@ -344,7 +358,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div>
-              <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', lineHeight: 1.6 }}>
                 Take 5 dedicated minutes each morning to align your intention with your core life values.
               </p>
               <button
@@ -360,8 +374,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Daily Check-in Card */}
-        <div style={{ background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: '12px', padding: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827', marginBottom: '1rem' }}>
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '1.5rem', boxShadow: 'var(--shadow-card)' }}>
+          <h2 style={{ fontSize: '1.0625rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>
             📝 Daily Check-in
           </h2>
 
