@@ -18,7 +18,7 @@ export const metadata: Metadata = {
  */
 export default function HomePage() {
   return (
-    <main style={{ minHeight: '100dvh' }}>
+    <main className="overflow-x-hidden" style={{ minHeight: '100dvh' }}>
       <Navbar />
       <Hero />
       <HowSaarThinks />

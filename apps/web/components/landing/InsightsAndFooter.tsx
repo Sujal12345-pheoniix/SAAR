@@ -52,7 +52,7 @@ export function InsightsSection() {
           </p>
         </FadeIn>
 
-        <div ref={ref} className="grid lg:grid-cols-2 gap-8 items-stretch">
+        <div ref={ref} className="grid lg:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
           {/* Left: Raw signals */}
           <div>
             <p className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: 'var(--text-tertiary)', letterSpacing: '0.1em' }}>

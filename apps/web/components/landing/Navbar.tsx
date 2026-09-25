@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { label: 'Product', href: '#product' },
   { label: 'How it works', href: '#how-it-works' },
   { label: 'Insights', href: '#insights' },
+  { label: 'About', href: '#how-it-works' },
 ];
 
 export function Navbar() {
@@ -27,8 +28,7 @@ export function Navbar() {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
     >
       <motion.div
-        className="mx-auto max-w-7xl"
-        style={{ padding: '0 1.5rem' }}
+        className="mx-auto max-w-6xl px-4 sm:px-6"
       >
         <motion.nav
           animate={{

@@ -112,7 +112,7 @@ export function HabitEcosystem() {
           </p>
         </FadeIn>
 
-        <div ref={ref} className="flex flex-col lg:flex-row items-center gap-16 justify-center">
+        <div ref={ref} className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 justify-center max-w-5xl mx-auto">
           {/* Radial ecosystem */}
           <motion.div
             className="relative flex-shrink-0"
@@ -186,7 +186,7 @@ export function HabitEcosystem() {
           </motion.div>
 
           {/* Detail panel */}
-          <div className="flex-1 max-w-sm">
+          <div className="flex-1 max-w-md lg:max-w-lg w-full">
             <motion.div
               key={active ?? 'none'}
               initial={{ opacity: 0, x: 20 }}

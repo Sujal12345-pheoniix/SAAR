@@ -98,7 +98,7 @@ export function HowSaarThinks() {
           </p>
         </FadeIn>
 
-        <div className="grid md:grid-cols-2 gap-16 items-start">
+        <div className="grid md:grid-cols-2 gap-12 lg:gap-16 items-start max-w-5xl mx-auto">
           {/* Pipeline */}
           <div>
             {PIPELINE_NODES.map((node, i) => (
