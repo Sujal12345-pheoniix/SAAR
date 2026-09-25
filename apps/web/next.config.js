@@ -4,13 +4,6 @@ const path = require('path');
 const nextConfig = {
   output: process.env.DOCKER_BUILD === 'true' ? 'standalone' : undefined,
   poweredByHeader: false,
-  // Transpile Three.js and R3F packages (they ship as ESM)
-  transpilePackages: [
-    'three',
-    '@react-three/fiber',
-    '@react-three/drei',
-    'lenis',
-  ],
   webpack(config) {
     config.resolve.alias = {
       ...config.resolve.alias,
