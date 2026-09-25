@@ -29,11 +29,9 @@ function validate(
   const errors: FormState['errors'] = {};
 
   if (!displayName.trim()) {
-    errors.displayName = 'Display name is required.';
+    errors.displayName = 'Name is required.';
   } else if (displayName.trim().length < 2) {
-    errors.displayName = 'Display name must be at least 2 characters.';
-  } else if (displayName.trim().length > 60) {
-    errors.displayName = 'Display name must be 60 characters or fewer.';
+    errors.displayName = 'Name must be at least 2 characters.';
   }
 
   if (!email.trim()) {
@@ -66,14 +64,12 @@ export default function RegisterPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-
     const displayName = (
       form.elements.namedItem('displayName') as HTMLInputElement
     ).value;
     const email = (form.elements.namedItem('email') as HTMLInputElement).value;
-    const password = (
-      form.elements.namedItem('password') as HTMLInputElement
-    ).value;
+    const password = (form.elements.namedItem('password') as HTMLInputElement)
+      .value;
 
     // Client-side validation
     const errors = validate(displayName, email, password);
@@ -86,7 +82,7 @@ export default function RegisterPage() {
 
     const result = await apiClient.post<SessionUser>('/auth/register', {
       displayName: displayName.trim(),
-      email: email.trim(),
+      email,
       password,
     } satisfies RegisterRequest);
 
@@ -95,26 +91,30 @@ export default function RegisterPage() {
 
       switch (result.error.error.code) {
         case 'EMAIL_TAKEN':
-          apiErrors.email =
-            'An account with this email already exists. Try signing in instead.';
+          apiErrors.email = 'This email is already in use. Sign in instead?';
           break;
         case 'VALIDATION_ERROR':
           Object.assign(apiErrors, result.error.error.details);
           break;
         default:
           apiErrors._form =
-            result.error.error.message || 'Registration failed. Please try again.';
+            result.error.error.message ||
+            'Registration failed. Please try again.';
       }
 
       setState({ errors: apiErrors, submitting: false });
       return;
     }
 
-    // Success — persist session cookie on our domain
+    // Success — persist session cookie and token in localStorage
     const authData = result.data as unknown as { session?: { accessToken?: string }; accessToken?: string };
     const token = authData?.session?.accessToken || authData?.accessToken;
 
     if (token) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('saar_token', token);
+      }
+
       try {
         await fetch('/api/auth/session', {
           method: 'POST',
@@ -138,10 +138,10 @@ export default function RegisterPage() {
         <h1
           style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '0.375rem' }}
         >
-          Create your account
+          Begin your journey
         </h1>
-        <p style={{ fontSize: '0.9rem', color: '#6b7280' }}>
-          Start your personal growth journey with SAAR
+        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+          Create an account to start mapping your personal growth.
         </p>
       </div>
 
@@ -164,15 +164,11 @@ export default function RegisterPage() {
         </div>
       )}
 
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        style={{ display: 'flex', flexDirection: 'column', gap: '1.125rem' }}
-      >
-        {/* Display Name */}
+      <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {/* Display name */}
         <div className="form-group">
           <label htmlFor="displayName" className="form-label">
-            Display name
+            Your name
           </label>
           <input
             id="displayName"
@@ -183,8 +179,7 @@ export default function RegisterPage() {
             aria-invalid={errors.displayName ? 'true' : 'false'}
             aria-describedby={errors.displayName ? 'displayName-error' : undefined}
             className="form-input"
-            placeholder="Jane Smith"
-            maxLength={60}
+            placeholder="Jane Doe"
           />
           {errors.displayName && (
             <p id="displayName-error" className="form-error" role="alert">
@@ -228,11 +223,9 @@ export default function RegisterPage() {
             autoComplete="new-password"
             required
             aria-invalid={errors.password ? 'true' : 'false'}
-            aria-describedby={
-              errors.password ? 'password-error' : 'password-hint'
-            }
+            aria-describedby={errors.password ? 'password-error' : 'password-hint'}
             className="form-input"
-            placeholder="Min. 8 characters"
+            placeholder="••••••••"
           />
           {errors.password ? (
             <p id="password-error" className="form-error" role="alert">
@@ -241,12 +234,25 @@ export default function RegisterPage() {
           ) : (
             <p
               id="password-hint"
-              style={{ fontSize: '0.8rem', color: '#9ca3af' }}
+              style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}
             >
-              At least 8 characters with one uppercase letter and one number.
+              At least 8 characters, one uppercase letter, and one number.
             </p>
           )}
         </div>
+
+        {/* Terms notice */}
+        <p style={{ fontSize: '0.75rem', color: '#9ca3af', lineHeight: 1.5 }}>
+          By creating an account you agree to our{' '}
+          <Link href="/terms" style={{ color: '#6366f1' }}>
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" style={{ color: '#6366f1' }}>
+            Privacy Policy
+          </Link>
+          .
+        </p>
 
         {/* Submit */}
         <button
@@ -258,32 +264,6 @@ export default function RegisterPage() {
         >
           {submitting ? 'Creating account…' : 'Create account'}
         </button>
-
-        {/* Terms */}
-        <p
-          style={{
-            fontSize: '0.78rem',
-            color: '#9ca3af',
-            textAlign: 'center',
-            lineHeight: 1.5,
-          }}
-        >
-          By creating an account you agree to our{' '}
-          <Link
-            href="/terms"
-            style={{ color: '#6366f1', textDecoration: 'none' }}
-          >
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link
-            href="/privacy"
-            style={{ color: '#6366f1', textDecoration: 'none' }}
-          >
-            Privacy Policy
-          </Link>
-          .
-        </p>
       </form>
 
       {/* Login link */}

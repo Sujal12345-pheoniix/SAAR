@@ -3,8 +3,8 @@
  *
  * - Wraps native fetch; no axios.
  * - Attaches X-Request-Id (UUIDv4) to every request for distributed tracing.
- * - Sends cookies automatically (credentials: 'include') so the API's
- *   httpOnly session cookie is forwarded — no manual token management.
+ * - Reads bearer token from localStorage or document.cookie and forwards
+ *   Authorization: Bearer <token>
  * - Returns a discriminated union { ok: true, data } | { ok: false, error }.
  */
 
@@ -28,6 +28,30 @@ function generateRequestId(): string {
     const v = c === 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
+}
+
+function getStoredToken(): string | null {
+  if (typeof window === 'undefined') return null;
+
+  // 1. Check localStorage first
+  try {
+    const token = localStorage.getItem('saar_token');
+    if (token) return token;
+  } catch {
+    // Ignore storage errors
+  }
+
+  // 2. Check document.cookie fallback
+  try {
+    const match = document.cookie.match(/(?:^|;\s*)saar_session=([^;]+)/);
+    if (match && match[1]) {
+      return decodeURIComponent(match[1]);
+    }
+  } catch {
+    // Ignore cookie errors
+  }
+
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -90,10 +114,10 @@ export class ApiClient {
       ...options.headers,
     };
 
-    if (!headers['Authorization'] && typeof document !== 'undefined') {
-      const match = document.cookie.match(/(?:^|;\s*)saar_session=([^;]+)/);
-      if (match) {
-        headers['Authorization'] = `Bearer ${decodeURIComponent(match[1])}`;
+    if (!headers['Authorization']) {
+      const token = getStoredToken();
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
       }
     }
 

@@ -90,11 +90,15 @@ export default function LoginPage() {
       return;
     }
 
-    // Success — persist session cookie on our domain
+    // Success — persist session token in localStorage AND cookies for bulletproof auth
     const authData = result.data as unknown as { session?: { accessToken?: string }; accessToken?: string };
     const token = authData?.session?.accessToken || authData?.accessToken;
 
     if (token) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('saar_token', token);
+      }
+
       try {
         await fetch('/api/auth/session', {
           method: 'POST',
