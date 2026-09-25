@@ -90,6 +90,13 @@ export class ApiClient {
       ...options.headers,
     };
 
+    if (!headers['Authorization'] && typeof document !== 'undefined') {
+      const match = document.cookie.match(/(?:^|;\s*)saar_session=([^;]+)/);
+      if (match) {
+        headers['Authorization'] = `Bearer ${decodeURIComponent(match[1])}`;
+      }
+    }
+
     const init: RequestInit = {
       method,
       headers,

@@ -17,14 +17,14 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
-        (req: any) => {
+        (req: { cookies?: Record<string, string>; headers?: { cookie?: string } } | undefined): string | null => {
           let token: string | null = null;
-          if (req && req.cookies && typeof req.cookies['saar_session'] === 'string') {
+          if (req?.cookies && typeof req.cookies['saar_session'] === 'string') {
             token = req.cookies['saar_session'];
           }
-          if (!token && req && req.headers && typeof req.headers.cookie === 'string') {
+          if (!token && typeof req?.headers?.cookie === 'string') {
             const match = req.headers.cookie.match(/(?:^|;\s*)saar_session=([^;]+)/);
-            if (match) token = decodeURIComponent(match[1]);
+            if (match && match[1]) token = decodeURIComponent(match[1]);
           }
           return token;
         },
