@@ -72,6 +72,10 @@ export default function LoginPage() {
 
       // Map API error codes to field-level messages
       switch (result.error.error.code) {
+        case 'TIMEOUT_ERROR':
+          apiErrors._form =
+            'The server is waking up from idle state. Please wait a moment and click Sign in again.';
+          break;
         case 'INVALID_CREDENTIALS':
           apiErrors._form = 'Incorrect email or password. Please try again.';
           break;

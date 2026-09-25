@@ -168,7 +168,10 @@ export class AuthService {
       },
     );
 
-    const tokens = this.signAccessToken(user.id, session.id);
+    const tokens = this.signAccessToken(user.id, session.id, {
+      email: user.email,
+      displayName: dto.displayName ?? user.email.split('@')[0],
+    });
 
     this.logger.log({ event: 'auth.register', userId: user.id });
 
@@ -225,7 +228,10 @@ export class AuthService {
 
     await this.auditAuth('auth.login', user.id, { sessionId: session.id });
 
-    const tokens = this.signAccessToken(user.id, session.id);
+    const tokens = this.signAccessToken(user.id, session.id, {
+      email: user.email,
+      displayName: user.profile?.displayName ?? user.email.split('@')[0],
+    });
 
     this.logger.log({ event: 'auth.login', userId: user.id });
 
@@ -304,7 +310,15 @@ export class AuthService {
       return created;
     });
 
-    const tokens = this.signAccessToken(newSession.userId, newSession.id);
+    const matchedUser = await this.prisma.user.findUnique({
+      where: { id: newSession.userId },
+      include: { profile: true },
+    });
+
+    const tokens = this.signAccessToken(newSession.userId, newSession.id, {
+      email: matchedUser?.email,
+      displayName: matchedUser?.profile?.displayName ?? matchedUser?.email?.split('@')[0],
+    });
     this.logger.log({
       event: 'auth.refresh',
       userId: newSession.userId,
@@ -426,10 +440,11 @@ export class AuthService {
   private signAccessToken(
     userId: string,
     sessionId: string,
+    claims?: { email?: string; displayName?: string },
   ): { accessToken: string } {
     const expiresIn = this.accessExpiresIn();
     const accessToken = this.jwt.sign(
-      { sub: userId, sid: sessionId },
+      { sub: userId, sid: sessionId, ...claims },
       { expiresIn },
     );
     return { accessToken };

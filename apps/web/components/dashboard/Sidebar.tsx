@@ -25,8 +25,8 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 interface SidebarProps {
-  userDisplayName: string;
-  userEmail: string;
+  userDisplayName?: string | null;
+  userEmail?: string | null;
 }
 
 export function Sidebar({ userDisplayName, userEmail }: SidebarProps) {
@@ -34,12 +34,15 @@ export function Sidebar({ userDisplayName, userEmail }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const initials = userDisplayName
+  const safeName = (userDisplayName || (userEmail ? userEmail.split('@')[0] : 'User') || 'User').trim();
+  const safeEmail = userEmail || '';
+  const initials = (safeName
     .split(' ')
+    .filter(Boolean)
     .map((n) => n[0])
     .join('')
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2)) || 'U';
 
   const navContent = (
     <div className="flex flex-col h-full">
@@ -142,10 +145,10 @@ export function Sidebar({ userDisplayName, userEmail }: SidebarProps) {
                 className="overflow-hidden min-w-0"
               >
                 <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                  {userDisplayName}
+                  {safeName}
                 </p>
                 <p className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>
-                  {userEmail}
+                  {safeEmail}
                 </p>
               </motion.div>
             )}

@@ -15,31 +15,57 @@ const AUTH_PREFIXES = ['/login', '/register'];
 // Middleware
 // ---------------------------------------------------------------------------
 
+function isTokenExpired(token?: string): boolean {
+  if (!token) return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return false;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json = atob(base64);
+    const payload = JSON.parse(json);
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Edge Middleware for SAAR.
  *
- * Performs a lightweight presence-check of the session cookie ONLY.
+ * Performs a lightweight presence and expiration check of the session cookie.
  * Full cryptographic validation happens in `lib/auth.ts` (server-side).
- * This keeps middleware latency minimal and within Edge constraints.
  */
 export function middleware(request: NextRequest): NextResponse {
-  const { pathname } = request.nextUrl;
-  const hasSessionCookie = Boolean(
-    request.cookies.get(SESSION_COOKIE_NAME)?.value,
-  );
+  const { pathname, searchParams } = request.nextUrl;
+  const rawCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const expired = isTokenExpired(rawCookie);
+  const hasValidSession = Boolean(rawCookie && !expired);
 
-  // Protected route — no cookie → redirect to login
+  // Protected route — no valid session → clear invalid cookie & redirect to login
   if (PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
-    if (!hasSessionCookie) {
+    if (!hasValidSession) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('next', pathname);
-      return NextResponse.redirect(loginUrl);
+      const response = NextResponse.redirect(loginUrl);
+      if (rawCookie) {
+        response.cookies.delete(SESSION_COOKIE_NAME);
+      }
+      return response;
     }
   }
 
-  // Auth route — cookie present → redirect to dashboard
+  // Auth route — valid session present → redirect to dashboard
   if (AUTH_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
-    if (hasSessionCookie) {
+    if (rawCookie && expired) {
+      const response = NextResponse.next();
+      response.cookies.delete(SESSION_COOKIE_NAME);
+      return response;
+    }
+
+    if (hasValidSession && !searchParams.has('logout') && !searchParams.has('force')) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
   }

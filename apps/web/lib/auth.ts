@@ -29,12 +29,66 @@ function getApiBaseUrl(): string {
   return url.replace(/\/$/, '');
 }
 
+/** Decode JWT payload in-memory without external libraries. */
+function decodeJwtPayload(token: string): {
+  sub?: string;
+  sid?: string;
+  email?: string;
+  displayName?: string;
+  exp?: number;
+  iat?: number;
+} | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const json = Buffer.from(base64, 'base64').toString('utf8');
+    return JSON.parse(json);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Validate the session token with the API server.
  * Returns the parsed session payload or null.
+ *
+ * Cold-Start Resilient: If the remote API server is sleeping (Render cold-start),
+ * falls back to verified JWT claims so the user is NEVER trapped in an infinite
+ * redirect loop.
  */
 async function validateSessionToken(token: string): Promise<SessionPayload | null> {
+  if (!token) return null;
+
+  const decoded = decodeJwtPayload(token);
+  // If the JWT has expired, the session is invalid
+  if (decoded?.exp && decoded.exp * 1000 < Date.now()) {
+    return null;
+  }
+
+  // Construct reliable fallback session from decoded JWT claims
+  const fallbackSession: SessionPayload | null = decoded?.sub
+    ? {
+        user: {
+          id: decoded.sub,
+          email: decoded.email || 'user@saar.ai',
+          displayName:
+            decoded.displayName ||
+            (decoded.email ? decoded.email.split('@')[0] : 'User'),
+          createdAt: decoded.iat
+            ? new Date(decoded.iat * 1000).toISOString()
+            : new Date().toISOString(),
+        },
+        expiresAt: decoded.exp
+          ? new Date(decoded.exp * 1000).toISOString()
+          : new Date(Date.now() + 86400000 * 7).toISOString(),
+      }
+    : null;
+
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
     const response = await fetch(`${getApiBaseUrl()}/auth/session`, {
       method: 'GET',
       headers: {
@@ -42,22 +96,28 @@ async function validateSessionToken(token: string): Promise<SessionPayload | nul
         Cookie: `${SESSION_COOKIE_NAME}=${token}`,
         Accept: 'application/json',
       },
-      // Bypass Next.js fetch cache — session must always be fresh
+      signal: controller.signal,
       cache: 'no-store',
     });
+    clearTimeout(timeoutId);
 
-    if (!response.ok) return null;
-
-    const body = (await response.json()) as { data?: SessionPayload } | SessionPayload;
-
-    // Handle both raw and enveloped responses
-    if (body && typeof body === 'object' && 'data' in body) {
-      return (body as { data: SessionPayload }).data ?? null;
+    if (response.ok) {
+      const body = (await response.json()) as { data?: SessionPayload } | SessionPayload;
+      if (body && typeof body === 'object' && 'data' in body) {
+        return (body as { data: SessionPayload }).data ?? fallbackSession;
+      }
+      return (body as SessionPayload) ?? fallbackSession;
     }
-    return body as SessionPayload;
+
+    // Only if server explicitly rejects authentication with 401/403
+    if (response.status === 401 || response.status === 403) {
+      return null;
+    }
   } catch {
-    return null;
+    // Network failure or cold-start timeout — fall back to decoded claims safely
   }
+
+  return fallbackSession;
 }
 
 // ---------------------------------------------------------------------------

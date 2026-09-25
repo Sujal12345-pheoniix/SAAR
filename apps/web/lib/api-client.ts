@@ -121,11 +121,15 @@ export class ApiClient {
       }
     }
 
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), 30000);
+    const signal = options.signal ?? timeoutController.signal;
+
     const init: RequestInit = {
       method,
       headers,
       credentials: options.credentials ?? 'include',
-      signal: options.signal,
+      signal,
     };
 
     if (options.body !== undefined) {
@@ -136,20 +140,24 @@ export class ApiClient {
 
     try {
       response = await fetch(url, init);
-    } catch (networkError) {
-      // Network-level failure (offline, DNS, etc.)
+    } catch (networkError: unknown) {
+      clearTimeout(timeoutId);
+      const isAbort = networkError instanceof Error && networkError.name === 'AbortError';
       const errorPayload: ApiErrorResponse = {
         statusCode: 0,
         error: {
-          code: 'NETWORK_ERROR',
-          message:
-            networkError instanceof Error
-              ? networkError.message
-              : 'A network error occurred. Please check your connection.',
+          code: isAbort ? 'TIMEOUT_ERROR' : 'NETWORK_ERROR',
+          message: isAbort
+            ? 'The backend server is waking up from idle state. Please try again in a few seconds.'
+            : (networkError instanceof Error
+                ? networkError.message
+                : 'A network error occurred. Please check your connection.'),
         },
         requestId,
       };
       return { ok: false, error: errorPayload };
+    } finally {
+      clearTimeout(timeoutId);
     }
 
     // 204 No Content — success with no body

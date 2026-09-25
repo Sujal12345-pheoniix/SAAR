@@ -90,6 +90,10 @@ export default function RegisterPage() {
       const apiErrors: FormState['errors'] = {};
 
       switch (result.error.error.code) {
+        case 'TIMEOUT_ERROR':
+          apiErrors._form =
+            'The server is waking up from idle state. Please wait a moment and click Create account again.';
+          break;
         case 'EMAIL_TAKEN':
           apiErrors.email = 'This email is already in use. Sign in instead?';
           break;
