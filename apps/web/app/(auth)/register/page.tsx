@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
@@ -60,6 +60,11 @@ function validate(
 export default function RegisterPage() {
   const router = useRouter();
   const [state, setState] = useState<FormState>(INITIAL_STATE);
+
+  useEffect(() => {
+    // Proactively awaken backend if idle so submission is instant
+    apiClient.warmServer();
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

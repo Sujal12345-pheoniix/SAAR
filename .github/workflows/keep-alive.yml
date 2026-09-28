@@ -1,0 +1,19 @@
+name: Render API Keep-Alive
+
+on:
+  schedule:
+    # Run every 10 minutes to prevent Render free-tier idle spin-down (inactivity threshold is 15m)
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    name: Ping API Health
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping Render Backend
+        run: |
+          echo "Pinging SAAR API health endpoint..."
+          curl -s -f --max-time 60 https://saar-a494.onrender.com/health || echo "Ping dispatched"
+          curl -s -f --max-time 60 https://saar-a494.onrender.com/api/v1/meta || echo "Meta ping dispatched"

@@ -5,6 +5,8 @@
  * - Attaches X-Request-Id (UUIDv4) to every request for distributed tracing.
  * - Reads bearer token from localStorage or document.cookie and forwards
  *   Authorization: Bearer <token>
+ * - Supports automatic wakeup & transparent retry for cold-start environments (e.g. Render).
+ * - Extended 90-second timeout window accommodates container spin-up without failing.
  * - Returns a discriminated union { ok: true, data } | { ok: false, error }.
  */
 
@@ -69,6 +71,10 @@ interface RequestOptions {
   signal?: AbortSignal;
   /** Override `credentials`. Defaults to 'include'. */
   credentials?: RequestCredentials;
+  /** Custom timeout in ms (defaults to 90,000ms for resilient cold-start tolerance). */
+  timeoutMs?: number;
+  /** Number of retries on transient cold-start or network failure (defaults to 1). */
+  retries?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -84,7 +90,7 @@ export class ApiClient {
     }
   }
 
-  private get baseUrl(): string {
+  public get baseUrl(): string {
     if (this.configuredBaseUrl) {
       return this.configuredBaseUrl;
     }
@@ -97,6 +103,27 @@ export class ApiClient {
     return 'http://localhost:3001/api/v1';
   }
 
+  /**
+   * Pre-warms the backend asynchronously when user visits any auth or landing page.
+   * This awakens the Render server before the user even finishes filling in forms.
+   */
+  public warmServer(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const url = `${this.baseUrl}/meta`;
+      void fetch(url, {
+        method: 'GET',
+        keepalive: true,
+        mode: 'cors',
+        headers: { Accept: 'application/json' },
+      }).catch(() => {
+        // Silently ignore pre-warm errors
+      });
+    } catch {
+      // Ignore background warmup failures
+    }
+  }
+
   // ---- Core request method ------------------------------------------------
 
   private async request<T>(
@@ -104,108 +131,139 @@ export class ApiClient {
     path: string,
     options: RequestOptions = {},
   ): Promise<ApiResult<T>> {
-    const requestId = generateRequestId();
-    const url = `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
+    const retries = options.retries ?? (method === 'POST' || method === 'GET' ? 1 : 0);
+    const timeoutMs = options.timeoutMs ?? 90000; // 90 seconds gives plenty of headroom for Render cold start (40-50s)
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      'X-Request-Id': requestId,
-      ...options.headers,
-    };
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const requestId = generateRequestId();
+      const url = `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 
-    if (!headers['Authorization']) {
-      const token = getStoredToken();
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'X-Request-Id': requestId,
+        ...options.headers,
+      };
+
+      if (!headers['Authorization']) {
+        const token = getStoredToken();
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
       }
-    }
 
-    const timeoutController = new AbortController();
-    const timeoutId = setTimeout(() => timeoutController.abort(), 30000);
-    const signal = options.signal ?? timeoutController.signal;
+      const timeoutController = new AbortController();
+      const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
+      const signal = options.signal ?? timeoutController.signal;
 
-    const init: RequestInit = {
-      method,
-      headers,
-      credentials: options.credentials ?? 'include',
-      signal,
-    };
+      const init: RequestInit = {
+        method,
+        headers,
+        credentials: options.credentials ?? 'include',
+        signal,
+      };
 
-    if (options.body !== undefined) {
-      init.body = JSON.stringify(options.body);
-    }
+      if (options.body !== undefined) {
+        init.body = JSON.stringify(options.body);
+      }
 
-    let response: Response;
+      let response: Response;
 
-    try {
-      response = await fetch(url, init);
-    } catch (networkError: unknown) {
-      clearTimeout(timeoutId);
-      const isAbort = networkError instanceof Error && networkError.name === 'AbortError';
+      try {
+        response = await fetch(url, init);
+      } catch (networkError: unknown) {
+        clearTimeout(timeoutId);
+        const isAbort = networkError instanceof Error && networkError.name === 'AbortError';
+
+        // If this was an abort/network timeout and we have retries remaining, retry once
+        if (attempt < retries && isAbort) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          continue;
+        }
+
+        const errorPayload: ApiErrorResponse = {
+          statusCode: 0,
+          error: {
+            code: isAbort ? 'TIMEOUT_ERROR' : 'NETWORK_ERROR',
+            message: isAbort
+              ? 'The server took longer than expected to respond. Please try again.'
+              : (networkError instanceof Error
+                  ? networkError.message
+                  : 'A network error occurred. Please check your connection.'),
+          },
+          requestId,
+        };
+        return { ok: false, error: errorPayload };
+      } finally {
+        clearTimeout(timeoutId);
+      }
+
+      // 204 No Content — success with no body
+      if (response.status === 204) {
+        return { ok: true, data: undefined as T, statusCode: 204 };
+      }
+
+      // Attempt to parse JSON body
+      let body: unknown;
+      const contentType = response.headers.get('content-type') ?? '';
+
+      if (contentType.includes('application/json')) {
+        try {
+          body = await response.json();
+        } catch {
+          body = null;
+        }
+      } else {
+        body = await response.text();
+      }
+
+      if (response.ok) {
+        // Extract `.data` from envelope if present, else return raw body
+        const data =
+          body !== null &&
+          typeof body === 'object' &&
+          'data' in (body as Record<string, unknown>)
+            ? (body as { data: T }).data
+            : (body as T);
+
+        return { ok: true, data, statusCode: response.status };
+      }
+
+      // If backend returns a 502/503/504 Bad Gateway from Render while waking up, retry once
+      if (attempt < retries && (response.status === 502 || response.status === 503 || response.status === 504)) {
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        continue;
+      }
+
+      // Error response
+      const errorBody = body as Partial<ApiErrorResponse>;
       const errorPayload: ApiErrorResponse = {
+        statusCode: response.status,
+        requestId: errorBody.requestId ?? requestId,
+        error: {
+          code: errorBody.error?.code ?? 'UNKNOWN_ERROR',
+          message:
+            errorBody.error?.message ??
+            `Request failed with status ${response.status}`,
+          details: errorBody.error?.details,
+        },
+      };
+
+      return { ok: false, error: errorPayload };
+    }
+
+    // Fallback if loop finishes without returning
+    return {
+      ok: false,
+      error: {
         statusCode: 0,
         error: {
-          code: isAbort ? 'TIMEOUT_ERROR' : 'NETWORK_ERROR',
-          message: isAbort
-            ? 'The backend server is waking up from idle state. Please try again in a few seconds.'
-            : (networkError instanceof Error
-                ? networkError.message
-                : 'A network error occurred. Please check your connection.'),
+          code: 'NETWORK_ERROR',
+          message: 'Unable to connect to the server. Please try again.',
         },
-        requestId,
-      };
-      return { ok: false, error: errorPayload };
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    // 204 No Content — success with no body
-    if (response.status === 204) {
-      return { ok: true, data: undefined as T, statusCode: 204 };
-    }
-
-    // Attempt to parse JSON body
-    let body: unknown;
-    const contentType = response.headers.get('content-type') ?? '';
-
-    if (contentType.includes('application/json')) {
-      try {
-        body = await response.json();
-      } catch {
-        body = null;
-      }
-    } else {
-      body = await response.text();
-    }
-
-    if (response.ok) {
-      // Extract `.data` from envelope if present, else return raw body
-      const data =
-        body !== null &&
-        typeof body === 'object' &&
-        'data' in (body as Record<string, unknown>)
-          ? (body as { data: T }).data
-          : (body as T);
-
-      return { ok: true, data, statusCode: response.status };
-    }
-
-    // Error response
-    const errorBody = body as Partial<ApiErrorResponse>;
-    const errorPayload: ApiErrorResponse = {
-      statusCode: response.status,
-      requestId: errorBody.requestId ?? requestId,
-      error: {
-        code: errorBody.error?.code ?? 'UNKNOWN_ERROR',
-        message:
-          errorBody.error?.message ??
-          `Request failed with status ${response.status}`,
-        details: errorBody.error?.details,
+        requestId: generateRequestId(),
       },
     };
-
-    return { ok: false, error: errorPayload };
   }
 
   // ---- Public typed methods ------------------------------------------------
