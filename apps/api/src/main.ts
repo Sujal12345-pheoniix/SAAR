@@ -2,11 +2,31 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import { v4 as uuidv4 } from 'uuid';
-import { json, urlencoded } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import pino from 'pino';
+
+// Safely resolve body parsers with fallback to bundled platform parser
+type MiddlewareFn = (req: Request, res: Response, next: NextFunction) => void;
+let jsonParser: ((options?: { limit?: string }) => MiddlewareFn) | undefined;
+let urlencodedParser: ((options?: { extended?: boolean; limit?: string; parameterLimit?: number }) => MiddlewareFn) | undefined;
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const express = require('express') as { json: typeof jsonParser; urlencoded: typeof urlencodedParser };
+  jsonParser = express.json;
+  urlencodedParser = express.urlencoded;
+} catch {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const bodyParser = require('body-parser') as { json: typeof jsonParser; urlencoded: typeof urlencodedParser };
+    jsonParser = bodyParser.json;
+    urlencodedParser = bodyParser.urlencoded;
+  } catch {
+    // NestJS default built-in body parsing remains active
+  }
+}
 
 async function bootstrap(): Promise<void> {
   const logger = pino({
@@ -22,8 +42,12 @@ async function bootstrap(): Promise<void> {
   });
 
   // ── Request size limits ──────────────────────────────────────────────────────
-  app.use(json({ limit: '1mb' }));
-  app.use(urlencoded({ extended: true, limit: '1mb', parameterLimit: 1000 }));
+  if (typeof jsonParser === 'function') {
+    app.use(jsonParser({ limit: '1mb' }));
+  }
+  if (typeof urlencodedParser === 'function') {
+    app.use(urlencodedParser({ extended: true, limit: '1mb', parameterLimit: 1000 }));
+  }
 
   // ── Security headers ────────────────────────────────────────────────────────
   const isProduction = process.env['NODE_ENV'] === 'production';

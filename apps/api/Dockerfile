@@ -3,8 +3,8 @@ FROM node:24-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm and build essentials for native addons (argon2)
-RUN apk add --no-cache python3 make g++ libc6-compat
+# Install pnpm and build essentials for native addons (argon2) and openssl for Prisma
+RUN apk add --no-cache python3 make g++ libc6-compat openssl
 RUN corepack enable && corepack prepare pnpm@12.3.4 --activate
 
 # Copy workspace and lock files
@@ -17,7 +17,7 @@ COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 
 # Generate Prisma Client
-RUN pnpm --filter @saar/api exec prisma generate --schema=./prisma/schema.prisma
+RUN pnpm db:generate
 
 # Build contracts and api
 RUN pnpm --filter @saar/contracts build
@@ -31,8 +31,8 @@ FROM node:24-alpine AS runner
 
 WORKDIR /app
 
-# Install dumb-init for proper signal handling and curl for healthchecks
-RUN apk add --no-cache dumb-init curl
+# Install dumb-init for proper signal handling, curl for healthchecks, and openssl for Prisma runtime
+RUN apk add --no-cache dumb-init curl openssl
 
 ENV NODE_ENV=production
 ENV API_PORT=3001

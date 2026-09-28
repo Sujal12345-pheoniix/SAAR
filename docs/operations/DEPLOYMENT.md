@@ -48,3 +48,21 @@ Ensure all required production secrets are configured in the cloud secret manage
 - `JWT_REFRESH_SECRET` (Minimum 32 random bytes)
 - `CORS_ALLOWED_ORIGINS` (Comma-separated production domains)
 - `NODE_ENV=production`
+
+---
+
+## 5. Render.com Web Service Deployment
+When deploying `@saar/api` on Render:
+- **Service Type**: Web Service (Node runtime)
+- **Root Directory**: `.` (leave empty or repository root)
+- **Build Command**:
+  ```bash
+  pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @saar/contracts build && pnpm --filter @saar/api build
+  ```
+- **Start Command**:
+  ```bash
+  node apps/api/dist/main.js
+  ```
+- **Port**: Render automatically provisions `PORT=10000`. The NestJS API reads `process.env.PORT` and binds to `0.0.0.0`.
+- **Health Check Path**: `/api/v1/health`
+

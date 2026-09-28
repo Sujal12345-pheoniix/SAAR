@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
+    "express": "^4.22.1",
     "prisma": "^5.20.0"
   },
   "packageManager": "pnpm@12.3.4"
