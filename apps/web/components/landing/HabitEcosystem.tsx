@@ -217,7 +217,7 @@ export function HabitEcosystem() {
                             transition={{ duration: 0.8, delay: 0.1 * LIFE_AREAS.indexOf(a), ease: [0.16, 1, 0.3, 1] }}
                           />
                         </div>
-                        <span className="text-xs font-semibold tabular-nums" style={{ color: 'var(--text-tertiary)' }}>
+                        <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--text-primary)' }}>
                           {a.progress}%
                         </span>
                       </div>
@@ -237,25 +237,25 @@ export function HabitEcosystem() {
                       <h3 className="text-2xl font-bold" style={{ letterSpacing: '-0.025em', color: 'var(--text-primary)' }}>
                         {activeArea.label}
                       </h3>
-                      <p className="text-sm" style={{ color: activeArea.color, fontWeight: 600 }}>
+                      <p className="text-sm" style={{ color: activeArea.color, fontWeight: 700 }}>
                         {activeArea.progress}% engagement
                       </p>
                     </div>
                   </div>
 
-                  <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
+                  <p className="text-sm mb-6 font-medium" style={{ color: 'var(--text-secondary)' }}>
                     {activeArea.detail}
                   </p>
 
                   {/* Mock insight */}
                   <div
-                    className="rounded-2xl p-4"
-                    style={{ background: `${activeArea.color}10`, border: `1px solid ${activeArea.color}20` }}
+                    className="rounded-2xl p-5 shadow-sm"
+                    style={{ background: `${activeArea.color}12`, border: `1.5px solid ${activeArea.color}30` }}
                   >
-                    <p className="text-xs font-semibold mb-2" style={{ color: activeArea.color }}>
-                      💡 SAAR Insight
+                    <p className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: activeArea.color }}>
+                      💡 SAAR Pattern Insight
                     </p>
-                    <p className="text-sm" style={{ color: 'var(--text-primary)', lineHeight: 1.6 }}>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)', lineHeight: 1.65 }}>
                       {activeArea.id === 'health' && 'Your recovery habits directly correlate with next-day focus scores. Consider prioritizing sleep consistency.'}
                       {activeArea.id === 'career' && 'Deep work blocks before noon show 2x better output for you. Protect your mornings.'}
                       {activeArea.id === 'learning' && 'You retain more when you read before your main task block. Try front-loading learning daily.'}

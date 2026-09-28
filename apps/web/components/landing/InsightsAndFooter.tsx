@@ -3,164 +3,246 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef, useState } from 'react';
 import { FadeIn } from '@/components/motion/FadeIn';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles, CheckCircle2, TrendingUp, ShieldCheck } from 'lucide-react';
 import { SaarLogo } from '@/components/ui/SaarLogo';
+import Link from 'next/link';
 
 const RAW_SIGNALS = [
-  { label: '7 workouts logged', icon: '💪', color: '#22C55E' },
-  { label: '5.2h learning time', icon: '📚', color: '#06B6D4' },
-  { label: '6.8h avg sleep', icon: '😴', color: '#8B5CF6' },
-  { label: '4 missed habits', icon: '⚠️', color: '#F59E0B' },
-  { label: '82% task rate', icon: '✅', color: '#6366F1' },
+  { label: '7 workouts logged', sub: 'Strength & Zone 2 cardio', icon: '💪', color: '#22C55E', tag: '+2 vs target' },
+  { label: '5.2h deep learning', sub: 'TypeScript & Architecture', icon: '📚', color: '#06B6D4', tag: 'Streak: 6 days' },
+  { label: '6.8h avg sleep duration', sub: 'Sleep score: 79/100', icon: '😴', color: '#8B5CF6', tag: '-0.7h deficit' },
+  { label: '4 habit friction points', sub: 'Evening routine slip', icon: '⚠️', color: '#F59E0B', tag: 'High friction' },
+  { label: '82% overall task completion', sub: '37 of 45 tasks closed', icon: '✅', color: '#6366F1', tag: 'Top quartile' },
 ];
 
 const INSIGHTS = [
   {
     observation: 'Your consistency drops 38% after high-workload days.',
-    action: 'Consider scheduling recovery habits after intense work sessions.',
+    action: 'Schedule an automatic 20-minute restorative wind-down ritual whenever daily work hours exceed 8.5h.',
     confidence: 92,
+    impact: 'High Impact',
+    category: 'Energy & Recovery',
   },
   {
-    observation: 'You perform best when sleep exceeds 7.5 hours.',
-    action: 'Moving workout to morning improves your energy through the day.',
+    observation: 'You perform best when sleep duration exceeds 7.5 hours.',
+    action: 'Moving your morning workout 30 minutes earlier creates sustained alertness across the entire afternoon.',
     confidence: 88,
+    impact: 'Cognitive Optimization',
+    category: 'Circadian Rhythm',
   },
   {
-    observation: 'Learning and focus scores are deeply correlated for you.',
-    action: 'Front-load your learning block before 10am for peak alignment.',
+    observation: 'Learning blocks and creative focus scores are deeply correlated for you.',
+    action: 'Front-load your primary 45-minute learning block before 10:30 AM to maximize daily momentum.',
     confidence: 85,
+    impact: 'Skill Acceleration',
+    category: 'Habit Architecture',
   },
 ];
 
 export function InsightsSection() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: '-80px' });
+  const isInView = useInView(ref, { once: true, margin: '-60px' });
   const [activeInsight, setActiveInsight] = useState(0);
 
   return (
-    <section id="insights" className="py-32 px-6 w-full flex flex-col items-center justify-center" style={{ background: 'var(--surface)' }}>
-      <div className="w-full max-w-6xl mx-auto" style={{ width: '100%', maxWidth: '72rem', marginLeft: 'auto', marginRight: 'auto' }}>
-        <FadeIn className="text-center mb-20 w-full flex flex-col items-center">
-          <p className="text-sm font-semibold tracking-widest uppercase mb-4 text-center" style={{ color: 'var(--accent)', letterSpacing: '0.1em' }}>
-            Intelligence in Action
-          </p>
-          <h2 className="text-5xl font-bold mb-5 text-center" style={{ letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+    <section
+      id="insights"
+      className="relative py-24 md:py-32 px-4 sm:px-6 w-full flex flex-col items-center justify-center"
+      style={{ background: 'var(--surface)' }}
+    >
+      <div className="w-full max-w-6xl mx-auto">
+        {/* Header */}
+        <FadeIn className="text-center mb-16 md:mb-20 w-full flex flex-col items-center">
+          <div
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider mb-4"
+            style={{
+              background: 'rgba(99,102,241,0.08)',
+              color: 'var(--accent)',
+              border: '1px solid rgba(99,102,241,0.18)',
+              letterSpacing: '0.08em',
+            }}
+          >
+            <Sparkles size={12} className="text-indigo-500" />
+            Synthesis Engine
+          </div>
+
+          <h2
+            className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-5 text-center"
+            style={{ letterSpacing: '-0.03em', color: 'var(--text-primary)' }}
+          >
             Raw data becomes<br />
             <span className="gradient-text">real clarity.</span>
           </h2>
-          <p className="text-xl max-w-md mx-auto text-center" style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginLeft: 'auto', marginRight: 'auto' }}>
-            SAAR transforms what you do into insights you can actually act on.
+          <p
+            className="text-lg sm:text-xl max-w-lg mx-auto text-center"
+            style={{ color: 'var(--text-secondary)', lineHeight: 1.65 }}
+          >
+            SAAR transforms disparate daily inputs into precise, contextual intelligence you can immediately act upon.
           </p>
         </FadeIn>
 
-        <div ref={ref} className="grid lg:grid-cols-2 gap-8 items-stretch w-full max-w-5xl mx-auto" style={{ width: '100%', maxWidth: '64rem', marginLeft: 'auto', marginRight: 'auto' }}>
-          {/* Left: Raw signals */}
-          <div>
-            <p className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: 'var(--text-tertiary)', letterSpacing: '0.1em' }}>
-              Raw Behavior — This Week
-            </p>
-            <div className="flex flex-col gap-3">
+        {/* 2 Columns: Signals & Insights */}
+        <div
+          ref={ref}
+          className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start w-full max-w-5xl mx-auto"
+        >
+          {/* Left Column: Raw Behavioral Signals */}
+          <div className="lg:col-span-6 flex flex-col gap-3">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <p
+                className="text-xs font-bold tracking-widest uppercase"
+                style={{ color: 'var(--text-tertiary)', letterSpacing: '0.12em' }}
+              >
+                Raw Signals · Logged This Week
+              </p>
+              <span className="text-xs font-semibold text-indigo-600">5 sources active</span>
+            </div>
+
+            <div className="flex flex-col gap-2.5">
               {RAW_SIGNALS.map((sig, i) => (
                 <motion.div
                   key={sig.label}
-                  className="flex items-center gap-4 p-4 rounded-2xl"
+                  className="flex items-center gap-3.5 p-4 rounded-2xl transition-all duration-200"
                   style={{
                     background: 'var(--bg)',
                     border: '1px solid var(--border)',
                   }}
-                  initial={{ opacity: 0, x: -20 }}
+                  initial={{ opacity: 0, x: -16 }}
                   animate={isInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ duration: 0.5, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
-                  whileHover={{ x: 4 }}
+                  transition={{ duration: 0.4, delay: i * 0.07 }}
+                  whileHover={{ x: 4, borderColor: 'rgba(99,102,241,0.3)' }}
                 >
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                    style={{ background: `${sig.color}15` }}
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                    style={{ background: `${sig.color}15`, border: `1px solid ${sig.color}30` }}
                   >
                     {sig.icon}
                   </div>
-                  <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{sig.label}</span>
-                  <div className="ml-auto w-2 h-2 rounded-full" style={{ background: sig.color }} />
+
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                      {sig.label}
+                    </p>
+                    <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                      {sig.sub}
+                    </p>
+                  </div>
+
+                  <span
+                    className="text-[11px] font-semibold px-2.5 py-1 rounded-full flex-shrink-0"
+                    style={{ background: 'rgba(11,16,32,0.04)', color: 'var(--text-secondary)' }}
+                  >
+                    {sig.tag}
+                  </span>
                 </motion.div>
               ))}
             </div>
-
-            {/* Arrow connector */}
-            <div className="flex items-center justify-center my-6 lg:hidden">
-              <motion.div
-                animate={{ y: [0, 6, 0] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                <ArrowRight size={24} style={{ color: 'var(--accent)' }} className="rotate-90" />
-              </motion.div>
-            </div>
           </div>
 
-          {/* Right: Insight output */}
-          <div>
-            <p className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: 'var(--text-tertiary)', letterSpacing: '0.1em' }}>
-              AI-Generated Insight
-            </p>
+          {/* Right Column: AI-Generated Insights */}
+          <div className="lg:col-span-6 flex flex-col gap-3">
+            <div className="flex items-center justify-between mb-2 px-1">
+              <p
+                className="text-xs font-bold tracking-widest uppercase"
+                style={{ color: 'var(--text-tertiary)', letterSpacing: '0.12em' }}
+              >
+                Synthesized Insights · Click to inspect
+              </p>
+              <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Live Analysis
+              </span>
+            </div>
 
             <div className="flex flex-col gap-3">
-              {INSIGHTS.map((insight, i) => (
-                <motion.button
-                  key={i}
-                  className="text-left w-full border-none cursor-pointer"
-                  onClick={() => setActiveInsight(i)}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={isInView ? { opacity: 1, x: 0 } : {}}
-                  transition={{ duration: 0.5, delay: 0.3 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
-                >
+              {INSIGHTS.map((insight, i) => {
+                const isActive = activeInsight === i;
+
+                return (
                   <motion.div
-                    className="p-5 rounded-2xl transition-all"
-                    animate={{
-                      background: activeInsight === i
-                        ? 'linear-gradient(145deg, #0B1020, #1a1f3a)'
+                    key={i}
+                    onClick={() => setActiveInsight(i)}
+                    className="w-full text-left rounded-2xl cursor-pointer transition-all duration-300 overflow-hidden"
+                    style={{
+                      background: isActive
+                        ? 'linear-gradient(145deg, #0B1020 0%, #171C35 100%)'
                         : 'var(--bg)',
-                      border: activeInsight === i
-                        ? '1px solid rgba(99,102,241,0.3)'
+                      border: isActive
+                        ? '1.5px solid rgba(99,102,241,0.5)'
                         : '1px solid var(--border)',
-                      boxShadow: activeInsight === i
-                        ? '0 4px 20px rgba(99,102,241,0.15)'
+                      boxShadow: isActive
+                        ? '0 12px 35px -8px rgba(99,102,241,0.25)'
                         : 'none',
                     }}
-                    transition={{ duration: 0.25 }}
+                    initial={{ opacity: 0, x: 16 }}
+                    animate={isInView ? { opacity: 1, x: 0 } : {}}
+                    transition={{ duration: 0.4, delay: 0.2 + i * 0.1 }}
                   >
-                    <p
-                      className="text-sm font-semibold mb-2"
-                      style={{ color: activeInsight === i ? '#FFFFFF' : 'var(--text-primary)', lineHeight: 1.5 }}
-                    >
-                      &ldquo;{insight.observation}&rdquo;
-                    </p>
-                    {activeInsight === i && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        transition={{ duration: 0.3 }}
+                    <div className="p-5">
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span
+                          className="text-[11px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
+                          style={{
+                            background: isActive ? 'rgba(99,102,241,0.25)' : 'rgba(11,16,32,0.06)',
+                            color: isActive ? '#C7D2FE' : 'var(--text-secondary)',
+                          }}
+                        >
+                          {insight.category}
+                        </span>
+
+                        <span
+                          className="text-xs font-semibold"
+                          style={{ color: isActive ? '#34D399' : 'var(--accent)' }}
+                        >
+                          {insight.impact}
+                        </span>
+                      </div>
+
+                      <h3
+                        className="text-base sm:text-lg font-bold leading-snug"
+                        style={{ color: isActive ? '#FFFFFF' : 'var(--text-primary)' }}
                       >
-                        <p className="text-sm mt-2 mb-4" style={{ color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>
-                          {insight.action}
-                        </p>
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
-                            <motion.div
-                              className="h-full rounded-full"
-                              style={{ background: '#6366F1' }}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${insight.confidence}%` }}
-                              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-                            />
+                        &ldquo;{insight.observation}&rdquo;
+                      </h3>
+
+                      {isActive && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          transition={{ duration: 0.3 }}
+                          className="mt-4 pt-4 border-t border-white/10 flex flex-col gap-3.5"
+                        >
+                          <div>
+                            <span className="text-[11px] font-mono uppercase tracking-wider text-indigo-300 font-semibold block mb-1">
+                              Prescribed Next Action:
+                            </span>
+                            <p className="text-sm font-medium leading-relaxed" style={{ color: '#E2E8F0' }}>
+                              {insight.action}
+                            </p>
                           </div>
-                          <span className="text-xs font-semibold tabular-nums" style={{ color: 'rgba(255,255,255,0.5)' }}>
-                            {insight.confidence}% confidence
-                          </span>
-                        </div>
-                      </motion.div>
-                    )}
+
+                          <div className="flex flex-col gap-1.5 pt-1">
+                            <div className="flex items-center justify-between text-xs font-mono">
+                              <span style={{ color: '#CBD5E1' }}>Algorithmic Confidence</span>
+                              <strong className="text-white font-bold">{insight.confidence}% verified</strong>
+                            </div>
+
+                            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                              <motion.div
+                                className="h-full rounded-full"
+                                style={{ background: 'linear-gradient(90deg, #6366F1, #38BDF8)' }}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${insight.confidence}%` }}
+                                transition={{ duration: 0.6 }}
+                              />
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </div>
                   </motion.div>
-                </motion.button>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -172,66 +254,90 @@ export function InsightsSection() {
 /* ---- CTA Section ---- */
 export function CtaSection() {
   return (
-    <section className="py-32 px-6 w-full flex flex-col items-center justify-center" style={{ background: 'var(--bg)' }}>
-      <div className="w-full max-w-4xl mx-auto text-center" style={{ width: '100%', maxWidth: '56rem', marginLeft: 'auto', marginRight: 'auto' }}>
+    <section
+      className="relative py-24 md:py-32 px-4 sm:px-6 w-full flex flex-col items-center justify-center overflow-hidden"
+      style={{ background: 'var(--bg)' }}
+    >
+      <div className="w-full max-w-4xl mx-auto">
         <FadeIn className="w-full flex flex-col items-center">
           <div
-            className="w-full rounded-3xl p-10 sm:p-16 relative overflow-hidden"
+            className="w-full rounded-3xl p-8 sm:p-14 md:p-16 relative overflow-hidden"
             style={{
-              background: 'linear-gradient(145deg, #0B1020 0%, #1a1f3a 100%)',
-              boxShadow: '0 30px 80px rgba(11,16,32,0.25)',
-              width: '100%',
+              background: 'linear-gradient(150deg, #0B1020 0%, #151A32 50%, #1E1B4B 100%)',
+              boxShadow: '0 30px 80px -15px rgba(11,16,32,0.35), 0 0 0 1px rgba(255,255,255,0.08)',
             }}
           >
-            {/* Glow */}
+            {/* Top Atmospheric Radial Glow */}
             <div
-              className="absolute inset-0 pointer-events-none"
+              className="absolute -top-32 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full pointer-events-none"
               style={{
-                background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(99,102,241,0.2) 0%, transparent 60%)',
+                background: 'radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%)',
+                filter: 'blur(50px)',
               }}
             />
 
             <div className="relative z-10 flex flex-col items-center text-center">
+              {/* Badge with 100% visible, high-contrast text */}
               <div
-                className="inline-block px-4 py-2 rounded-full text-xs font-semibold tracking-wider uppercase mb-8"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-mono font-bold tracking-widest uppercase mb-6 sm:mb-8"
                 style={{
-                  background: 'rgba(99,102,241,0.2)',
-                  color: '#A5B4FC',
-                  border: '1px solid rgba(99,102,241,0.3)',
+                  background: 'rgba(99,102,241,0.35)',
+                  color: '#FFFFFF',
+                  border: '1px solid rgba(165,180,252,0.45)',
+                  boxShadow: '0 0 16px rgba(99,102,241,0.3)',
                   letterSpacing: '0.1em',
                 }}
               >
+                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
                 Begin your growth journey
               </div>
 
+              {/* Headline */}
               <h2
-                className="text-4xl sm:text-5xl font-bold text-white mb-6 text-center"
+                className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 text-center tracking-tight"
                 style={{ letterSpacing: '-0.03em', lineHeight: 1.15, color: '#FFFFFF' }}
               >
                 Understand yourself.<br />
-                Build what comes next.
+                <span className="gradient-text">Build what comes next.</span>
               </h2>
 
-              <p className="text-lg sm:text-xl mb-10 text-center max-w-xl mx-auto" style={{ color: 'rgba(255,255,255,0.75)', lineHeight: 1.7, marginLeft: 'auto', marginRight: 'auto' }}>
-                SAAR is the intelligence layer between where you are and who you want to become.
+              {/* Subheading */}
+              <p
+                className="text-base sm:text-xl mb-10 text-center max-w-xl mx-auto leading-relaxed"
+                style={{ color: '#E2E8F0', lineHeight: 1.65 }}
+              >
+                SAAR is the personal intelligence layer between where you are today and the identity you are building tomorrow.
               </p>
 
+              {/* CTA Action Button */}
               <div className="flex flex-wrap gap-4 justify-center">
                 <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }}>
-                  <a
+                  <Link
                     href="/register"
-                    className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl font-semibold text-base text-white"
+                    className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-base !text-white shadow-xl transition-all duration-200"
                     style={{
-                      background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-                      boxShadow: '0 4px 20px rgba(99,102,241,0.4)',
+                      background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+                      boxShadow: '0 8px 30px rgba(99,102,241,0.5)',
                       textDecoration: 'none',
                       color: '#FFFFFF',
                     }}
                   >
                     Start for free
-                    <ArrowRight size={16} />
-                  </a>
+                    <ArrowRight size={18} className="text-white" />
+                  </Link>
                 </motion.div>
+              </div>
+
+              {/* Guarantee / trust signals */}
+              <div className="flex items-center gap-6 mt-8 text-xs font-medium" style={{ color: '#94A3B8' }}>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 size={14} className="text-emerald-400" />
+                  No credit card required
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-indigo-400" />
+                  Private & encrypted
+                </span>
               </div>
             </div>
           </div>
@@ -245,19 +351,26 @@ export function CtaSection() {
 export function Footer() {
   return (
     <footer
-      className="py-10 px-6 border-t w-full flex justify-center"
+      className="py-12 px-6 border-t w-full flex justify-center"
       style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
     >
-      <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4" style={{ width: '100%', maxWidth: '72rem', marginLeft: 'auto', marginRight: 'auto' }}>
+      <div className="w-full max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
         <SaarLogo href="/home" size="xs" />
-        <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+
+        <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
           &copy; {new Date().getFullYear()} SAAR. Personal Growth Intelligence.
         </p>
+
         <div className="flex gap-6">
           {['Privacy', 'Terms'].map((l) => (
-            <a key={l} href={`/${l.toLowerCase()}`} className="text-sm" style={{ color: 'var(--text-tertiary)', textDecoration: 'none' }}>
+            <Link
+              key={l}
+              href={`/${l.toLowerCase()}`}
+              className="text-sm font-medium transition-colors hover:text-indigo-600"
+              style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+            >
               {l}
-            </a>
+            </Link>
           ))}
         </div>
       </div>

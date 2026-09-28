@@ -138,10 +138,18 @@ a:hover {
   text-decoration: none;
 }
 
+/* Ensure button links, white text links, and styled links are not overridden by a */
+a.text-white,
+a[class*="text-white"],
+.btn-primary,
+.btn-primary a {
+  color: #FFFFFF !important;
+}
+
 /* ---- Selection ---- */
 ::selection {
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--text-primary);
+  background: rgba(99, 102, 241, 0.25);
+  color: inherit;
 }
 
 /* ---- Scrollbar ---- */

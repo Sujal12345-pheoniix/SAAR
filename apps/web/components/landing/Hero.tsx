@@ -1,10 +1,11 @@
 'use client';
 
 import { motion, useMotionValue, useSpring } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { IntelligenceCoreLoader } from '@/components/3d/IntelligenceCoreLoader';
+import { HeroMotionBackground } from '@/components/3d/HeroMotionBackground';
 
 /* ---- Background particles (pure CSS) ---- */
 function BackgroundParticles() {
@@ -77,6 +78,7 @@ function StatPill({ value, label }: { value: string; label: string }) {
 export function Hero() {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const heroRef = useRef<HTMLElement>(null);
 
   const smoothX = useSpring(mouseX, { stiffness: 60, damping: 20 });
@@ -86,8 +88,11 @@ export function Hero() {
     const handleMove = (e: MouseEvent) => {
       if (!heroRef.current) return;
       const rect = heroRef.current.getBoundingClientRect();
-      mouseX.set((e.clientX - rect.width / 2) / rect.width);
-      mouseY.set((e.clientY - rect.height / 2) / rect.height);
+      const nx = (e.clientX - rect.width / 2) / rect.width;
+      const ny = (e.clientY - rect.height / 2) / rect.height;
+      mouseX.set(nx);
+      mouseY.set(ny);
+      setMousePos({ x: nx, y: ny });
     };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
@@ -99,6 +104,9 @@ export function Hero() {
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden hero-bg"
       style={{ paddingTop: '120px', paddingBottom: '60px' }}
     >
+      {/* 3D Motion Graphic Background */}
+      <HeroMotionBackground mouseX={mousePos.x} mouseY={mousePos.y} />
+
       <GridBackground />
       <BackgroundParticles />
 
@@ -118,33 +126,12 @@ export function Hero() {
       />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 w-full flex flex-col items-center text-center">
-        {/* Badge */}
-        <motion.div
-          className="inline-flex mb-6"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          <div
-            className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold tracking-wider uppercase"
-            style={{
-              background: 'rgba(99,102,241,0.08)',
-              color: 'var(--accent)',
-              border: '1px solid rgba(99,102,241,0.18)',
-              letterSpacing: '0.06em',
-            }}
-          >
-            <Sparkles size={13} className="text-indigo-500 animate-pulse" />
-            Personal Growth Intelligence
-          </div>
-        </motion.div>
-
         {/* Headline */}
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-4xl mx-auto mb-6"
+          transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-4xl mx-auto mb-6 mt-4"
         >
           <h1
             className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight leading-[1.08]"
@@ -161,7 +148,7 @@ export function Hero() {
           style={{ color: 'var(--text-secondary)' }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.7, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
         >
           SAAR turns your daily habits, goals, and patterns into a living map of who you&apos;re becoming — and what to do next.
         </motion.p>
@@ -171,14 +158,15 @@ export function Hero() {
           className="flex flex-wrap gap-4 items-center justify-center mb-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.6, delay: 0.45, ease: [0.16, 1, 0.3, 1] }}
         >
           <motion.div whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }}>
             <Link
               href="/register"
-              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl text-white font-semibold text-base shadow-lg shadow-indigo-500/25"
+              className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl !text-white font-semibold text-base shadow-lg shadow-indigo-500/25"
               style={{
                 background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+                color: '#FFFFFF',
                 textDecoration: 'none',
               }}
             >
@@ -190,12 +178,12 @@ export function Hero() {
           <motion.div whileHover={{ scale: 1.01, y: -1 }} whileTap={{ scale: 0.99 }}>
             <Link
               href="#how-it-works"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base border"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold text-base border transition-all duration-200"
               style={{
                 color: 'var(--text-primary)',
-                background: 'rgba(255,255,255,0.75)',
+                background: 'rgba(255,255,255,0.85)',
                 backdropFilter: 'blur(12px)',
-                borderColor: 'rgba(11,16,32,0.1)',
+                borderColor: 'rgba(11,16,32,0.12)',
                 boxShadow: '0 2px 8px rgba(11,16,32,0.04)',
                 textDecoration: 'none',
               }}

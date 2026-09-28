@@ -73,20 +73,33 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="hidden sm:block text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
-              style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+              className="hidden sm:inline-flex items-center text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200"
+              style={{
+                color: 'var(--text-primary)',
+                textDecoration: 'none',
+                backgroundColor: 'transparent',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(99,102,241,0.08)';
+                e.currentTarget.style.color = '#6366F1';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
             >
               Sign in
             </Link>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link
                 href="/register"
-                className="text-sm font-semibold px-5 py-2.5 rounded-xl text-white"
+                className="text-sm font-semibold px-5 py-2.5 rounded-xl !text-white inline-flex items-center justify-center transition-all duration-200"
                 style={{
                   background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-                  boxShadow: '0 2px 12px rgba(99,102,241,0.3)',
+                  boxShadow: '0 2px 14px rgba(99,102,241,0.35)',
                   textDecoration: 'none',
-                  display: 'inline-block',
+                  color: '#FFFFFF',
+                  fontWeight: 600,
                 }}
               >
                 Get started
