@@ -94,3 +94,22 @@ export * from './signals/signal-calculators';
 // ─── Gap Engine ───────────────────────────────────────────────────────────────
 export * from './gap/gap.types';
 export * from './gap/gap-engine';
+
+// ─── Tradeoff Engine ─────────────────────────────────────────────────────────
+export * from './tradeoff/tradeoff.types';
+export * from './tradeoff/tradeoff-engine';
+
+// ─── Adaptive Scheduling ─────────────────────────────────────────────────────
+export * from './scheduling/scheduling.types';
+export * from './scheduling/capacity-model';
+export * from './scheduling/candidate-scorer';
+export * from './scheduling/schedule-simulator';
+
+// ─── Interventions & Outcome Measurement ──────────────────────────────────────
+export * from './interventions/intervention.types';
+export * from './interventions/intervention-selector';
+export * from './interventions/outcome-evaluator';
+
+// ─── Daily Growth Pure Engine ─────────────────────────────────────────────────
+export * from './daily-growth/daily-growth.types';
+export * from './daily-growth/daily-growth-pure';

@@ -37,6 +37,17 @@ export const BEHAVIOR_EVENT_TYPES = [
   'plan.created',
   'plan.updated',
 
+  // Gaps & Interventions
+  'gap.detected',
+  'intervention.proposed',
+  'intervention.accepted',
+  'intervention.rejected',
+  'intervention.completed',
+
+  // Adaptive Scheduling
+  'schedule.adaptation_proposed',
+  'schedule.adaptation_accepted',
+
   // Alarm & System events
   'alarm.dismissed',
 ] as const;

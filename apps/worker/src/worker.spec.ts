@@ -7,6 +7,7 @@ import { DailyPlanGeneratorService } from './daily-growth/daily-plan-generator.s
 import { RoutineOccurrenceGeneratorService } from './routines/routine-occurrence-generator.service';
 import { MaintenanceWorkerService } from './maintenance/maintenance-worker.service';
 import { GrowthAggregationWorkerService } from './growth-engine/growth-aggregation-worker.service';
+import { InterventionOutcomeWorkerService } from './growth-engine/intervention-outcome-worker.service';
 
 describe('SAAR Part 2C — Worker & Outbox Reliability Unit Tests', () => {
   let mockPrisma: any;
@@ -425,6 +426,44 @@ describe('SAAR Part 2C — Worker & Outbox Reliability Unit Tests', () => {
 
       expect(res.gapsDetected).toBeGreaterThanOrEqual(1);
       expect(mockPrisma.insight.create).toHaveBeenCalled();
+    });
+  });
+
+  describe('7. Intervention Outcome Worker & Measurement', () => {
+    it('evaluates elapsed interventions and updates outcome delta', async () => {
+      const pastDate = new Date(Date.now() - 10 * 86_400_000); // 10 days ago (window was 7)
+      mockPrisma.intervention = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'int-worker-1',
+            userId: 'user-worker-1',
+            actionType: 'SPLIT_TASK',
+            status: 'ACCEPTED',
+            executedAt: pastDate,
+            payload: {
+              measurementWindowDays: 7,
+              baselineMetric: { name: 'task_completion_rate', value: 30, unit: '%' },
+            },
+          },
+        ]),
+        update: jest.fn().mockResolvedValue({ id: 'int-worker-1', status: 'COMPLETED' }),
+      };
+      mockPrisma.task = {
+        findMany: jest.fn().mockResolvedValue([{ id: 't-comp-1' }]),
+        count: jest.fn().mockResolvedValue(1),
+      };
+      mockPrisma.outboxEvent.create = jest.fn().mockResolvedValue({ id: 'outbox-1' });
+
+      const worker = new InterventionOutcomeWorkerService(mockPrisma);
+      const res = await worker.evaluatePendingOutcomes();
+
+      expect(res.evaluatedCount).toBe(1);
+      expect(mockPrisma.intervention.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'int-worker-1' },
+          data: expect.objectContaining({ status: 'COMPLETED' }),
+        }),
+      );
     });
   });
 });

@@ -33,6 +33,8 @@ export interface GrowthFinding {
   generatedAt: string;
 }
 
+export type GapFinding = GrowthFinding;
+
 export interface GoalComparisonTarget {
   id: string;
   title: string;

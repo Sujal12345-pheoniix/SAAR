@@ -16,6 +16,8 @@ import { RoutinesModule } from './modules/routines/routines.module';
 import { DailyGrowthModule } from './modules/daily-growth/daily-growth.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { GrowthEngineModule } from './modules/growth-engine/growth-engine.module';
+import { InterventionsModule } from './modules/interventions/interventions.module';
+import { ScheduleModule } from './modules/schedule/schedule.module';
 
 @Module({
   imports: [
@@ -55,6 +57,8 @@ import { GrowthEngineModule } from './modules/growth-engine/growth-engine.module
     DailyGrowthModule,
     PlansModule,
     GrowthEngineModule,
+    InterventionsModule,
+    ScheduleModule,
   ],
   providers: [
     {

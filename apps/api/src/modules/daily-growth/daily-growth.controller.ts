@@ -17,15 +17,25 @@ import {
   type AuthenticatedUser,
 } from '../../common/decorators/current-user.decorator';
 import { DailyGrowthService } from './daily-growth.service';
+import { DailyGrowthOrchestratorService } from './daily-growth-orchestrator.service';
 import { CreateCheckinDto } from './dto/create-checkin.dto';
 
 @Controller({ path: 'daily-growth', version: '1' })
 @UseGuards(JwtAuthGuard)
 export class DailyGrowthController {
-  constructor(private readonly dailyGrowthService: DailyGrowthService) {}
+  constructor(
+    private readonly dailyGrowthService: DailyGrowthService,
+    private readonly orchestrator: DailyGrowthOrchestratorService,
+  ) {}
 
   @Get('today')
-  getToday(@CurrentUser() user: AuthenticatedUser) {
+  async getToday(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('full') full?: string,
+  ) {
+    if (full === 'true') {
+      return this.orchestrator.getDailyGrowthState(user.userId);
+    }
     return this.dailyGrowthService.getToday(user.userId);
   }
 
@@ -72,13 +82,51 @@ export class DailyGrowthController {
 
   @Post('session/start')
   @HttpCode(HttpStatus.OK)
-  startSession(@CurrentUser() user: AuthenticatedUser) {
+  startSessionLegacy(@CurrentUser() user: AuthenticatedUser) {
     return this.dailyGrowthService.startSession(user.userId);
   }
 
   @Post('session/complete')
   @HttpCode(HttpStatus.OK)
-  completeSession(@CurrentUser() user: AuthenticatedUser) {
+  completeSessionLegacy(@CurrentUser() user: AuthenticatedUser) {
     return this.dailyGrowthService.completeSession(user.userId);
+  }
+
+  /**
+   * GET /api/v1/daily-growth/:date
+   * Returns the full 8-step Daily Growth Session state for a specific date.
+   */
+  @Get(':date')
+  getStateByDate(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('date') date: string,
+  ) {
+    return this.orchestrator.getDailyGrowthState(user.userId, date);
+  }
+
+  /**
+   * POST /api/v1/daily-growth/:date/start
+   * Starts a daily growth session for the date idempotently.
+   */
+  @Post(':date/start')
+  @HttpCode(HttpStatus.OK)
+  startSession(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('date') date: string,
+  ) {
+    return this.orchestrator.startSession(user.userId, date);
+  }
+
+  /**
+   * POST /api/v1/daily-growth/:date/complete
+   * Completes a daily growth session for the date idempotently.
+   */
+  @Post(':date/complete')
+  @HttpCode(HttpStatus.OK)
+  completeSession(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('date') date: string,
+  ) {
+    return this.orchestrator.completeSession(user.userId, date);
   }
 }

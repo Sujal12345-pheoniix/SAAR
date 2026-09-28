@@ -45,13 +45,20 @@ export enum EventType {
   DAILY_GROWTH_STARTED = 'daily_growth.started',
   DAILY_GROWTH_COMPLETED = 'daily_growth.completed',
 
-  // Insights
+  // Insights & Gaps
   INSIGHT_VIEWED = 'insight.viewed',
   INSIGHT_ACCEPTED = 'insight.accepted',
+  GAP_DETECTED = 'gap.detected',
 
   // Interventions
+  INTERVENTION_PROPOSED = 'intervention.proposed',
   INTERVENTION_ACCEPTED = 'intervention.accepted',
+  INTERVENTION_REJECTED = 'intervention.rejected',
   INTERVENTION_COMPLETED = 'intervention.completed',
+
+  // Schedule Adaptation
+  SCHEDULE_ADAPTATION_PROPOSED = 'schedule.adaptation_proposed',
+  SCHEDULE_ADAPTATION_ACCEPTED = 'schedule.adaptation_accepted',
 
   // Companion / AI
   COMPANION_MESSAGE_SENT = 'companion.message.sent',
