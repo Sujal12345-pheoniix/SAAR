@@ -1,9 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { TaskStatus, type Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { BehaviorEventsService } from '../behavior-events/behavior-events.service';
 import type { CreateTaskDto } from './dto/create-task.dto';
 import type { UpdateTaskDto } from './dto/update-task.dto';
+
+// Valid task state transitions
+const TASK_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+  [TaskStatus.TODO]: [TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED, TaskStatus.SKIPPED, TaskStatus.CANCELLED],
+  [TaskStatus.IN_PROGRESS]: [TaskStatus.COMPLETED, TaskStatus.SKIPPED, TaskStatus.CANCELLED, TaskStatus.TODO],
+  [TaskStatus.COMPLETED]: [], // terminal — no transitions except via reschedule
+  [TaskStatus.SKIPPED]: [TaskStatus.TODO, TaskStatus.RESCHEDULED], // can re-activate
+  [TaskStatus.CANCELLED]: [TaskStatus.TODO], // can re-activate
+  [TaskStatus.RESCHEDULED]: [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED, TaskStatus.SKIPPED, TaskStatus.CANCELLED],
+};
 
 @Injectable()
 export class TasksService {
@@ -18,21 +32,38 @@ export class TasksService {
       status?: TaskStatus;
       goalId?: string;
       lifeAreaId?: string;
+      planId?: string;
+      cursor?: string;
+      limit?: number;
     },
   ) {
-    return this.prisma.task.findMany({
+    const limit = Math.min(filter?.limit ?? 20, 100);
+    const tasks = await this.prisma.task.findMany({
       where: {
         userId,
         ...(filter?.status ? { status: filter.status } : {}),
         ...(filter?.goalId ? { goalId: filter.goalId } : {}),
         ...(filter?.lifeAreaId ? { lifeAreaId: filter.lifeAreaId } : {}),
+        ...(filter?.planId ? { planId: filter.planId } : {}),
+        ...(filter?.cursor ? { id: { lt: filter.cursor } } : {}),
       },
       include: {
         goal: { select: { id: true, title: true } },
         lifeArea: { select: { id: true, title: true, type: true } },
       },
       orderBy: [{ dueAt: 'asc' }, { priority: 'asc' }, { createdAt: 'desc' }],
+      take: limit + 1,
     });
+
+    const hasMore = tasks.length > limit;
+    const data = hasMore ? tasks.slice(0, limit) : tasks;
+    return {
+      data,
+      page: {
+        nextCursor: hasMore ? (data[data.length - 1]?.id ?? null) : null,
+        hasMore,
+      },
+    };
   }
 
   async findOne(userId: string, id: string) {
@@ -41,6 +72,7 @@ export class TasksService {
       include: {
         goal: { select: { id: true, title: true } },
         lifeArea: { select: { id: true, title: true, type: true } },
+        plan: { select: { id: true, localDate: true } },
       },
     });
 
@@ -75,6 +107,15 @@ export class TasksService {
       }
     }
 
+    if (dto.planId) {
+      const plan = await this.prisma.plan.findFirst({
+        where: { id: dto.planId, userId },
+      });
+      if (!plan) {
+        throw new NotFoundException('Plan not found');
+      }
+    }
+
     const task = await this.prisma.task.create({
       data: {
         userId,
@@ -85,6 +126,8 @@ export class TasksService {
         planId: dto.planId,
         priority: dto.priority ?? 3,
         dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
+        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
+        originalDueAt: dto.dueAt ? new Date(dto.dueAt) : null,
         estimatedMinutes: dto.estimatedMinutes,
       },
       include: {
@@ -117,6 +160,16 @@ export class TasksService {
       throw new NotFoundException('Task not found');
     }
 
+    // Validate state transition if status is changing
+    if (dto.status !== undefined && dto.status !== existing.status) {
+      const allowed = TASK_TRANSITIONS[existing.status] ?? [];
+      if (!allowed.includes(dto.status)) {
+        throw new BadRequestException(
+          `Cannot transition task from ${existing.status} to ${dto.status}`,
+        );
+      }
+    }
+
     if (dto.goalId) {
       const goal = await this.prisma.goal.findFirst({
         where: { id: dto.goalId, userId },
@@ -140,6 +193,7 @@ export class TasksService {
     if (dto.description !== undefined) data.description = dto.description;
     if (dto.priority !== undefined) data.priority = dto.priority;
     if (dto.estimatedMinutes !== undefined) data.estimatedMinutes = dto.estimatedMinutes;
+    if (dto.actualDurationMinutes !== undefined) data.actualDurationMinutes = dto.actualDurationMinutes;
     if (dto.dueAt !== undefined) {
       data.dueAt = dto.dueAt ? new Date(dto.dueAt) : null;
     }
@@ -158,6 +212,11 @@ export class TasksService {
       data.status = dto.status;
       if (dto.status === TaskStatus.COMPLETED && !existing.completedAt) {
         data.completedAt = new Date();
+      } else if (dto.status === TaskStatus.IN_PROGRESS && !existing.startedAt) {
+        data.startedAt = new Date();
+      } else if (dto.status === TaskStatus.SKIPPED && !existing.skippedAt) {
+        data.skippedAt = new Date();
+        if (dto.skipReason) data.skipReason = dto.skipReason;
       } else if (dto.status !== TaskStatus.COMPLETED) {
         data.completedAt = null;
       }
@@ -186,19 +245,54 @@ export class TasksService {
         eventType: 'task.skipped',
         entityType: 'Task',
         entityId: updated.id,
-        metadata: { title: updated.title },
+        metadata: { title: updated.title, skipReason: dto.skipReason },
       });
     }
 
     return updated;
   }
 
-  async complete(userId: string, id: string) {
-    const existing = await this.prisma.task.findFirst({
-      where: { id, userId },
+  async start(userId: string, id: string) {
+    const existing = await this.prisma.task.findFirst({ where: { id, userId } });
+    if (!existing) throw new NotFoundException('Task not found');
+
+    if (existing.status === TaskStatus.IN_PROGRESS) {
+      return existing; // idempotent
+    }
+
+    const allowed = TASK_TRANSITIONS[existing.status] ?? [];
+    if (!allowed.includes(TaskStatus.IN_PROGRESS)) {
+      throw new BadRequestException(
+        `Cannot start task in status ${existing.status}`,
+      );
+    }
+
+    return this.prisma.task.update({
+      where: { id },
+      data: {
+        status: TaskStatus.IN_PROGRESS,
+        startedAt: new Date(),
+      },
+      include: {
+        goal: { select: { id: true, title: true } },
+        lifeArea: { select: { id: true, title: true, type: true } },
+      },
     });
-    if (!existing) {
-      throw new NotFoundException('Task not found');
+  }
+
+  async complete(userId: string, id: string) {
+    const existing = await this.prisma.task.findFirst({ where: { id, userId } });
+    if (!existing) throw new NotFoundException('Task not found');
+
+    if (existing.status === TaskStatus.COMPLETED) {
+      return existing; // idempotent
+    }
+
+    const allowed = TASK_TRANSITIONS[existing.status] ?? [];
+    if (!allowed.includes(TaskStatus.COMPLETED)) {
+      throw new BadRequestException(
+        `Cannot complete task in status ${existing.status}`,
+      );
     }
 
     const updated = await this.prisma.task.update({
@@ -206,6 +300,7 @@ export class TasksService {
       data: {
         status: TaskStatus.COMPLETED,
         completedAt: new Date(),
+        startedAt: existing.startedAt ?? new Date(),
       },
       include: {
         goal: { select: { id: true, title: true } },
@@ -224,18 +319,25 @@ export class TasksService {
     return updated;
   }
 
-  async skip(userId: string, id: string) {
-    const existing = await this.prisma.task.findFirst({
-      where: { id, userId },
-    });
-    if (!existing) {
-      throw new NotFoundException('Task not found');
+  async skip(userId: string, id: string, reason?: string) {
+    const existing = await this.prisma.task.findFirst({ where: { id, userId } });
+    if (!existing) throw new NotFoundException('Task not found');
+
+    if (existing.status === TaskStatus.SKIPPED) return existing; // idempotent
+
+    const allowed = TASK_TRANSITIONS[existing.status] ?? [];
+    if (!allowed.includes(TaskStatus.SKIPPED)) {
+      throw new BadRequestException(
+        `Cannot skip task in status ${existing.status}`,
+      );
     }
 
     const updated = await this.prisma.task.update({
       where: { id },
       data: {
         status: TaskStatus.SKIPPED,
+        skippedAt: new Date(),
+        ...(reason ? { skipReason: reason } : {}),
       },
       include: {
         goal: { select: { id: true, title: true } },
@@ -248,31 +350,67 @@ export class TasksService {
       eventType: 'task.skipped',
       entityType: 'Task',
       entityId: updated.id,
-      metadata: { title: updated.title },
+      metadata: { title: updated.title, skipReason: reason },
     });
 
     return updated;
   }
 
-  async reschedule(userId: string, id: string, dueAt: string) {
-    const existing = await this.prisma.task.findFirst({
-      where: { id, userId },
-    });
-    if (!existing) {
-      throw new NotFoundException('Task not found');
+  async cancel(userId: string, id: string, reason?: string) {
+    const existing = await this.prisma.task.findFirst({ where: { id, userId } });
+    if (!existing) throw new NotFoundException('Task not found');
+
+    if (existing.status === TaskStatus.CANCELLED) return existing; // idempotent
+
+    const allowed = TASK_TRANSITIONS[existing.status] ?? [];
+    if (!allowed.includes(TaskStatus.CANCELLED)) {
+      throw new BadRequestException(
+        `Cannot cancel task in status ${existing.status}`,
+      );
     }
 
+    const updated = await this.prisma.task.update({
+      where: { id },
+      data: {
+        status: TaskStatus.CANCELLED,
+      },
+      include: {
+        goal: { select: { id: true, title: true } },
+        lifeArea: { select: { id: true, title: true, type: true } },
+      },
+    });
+
+    await this.behaviorEvents.logEvent({
+      userId,
+      eventType: 'task.cancelled',
+      entityType: 'Task',
+      entityId: updated.id,
+      metadata: { title: updated.title, reason },
+    });
+
+    return updated;
+  }
+
+  async reschedule(userId: string, id: string, dueAt: string, reason?: string) {
+    const existing = await this.prisma.task.findFirst({ where: { id, userId } });
+    if (!existing) throw new NotFoundException('Task not found');
+
     const newDueDate = new Date(dueAt);
+    const newStatus =
+      existing.status === TaskStatus.COMPLETED
+        ? TaskStatus.COMPLETED
+        : existing.status === TaskStatus.CANCELLED
+          ? TaskStatus.TODO
+          : TaskStatus.RESCHEDULED;
 
     const updated = await this.prisma.task.update({
       where: { id },
       data: {
         dueAt: newDueDate,
-        // If task was skipped or cancelled, moving date back to future resets to TODO
-        status:
-          existing.status === TaskStatus.SKIPPED || existing.status === TaskStatus.CANCELLED
-            ? TaskStatus.TODO
-            : existing.status,
+        rescheduledAt: new Date(),
+        rescheduleCount: { increment: 1 },
+        status: newStatus,
+        ...(reason ? { rescheduleReason: reason } : {}),
       },
       include: {
         goal: { select: { id: true, title: true } },
@@ -289,6 +427,7 @@ export class TasksService {
         title: updated.title,
         oldDueAt: existing.dueAt,
         newDueAt: updated.dueAt,
+        reason,
       },
     });
 

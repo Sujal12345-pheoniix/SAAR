@@ -41,7 +41,12 @@ export class CreateTaskDto {
   dueAt?: string;
 
   @IsOptional()
+  @IsDateString()
+  scheduledAt?: string;
+
+  @IsOptional()
   @IsInt()
   @Min(1)
   estimatedMinutes?: number;
 }
+

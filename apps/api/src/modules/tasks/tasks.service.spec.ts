@@ -142,6 +142,47 @@ describe('TasksService (Unit & Multi-tenant Isolation)', () => {
         }),
       );
     });
+
+    it('starts task and transitions status to IN_PROGRESS', async () => {
+      const existing = { id: 't-1', userId: 'user-a', status: TaskStatus.TODO };
+      mockPrisma.task.findFirst.mockResolvedValueOnce(existing);
+      mockPrisma.task.update.mockResolvedValueOnce({
+        ...existing,
+        status: TaskStatus.IN_PROGRESS,
+        startedAt: new Date(),
+      });
+
+      const updated = await service.start('user-a', 't-1');
+      expect(updated.status).toBe(TaskStatus.IN_PROGRESS);
+    });
+
+    it('is idempotent when completing an already COMPLETED task', async () => {
+      const existing = { id: 't-1', userId: 'user-a', status: TaskStatus.COMPLETED };
+      mockPrisma.task.findFirst.mockResolvedValueOnce(existing);
+
+      const updated = await service.complete('user-a', 't-1');
+      expect(updated.status).toBe(TaskStatus.COMPLETED);
+      expect(mockPrisma.task.update).not.toHaveBeenCalled();
+    });
+
+    it('cancels task and logs task.cancelled event with reason', async () => {
+      const existing = { id: 't-1', userId: 'user-a', status: TaskStatus.TODO };
+      mockPrisma.task.findFirst.mockResolvedValueOnce(existing);
+      mockPrisma.task.update.mockResolvedValueOnce({
+        ...existing,
+        status: TaskStatus.CANCELLED,
+      });
+
+      const updated = await service.cancel('user-a', 't-1', 'No longer relevant');
+      expect(updated.status).toBe(TaskStatus.CANCELLED);
+      expect(mockBehaviorEvents.logEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-a',
+          eventType: 'task.cancelled',
+          metadata: expect.objectContaining({ reason: 'No longer relevant' }),
+        }),
+      );
+    });
   });
 
   describe('Cross-User Access Security (Tenant Isolation)', () => {

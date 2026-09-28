@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsInt, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateLifeAreaDto {
   @IsOptional()
@@ -32,4 +33,11 @@ export class CreateLifeAreaDto {
   @Min(0)
   @Max(100)
   weight?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  sortOrder?: number;
 }
+

@@ -129,4 +129,107 @@ describe('GoalsService (Unit & Multi-tenant Isolation)', () => {
       );
     });
   });
+
+  describe('Lifecycle State Transitions (complete, pause, reopen)', () => {
+    it('completes an ACTIVE goal and emits goal.completed event', async () => {
+      mockPrisma.goal.findFirst.mockResolvedValueOnce({
+        id: 'g-1',
+        userId: 'user-a',
+        status: GoalStatus.ACTIVE,
+        title: 'Run 10K',
+      });
+      mockPrisma.goal.update.mockResolvedValueOnce({
+        id: 'g-1',
+        userId: 'user-a',
+        status: GoalStatus.COMPLETED,
+        title: 'Run 10K',
+      });
+
+      const result = await service.complete('user-a', 'g-1');
+      expect(result.status).toBe(GoalStatus.COMPLETED);
+      expect(mockBehaviorEvents.logEvent).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-a',
+          eventType: 'goal.completed',
+        }),
+      );
+    });
+
+    it('is idempotent when completing an already COMPLETED goal', async () => {
+      mockPrisma.goal.findFirst.mockResolvedValueOnce({
+        id: 'g-1',
+        userId: 'user-a',
+        status: GoalStatus.COMPLETED,
+      });
+
+      const result = await service.complete('user-a', 'g-1');
+      expect(result.status).toBe(GoalStatus.COMPLETED);
+      expect(mockPrisma.goal.update).not.toHaveBeenCalled();
+    });
+
+    it('pauses an ACTIVE goal and emits goal.updated event', async () => {
+      mockPrisma.goal.findFirst.mockResolvedValueOnce({
+        id: 'g-1',
+        userId: 'user-a',
+        status: GoalStatus.ACTIVE,
+      });
+      mockPrisma.goal.update.mockResolvedValueOnce({
+        id: 'g-1',
+        userId: 'user-a',
+        status: GoalStatus.PAUSED,
+      });
+
+      const result = await service.pause('user-a', 'g-1');
+      expect(result.status).toBe(GoalStatus.PAUSED);
+    });
+
+    it('reopens a COMPLETED goal back to ACTIVE', async () => {
+      mockPrisma.goal.findFirst.mockResolvedValueOnce({
+        id: 'g-1',
+        userId: 'user-a',
+        status: GoalStatus.COMPLETED,
+      });
+      mockPrisma.goal.update.mockResolvedValueOnce({
+        id: 'g-1',
+        userId: 'user-a',
+        status: GoalStatus.ACTIVE,
+      });
+
+      const result = await service.reopen('user-a', 'g-1');
+      expect(result.status).toBe(GoalStatus.ACTIVE);
+    });
+  });
+
+  describe('Metric Observations Tracking', () => {
+    it('records an observation and updates the currentValue on GoalMetric', async () => {
+      mockPrisma.goal.findFirst.mockResolvedValueOnce({ id: 'g-1', userId: 'user-a' });
+      mockPrisma.goalMetric = {
+        ...mockPrisma.goalMetric,
+        findFirst: jest.fn().mockResolvedValueOnce({ id: 'm-1', goalId: 'g-1', unit: 'km' }),
+        update: jest.fn().mockResolvedValueOnce({ id: 'm-1', currentValue: 15 }),
+      };
+      mockPrisma.metricObservation = {
+        create: jest.fn().mockResolvedValueOnce({
+          id: 'obs-1',
+          metricId: 'm-1',
+          value: 15,
+          unit: 'km',
+        }),
+      };
+
+      const obs = await service.recordObservation('user-a', 'g-1', 'm-1', {
+        value: 15,
+        source: 'device',
+      });
+
+      expect(obs.value).toBe(15);
+      expect(mockPrisma.goalMetric.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'm-1' },
+          data: { currentValue: 15 },
+        }),
+      );
+    });
+  });
 });
+

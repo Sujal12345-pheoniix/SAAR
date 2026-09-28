@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsInt, IsBoolean, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class UpdateLifeAreaDto {
   @IsOptional()
@@ -26,4 +27,15 @@ export class UpdateLifeAreaDto {
   @Min(0)
   @Max(100)
   weight?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  sortOrder?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
+

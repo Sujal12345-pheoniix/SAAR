@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { TaskStatus } from '@prisma/client';
 import { DailyGrowthService } from './daily-growth.service';
@@ -130,4 +131,27 @@ describe('DailyGrowthService (Deterministic Aggregation & Check-in)', () => {
       );
     });
   });
+
+  describe('checkin history (listCheckins & getCheckin)', () => {
+    it('listCheckins() returns paginated list of checkins', async () => {
+      const mockList = [
+        { id: 'c-1', userId: 'user-a', mood: 4, energy: 3, localDate: new Date('2026-09-28') },
+        { id: 'c-2', userId: 'user-a', mood: 5, energy: 5, localDate: new Date('2026-09-27') },
+      ];
+      (mockPrisma.checkin as any).findMany = jest.fn().mockResolvedValueOnce(mockList);
+
+      const res = await service.listCheckins('user-a', { limit: 10 });
+      expect(res.data).toHaveLength(2);
+      expect(res.page.hasMore).toBe(false);
+    });
+
+    it('getCheckin() returns checkin for specified date', async () => {
+      const record = { id: 'c-1', userId: 'user-a', mood: 4, energy: 3 };
+      mockPrisma.checkin.findFirst.mockResolvedValueOnce(record);
+
+      const res = await service.getCheckin('user-a', '2026-09-28');
+      expect(res).toEqual(record);
+    });
+  });
 });
+

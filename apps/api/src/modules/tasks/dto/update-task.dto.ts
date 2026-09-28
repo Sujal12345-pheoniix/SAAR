@@ -47,6 +47,15 @@ export class UpdateTaskDto {
   estimatedMinutes?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  actualDurationMinutes?: number;
+
+  @IsOptional()
   @IsEnum(TaskStatus)
   status?: TaskStatus;
+
+  @IsOptional()
+  @IsString()
+  skipReason?: string;
 }

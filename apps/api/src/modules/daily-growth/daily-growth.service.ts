@@ -21,12 +21,16 @@ export class DailyGrowthService {
     return formatter.format(new Date()); // Returns YYYY-MM-DD
   }
 
-  async getToday(userId: string) {
+  private async getUserTimezone(userId: string): Promise<string> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { timezone: true },
     });
-    const tz = user?.timezone || 'Asia/Kolkata';
+    return user?.timezone ?? 'Asia/Kolkata';
+  }
+
+  async getToday(userId: string) {
+    const tz = await this.getUserTimezone(userId);
     const todayStr = this.getTodayDateString(tz);
     const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
 
@@ -126,11 +130,7 @@ export class DailyGrowthService {
   }
 
   async checkin(userId: string, dto: CreateCheckinDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { timezone: true },
-    });
-    const tz = user?.timezone || 'Asia/Kolkata';
+    const tz = await this.getUserTimezone(userId);
     const dateStr = dto.localDate || this.getTodayDateString(tz);
     const localDate = new Date(`${dateStr}T00:00:00.000Z`);
 
@@ -173,12 +173,49 @@ export class DailyGrowthService {
     return record;
   }
 
-  async getSession(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { timezone: true },
+  async getCheckin(userId: string, date: string) {
+    const localDate = new Date(`${date}T00:00:00.000Z`);
+    return this.prisma.checkin.findFirst({
+      where: { userId, localDate },
     });
-    const tz = user?.timezone || 'Asia/Kolkata';
+  }
+
+  async listCheckins(
+    userId: string,
+    options?: { from?: string; to?: string; cursor?: string; limit?: number },
+  ) {
+    const limit = Math.min(options?.limit ?? 30, 100);
+    const checkins = await this.prisma.checkin.findMany({
+      where: {
+        userId,
+        ...(options?.from || options?.to
+          ? {
+              localDate: {
+                ...(options.from ? { gte: new Date(`${options.from}T00:00:00.000Z`) } : {}),
+                ...(options.to ? { lte: new Date(`${options.to}T00:00:00.000Z`) } : {}),
+              },
+            }
+          : {}),
+        ...(options?.cursor ? { id: { lt: options.cursor } } : {}),
+      },
+      orderBy: { localDate: 'desc' },
+      take: limit + 1,
+    });
+
+    const hasMore = checkins.length > limit;
+    const data = hasMore ? checkins.slice(0, limit) : checkins;
+
+    return {
+      data,
+      page: {
+        nextCursor: hasMore ? (data[data.length - 1]?.id ?? null) : null,
+        hasMore,
+      },
+    };
+  }
+
+  async getSession(userId: string) {
+    const tz = await this.getUserTimezone(userId);
     const todayStr = this.getTodayDateString(tz);
     const todayDate = new Date(`${todayStr}T00:00:00.000Z`);
     const sessionId = `session_${userId}_${todayStr}`;
@@ -228,11 +265,7 @@ export class DailyGrowthService {
   }
 
   async startSession(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { timezone: true },
-    });
-    const tz = user?.timezone || 'Asia/Kolkata';
+    const tz = await this.getUserTimezone(userId);
     const todayStr = this.getTodayDateString(tz);
     const sessionId = `session_${userId}_${todayStr}`;
 
@@ -252,11 +285,7 @@ export class DailyGrowthService {
   }
 
   async completeSession(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { timezone: true },
-    });
-    const tz = user?.timezone || 'Asia/Kolkata';
+    const tz = await this.getUserTimezone(userId);
     const todayStr = this.getTodayDateString(tz);
     const sessionId = `session_${userId}_${todayStr}`;
 

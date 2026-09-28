@@ -11,6 +11,14 @@ export interface LogEventParams {
   source?: string;
 }
 
+export interface GetEventsParams {
+  eventType?: string;
+  from?: string;
+  to?: string;
+  cursor?: string;
+  limit?: number;
+}
+
 @Injectable()
 export class BehaviorEventsService {
   private readonly logger = new Logger(BehaviorEventsService.name);
@@ -65,14 +73,38 @@ export class BehaviorEventsService {
     }
   }
 
-  async getEvents(userId: string, limit = 50, eventType?: string) {
-    return this.prisma.behaviorEvent.findMany({
-      where: {
-        userId,
-        ...(eventType ? { eventType } : {}),
-      },
+  async getEvents(userId: string, params: GetEventsParams = {}) {
+    const limit = Math.min(params.limit ?? 50, 200);
+
+    const where: Prisma.BehaviorEventWhereInput = {
+      userId,
+      ...(params.eventType ? { eventType: params.eventType } : {}),
+      ...(params.from || params.to
+        ? {
+            occurredAt: {
+              ...(params.from ? { gte: new Date(params.from) } : {}),
+              ...(params.to ? { lte: new Date(params.to) } : {}),
+            },
+          }
+        : {}),
+      ...(params.cursor ? { id: { lt: params.cursor } } : {}),
+    };
+
+    const events = await this.prisma.behaviorEvent.findMany({
+      where,
       orderBy: { occurredAt: 'desc' },
-      take: Math.min(limit, 100),
+      take: limit + 1,
     });
+
+    const hasMore = events.length > limit;
+    const data = hasMore ? events.slice(0, limit) : events;
+
+    return {
+      data,
+      page: {
+        nextCursor: hasMore ? (data[data.length - 1]?.id ?? null) : null,
+        hasMore,
+      },
+    };
   }
 }

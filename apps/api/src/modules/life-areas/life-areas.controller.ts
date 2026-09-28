@@ -39,6 +39,14 @@ export class LifeAreasController {
     return this.lifeAreasService.create(user.userId, dto);
   }
 
+  @Get(':id')
+  findOne(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.lifeAreasService.findOne(user.userId, id);
+  }
+
   @Patch(':id')
   update(
     @CurrentUser() user: AuthenticatedUser,
@@ -46,6 +54,15 @@ export class LifeAreasController {
     @Body() dto: UpdateLifeAreaDto,
   ) {
     return this.lifeAreasService.update(user.userId, id, dto);
+  }
+
+  @Post(':id/archive')
+  @HttpCode(HttpStatus.OK)
+  archive(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.lifeAreasService.archive(user.userId, id);
   }
 
   @Delete(':id')

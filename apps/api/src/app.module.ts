@@ -14,6 +14,7 @@ import { GoalsModule } from './modules/goals/goals.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { RoutinesModule } from './modules/routines/routines.module';
 import { DailyGrowthModule } from './modules/daily-growth/daily-growth.module';
+import { PlansModule } from './modules/plans/plans.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { DailyGrowthModule } from './modules/daily-growth/daily-growth.module';
     TasksModule,
     RoutinesModule,
     DailyGrowthModule,
+    PlansModule,
   ],
   providers: [
     {

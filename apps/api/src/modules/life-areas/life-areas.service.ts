@@ -5,12 +5,12 @@ import type { CreateLifeAreaDto } from './dto/create-life-area.dto';
 import type { UpdateLifeAreaDto } from './dto/update-life-area.dto';
 
 const DEFAULT_LIFE_AREAS = [
-  { type: 'health', title: 'Health', weight: 20 },
-  { type: 'career', title: 'Career', weight: 20 },
-  { type: 'relationships', title: 'Relationships', weight: 15 },
-  { type: 'family', title: 'Family', weight: 15 },
-  { type: 'personal_growth', title: 'Personal Growth', weight: 15 },
-  { type: 'recovery_rest', title: 'Recovery / Rest', weight: 15 },
+  { type: 'health', title: 'Health', weight: 20, sortOrder: 0 },
+  { type: 'career', title: 'Career', weight: 20, sortOrder: 1 },
+  { type: 'relationships', title: 'Relationships', weight: 15, sortOrder: 2 },
+  { type: 'family', title: 'Family', weight: 15, sortOrder: 3 },
+  { type: 'personal_growth', title: 'Personal Growth', weight: 15, sortOrder: 4 },
+  { type: 'recovery_rest', title: 'Recovery / Rest', weight: 15, sortOrder: 5 },
 ];
 
 const SYSTEM_TYPES = new Set(['health', 'career', 'relationships', 'family', 'personal_growth', 'recovery_rest']);
@@ -23,7 +23,7 @@ export class LifeAreasService {
     return {
       ...area,
       name: area.title || area.type,
-      color: overrideColor || '#6366f1',
+      color: overrideColor || area.color || '#6366f1',
       isSystem: SYSTEM_TYPES.has(area.type),
     };
   }
@@ -31,7 +31,7 @@ export class LifeAreasService {
   async findAll(userId: string) {
     let areas = await this.prisma.lifeArea.findMany({
       where: { userId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
     });
 
     if (areas.length === 0) {
@@ -41,21 +41,36 @@ export class LifeAreasService {
           type: def.type,
           title: def.title,
           weight: def.weight,
+          sortOrder: def.sortOrder,
+          isActive: true,
         })),
       });
 
       areas = await this.prisma.lifeArea.findMany({
         where: { userId },
-        orderBy: { createdAt: 'asc' },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
       });
     }
 
     return areas.map((a) => this.mapLifeArea(a));
   }
 
+  async findOne(userId: string, id: string) {
+    const area = await this.prisma.lifeArea.findFirst({ where: { id, userId } });
+    if (!area) throw new NotFoundException('Life area not found');
+    return this.mapLifeArea(area);
+  }
+
   async create(userId: string, dto: CreateLifeAreaDto) {
     const rawTitle = (dto.title || dto.name || 'Untitled Area').trim();
-    const rawType = (dto.type || rawTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'custom').trim();
+    const rawType = (
+      dto.type ||
+      rawTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '') ||
+      'custom'
+    ).trim();
 
     const created = await this.prisma.lifeArea.create({
       data: {
@@ -64,6 +79,9 @@ export class LifeAreasService {
         title: rawTitle,
         targetState: dto.targetState,
         weight: dto.weight !== undefined ? dto.weight : null,
+        color: dto.color ?? null,
+        isActive: true,
+        sortOrder: dto.sortOrder ?? 0,
       },
     });
 
@@ -86,10 +104,28 @@ export class LifeAreasService {
         ...(title !== undefined ? { title: title.trim() } : {}),
         ...(dto.targetState !== undefined ? { targetState: dto.targetState } : {}),
         ...(dto.weight !== undefined ? { weight: dto.weight } : {}),
+        ...(dto.color !== undefined ? { color: dto.color } : {}),
+        ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
       },
     });
 
     return this.mapLifeArea(updated, dto.color);
+  }
+
+  async archive(userId: string, id: string) {
+    const existing = await this.prisma.lifeArea.findFirst({
+      where: { id, userId },
+    });
+    if (!existing) {
+      throw new NotFoundException('Life area not found');
+    }
+
+    const updated = await this.prisma.lifeArea.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    return this.mapLifeArea(updated);
   }
 
   async remove(userId: string, id: string) {
