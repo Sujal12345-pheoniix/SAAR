@@ -6,6 +6,7 @@ import { NotificationWorkerService } from './notifications/notification-worker.s
 import { DailyPlanGeneratorService } from './daily-growth/daily-plan-generator.service';
 import { RoutineOccurrenceGeneratorService } from './routines/routine-occurrence-generator.service';
 import { MaintenanceWorkerService } from './maintenance/maintenance-worker.service';
+import { GrowthAggregationWorkerService } from './growth-engine/growth-aggregation-worker.service';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { MaintenanceWorkerService } from './maintenance/maintenance-worker.servi
     DailyPlanGeneratorService,
     RoutineOccurrenceGeneratorService,
     MaintenanceWorkerService,
+    GrowthAggregationWorkerService,
   ],
   exports: [
     PrismaService,
@@ -29,6 +31,7 @@ import { MaintenanceWorkerService } from './maintenance/maintenance-worker.servi
     DailyPlanGeneratorService,
     RoutineOccurrenceGeneratorService,
     MaintenanceWorkerService,
+    GrowthAggregationWorkerService,
   ],
 })
 export class WorkerModule {}

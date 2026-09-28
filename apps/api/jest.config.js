@@ -11,5 +11,7 @@ module.exports = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@saar/contracts$': '<rootDir>/../../../packages/contracts/src/index.ts',
     '^@saar/contracts/(.*)$': '<rootDir>/../../../packages/contracts/src/$1',
+    '^@saar/domain$': '<rootDir>/../../../packages/domain/src/index.ts',
+    '^@saar/domain/(.*)$': '<rootDir>/../../../packages/domain/src/$1',
   },
 };

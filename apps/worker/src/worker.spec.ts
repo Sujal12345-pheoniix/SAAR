@@ -6,6 +6,7 @@ import { MockNotificationProvider } from './notifications/notification-provider.
 import { DailyPlanGeneratorService } from './daily-growth/daily-plan-generator.service';
 import { RoutineOccurrenceGeneratorService } from './routines/routine-occurrence-generator.service';
 import { MaintenanceWorkerService } from './maintenance/maintenance-worker.service';
+import { GrowthAggregationWorkerService } from './growth-engine/growth-aggregation-worker.service';
 
 describe('SAAR Part 2C — Worker & Outbox Reliability Unit Tests', () => {
   let mockPrisma: any;
@@ -391,4 +392,40 @@ describe('SAAR Part 2C — Worker & Outbox Reliability Unit Tests', () => {
       );
     });
   });
+
+  describe('6. Growth Aggregation Worker & Idempotency', () => {
+    it('aggregates behavioral features and detects gaps for user', async () => {
+      mockPrisma.user = {
+        findUnique: jest.fn().mockResolvedValue({ id: 'user-1', timezone: 'UTC' }),
+      };
+      mockPrisma.goal = {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'g-1',
+            title: 'Exercise',
+            priority: 1,
+            lifeArea: { type: 'health' },
+            metrics: [{ targetValue: 5, currentValue: 2, unit: 'times' }],
+          },
+        ]),
+      };
+      mockPrisma.insight = {
+        findFirst: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue({ id: 'ins-1' }),
+      };
+      mockPrisma.task.findMany.mockResolvedValueOnce([
+        { status: 'COMPLETED', completedAt: new Date(), actualDurationMinutes: 30, goalId: 'g-1' },
+      ]);
+      mockPrisma.routineOccurrence.findMany = jest.fn().mockResolvedValueOnce([
+        { status: 'COMPLETED' },
+      ]);
+
+      const worker = new GrowthAggregationWorkerService(mockPrisma);
+      const res = await worker.aggregateUserGrowth('user-1');
+
+      expect(res.gapsDetected).toBeGreaterThanOrEqual(1);
+      expect(mockPrisma.insight.create).toHaveBeenCalled();
+    });
+  });
 });
+

@@ -114,7 +114,7 @@ importers:
         version: 5.22.0(prisma@5.22.0)
       express:
         specifier: ^4.22.1
-        version: 4.22.1
+        version: 4.22.1(supports-color@8.1.1)
       prisma:
         specifier: ^5.20.0
         version: 5.22.0
@@ -179,6 +179,9 @@ importers:
       '@saar/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@saar/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       argon2:
         specifier: ^0.41.1
         version: 0.41.1
@@ -407,6 +410,9 @@ importers:
       '@saar/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@saar/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       bullmq:
         specifier: ^5.14.0
         version: 5.81.5(supports-color@8.1.1)

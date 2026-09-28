@@ -16,6 +16,7 @@
     "@nestjs/config": "^3.2.3",
     "@prisma/client": "^5.20.0",
     "@saar/contracts": "workspace:*",
+    "@saar/domain": "workspace:*",
     "bullmq": "^5.14.0",
     "ioredis": "^5.4.1",
     "pino": "^9.4.0",
