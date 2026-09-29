@@ -1,10 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 
-// ---------------------------------------------------------------------------
-// Simple SVG-free icon placeholder — replaced by a real icon library later
-// ---------------------------------------------------------------------------
-
 type TabIconProps = {
   label: string;
   focused: boolean;
@@ -12,25 +8,21 @@ type TabIconProps = {
 
 function TabIcon({ label, focused }: TabIconProps) {
   const icons: Record<string, string> = {
-    Home: '⌂',
-    Goals: '◎',
-    Tasks: '☑',
-    Insights: '◈',
-    Profile: '◉',
+    Today: '☀',
+    Plan: '▦',
+    Growth: '▲',
+    Companion: '◉',
+    Profile: '●',
   };
 
   return (
     <View style={styles.iconWrapper}>
-      <Text style={[styles.iconEmoji, focused && styles.iconFocused]}>
+      <Text style={[styles.iconSymbol, focused && styles.iconFocused]}>
         {icons[label] ?? '•'}
       </Text>
     </View>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Tab layout
-// ---------------------------------------------------------------------------
 
 export default function AppLayout() {
   return (
@@ -38,81 +30,81 @@ export default function AppLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: styles.tabBar,
-        tabBarActiveTintColor: '#6366f1',
-        tabBarInactiveTintColor: '#475569',
+        tabBarActiveTintColor: '#226949', // SAAR Growth green
+        tabBarInactiveTintColor: '#868E96', // Graphite
         tabBarLabelStyle: styles.tabLabel,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Home" focused={focused} />
-          ),
+          title: 'Today',
+          tabBarIcon: ({ focused }) => <TabIcon label="Today" focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="goals"
+        name="plan"
         options={{
-          title: 'Goals',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Goals" focused={focused} />
-          ),
+          title: 'Plan',
+          tabBarIcon: ({ focused }) => <TabIcon label="Plan" focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="tasks"
+        name="growth"
         options={{
-          title: 'Tasks',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Tasks" focused={focused} />
-          ),
+          title: 'Growth',
+          tabBarIcon: ({ focused }) => <TabIcon label="Growth" focused={focused} />,
         }}
       />
       <Tabs.Screen
-        name="insights"
+        name="companion"
         options={{
-          title: 'Insights',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Insights" focused={focused} />
-          ),
+          title: 'Companion',
+          tabBarIcon: ({ focused }) => <TabIcon label="Companion" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon label="Profile" focused={focused} />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon label="Profile" focused={focused} />,
         }}
       />
+      {/* Hidden legacy routes for deep links */}
+      <Tabs.Screen name="goals" options={{ href: null }} />
+      <Tabs.Screen name="tasks" options={{ href: null }} />
+      <Tabs.Screen name="insights" options={{ href: null }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: '#0f172a',
-    borderTopColor: '#1e293b',
+    backgroundColor: '#FAF8F5',
+    borderTopColor: 'rgba(15, 17, 21, 0.08)',
     borderTopWidth: 1,
     height: Platform.OS === 'ios' ? 84 : 64,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+    elevation: 4,
   },
   tabLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
+    marginTop: 2,
+    letterSpacing: 0.2,
   },
   iconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
+    height: 24,
   },
-  iconEmoji: {
-    fontSize: 20,
-    color: '#475569',
+  iconSymbol: {
+    fontSize: 17,
+    color: '#868E96',
   },
   iconFocused: {
-    color: '#6366f1',
+    color: '#226949',
+    fontWeight: 'bold',
   },
 });

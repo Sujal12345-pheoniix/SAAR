@@ -6,8 +6,8 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SaarLogo } from '@/components/ui/SaarLogo';
 import {
-  LayoutDashboard, Target, CheckSquare, BarChart2,
-  Settings, Brain, ChevronLeft, ChevronRight,
+  Sun, Compass, Target, CalendarDays, TrendingUp,
+  MessageCircle, User, ChevronLeft, ChevronRight,
   LogOut, Menu, X
 } from 'lucide-react';
 
@@ -18,11 +18,13 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={18} /> },
-  { label: 'Goals',     href: '/goals',     icon: <Target size={18} /> },
-  { label: 'Tasks',     href: '/tasks',     icon: <CheckSquare size={18} /> },
-  { label: 'Insights',  href: '/insights',  icon: <Brain size={18} /> },
-  { label: 'Settings',  href: '/settings',  icon: <Settings size={18} /> },
+  { label: 'Today',       href: '/today',       icon: <Sun size={18} /> },
+  { label: 'Future Self', href: '/future-self', icon: <Compass size={18} /> },
+  { label: 'Goals',       href: '/goals',       icon: <Target size={18} /> },
+  { label: 'Plan',        href: '/plan',        icon: <CalendarDays size={18} /> },
+  { label: 'Growth',      href: '/growth',      icon: <TrendingUp size={18} /> },
+  { label: 'Companion',   href: '/companion',   icon: <MessageCircle size={18} /> },
+  { label: 'Profile',     href: '/profile',     icon: <User size={18} /> },
 ];
 
 interface SidebarProps {
@@ -52,14 +54,14 @@ export function Sidebar({ userDisplayName, userEmail }: SidebarProps) {
         className="flex items-center gap-3 px-4 py-5 overflow-hidden"
         style={{ borderBottom: '1px solid var(--border)' }}
       >
-        <SaarLogo href="/dashboard" size="sm" showText={!collapsed} />
+        <SaarLogo href="/today" size="sm" showText={!collapsed} />
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.href === '/dashboard'
-            ? pathname === '/dashboard'
+          const isActive = item.href === '/today'
+            ? pathname === '/today' || pathname === '/dashboard'
             : pathname.startsWith(item.href);
 
           return (

@@ -21,6 +21,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@saar/ui": [
+        "../../packages/ui/src/index.ts"
       ]
     },
     "allowJs": true,

@@ -17,7 +17,7 @@ export default function WelcomeScreen() {
         <View style={styles.brandingBlock}>
           <Text style={styles.logo}>SAAR</Text>
           <Text style={styles.tagline}>
-            Your personal clarity engine.{'\n'}Align goals. Build habits. Own your day.
+            A calm, intelligent companion for becoming the person you want to become.
           </Text>
         </View>
 
@@ -26,9 +26,9 @@ export default function WelcomeScreen() {
           <TouchableOpacity
             style={styles.primaryButton}
             activeOpacity={0.85}
-            onPress={() => router.push('/(auth)/register')}
+            onPress={() => router.push('/(auth)/onboarding')}
           >
-            <Text style={styles.primaryButtonText}>Get Started</Text>
+            <Text style={styles.primaryButtonText}>Begin Guided Setup</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -40,7 +40,7 @@ export default function WelcomeScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.footer}>SAAR v0.1 · Early Access</Text>
+        <Text style={styles.footer}>SAAR · Personal Growth Intelligence</Text>
       </View>
     </SafeAreaView>
   );
@@ -49,7 +49,7 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#FAF8F5',
   },
   container: {
     flex: 1,
@@ -64,48 +64,49 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   logo: {
-    fontSize: 72,
+    fontSize: 54,
     fontWeight: '800',
-    color: '#6366f1',
-    letterSpacing: 8,
+    color: '#0F1115',
+    letterSpacing: 6,
   },
   tagline: {
-    fontSize: 16,
-    color: '#94a3b8',
+    fontSize: 15,
+    color: '#495057',
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 22,
+    maxWidth: 280,
   },
   buttonBlock: {
     gap: 12,
   },
   primaryButton: {
-    backgroundColor: '#6366f1',
-    paddingVertical: 16,
-    borderRadius: 14,
+    backgroundColor: '#0F1115',
+    paddingVertical: 15,
+    borderRadius: 12,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
+    color: '#FAF8F5',
+    fontSize: 15,
+    fontWeight: '600',
   },
   secondaryButton: {
     backgroundColor: 'transparent',
-    paddingVertical: 16,
-    borderRadius: 14,
+    paddingVertical: 15,
+    borderRadius: 12,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#334155',
+    borderWidth: 1,
+    borderColor: 'rgba(15,17,21,0.18)',
   },
   secondaryButtonText: {
-    color: '#94a3b8',
-    fontSize: 16,
+    color: '#0F1115',
+    fontSize: 15,
     fontWeight: '600',
   },
   footer: {
     textAlign: 'center',
-    color: '#334155',
-    fontSize: 12,
+    color: '#868E96',
+    fontSize: 11,
     marginTop: 24,
   },
 });

@@ -17,6 +17,7 @@ export type UserPublic = {
   id: string;
   email: string;
   displayName: string | null;
+  timezone?: string;
   createdAt: string;
 };
 

@@ -282,6 +282,9 @@ importers:
       '@saar/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@saar/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       expo:
         specifier: ~51.0.28
         version: 51.0.39(@babel/core@7.29.7(supports-color@8.1.1))(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.74.5(@babel/core@7.29.7(supports-color@8.1.1))(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@18.2.79)(react@18.2.0)(supports-color@8.1.1))(react@18.2.0)(supports-color@8.1.1)
@@ -334,6 +337,9 @@ importers:
       '@saar/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@saar/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       framer-motion:
         specifier: ^13.4.2
         version: 13.4.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

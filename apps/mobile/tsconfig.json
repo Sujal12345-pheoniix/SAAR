@@ -3,6 +3,9 @@
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": false,
-    "paths": { "@saar/contracts": ["../../packages/contracts/src/index.ts"] }
+    "paths": {
+      "@saar/contracts": ["../../packages/contracts/src/index.ts"],
+      "@saar/ui": ["../../packages/ui/src/index.ts"]
+    }
   }
 }
