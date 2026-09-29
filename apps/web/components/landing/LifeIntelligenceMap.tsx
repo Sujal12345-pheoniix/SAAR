@@ -26,7 +26,7 @@ const LIFE_AREAS: LifeAreaDetail[] = [
     name: 'Health & Vitality',
     tagline: 'Physical resilience, aerobic baseline, and circadian recovery',
     score: 84,
-    trend: '+8% this month',
+    trend: 'Improving (+8% 30d)',
     color: '#226949',
     bgLight: 'rgba(34, 105, 73, 0.08)',
     connectedTo: ['mind', 'career'],
@@ -48,7 +48,7 @@ const LIFE_AREAS: LifeAreaDetail[] = [
     name: 'Mind & Clarity',
     tagline: 'Deep cognitive focus, emotional poise, and mental space',
     score: 79,
-    trend: '+4% this month',
+    trend: 'Improving (+4% 30d)',
     color: '#4D5091',
     bgLight: 'rgba(77, 80, 145, 0.08)',
     connectedTo: ['health', 'purpose'],
@@ -70,7 +70,7 @@ const LIFE_AREAS: LifeAreaDetail[] = [
     name: 'Career & Craft',
     tagline: 'Deliberate building, architectural mastery, and deep contribution',
     score: 88,
-    trend: 'Stable high velocity',
+    trend: 'Steady high focus',
     color: '#B45309',
     bgLight: 'rgba(180, 83, 9, 0.08)',
     connectedTo: ['health', 'finance'],
@@ -92,7 +92,7 @@ const LIFE_AREAS: LifeAreaDetail[] = [
     name: 'Relationships & Connection',
     tagline: 'Unhurried presence, deep listening, and enduring bonds',
     score: 72,
-    trend: 'Needs intentional space',
+    trend: 'Attention needed',
     color: '#9B2C2C',
     bgLight: 'rgba(155, 44, 44, 0.08)',
     connectedTo: ['mind', 'purpose'],
@@ -114,7 +114,7 @@ const LIFE_AREAS: LifeAreaDetail[] = [
     name: 'Finance & Stewardship',
     tagline: 'Calibrated reserves, long-term sovereignty, and conscious allocation',
     score: 81,
-    trend: '+12% this quarter',
+    trend: 'Steady discipline',
     color: '#0F766E',
     bgLight: 'rgba(15, 118, 110, 0.08)',
     connectedTo: ['career', 'purpose'],
@@ -136,7 +136,7 @@ const LIFE_AREAS: LifeAreaDetail[] = [
     name: 'Purpose & Philosophy',
     tagline: 'Internal compass, ethical alignment, and intentional living',
     score: 86,
-    trend: 'Clear alignment',
+    trend: 'Aligned clarity',
     color: '#8C6D3B',
     bgLight: 'rgba(140, 109, 59, 0.08)',
     connectedTo: ['mind', 'relationships'],
@@ -164,7 +164,8 @@ export function LifeIntelligenceMap() {
       {/* Section Header */}
       <div className="max-w-2xl mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-[#226949] bg-[rgba(34,105,73,0.08)] mb-3">
-          02 • What Is Happening In My Life
+          <span>02 • What Is Happening In My Life</span>
+          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-800 font-medium normal-case">Illustrative Demo</span>
         </div>
         <h2 className="font-editorial text-4xl sm:text-5xl font-bold text-[#0F1115] tracking-tight leading-tight">
           Life is an ecosystem, <br />

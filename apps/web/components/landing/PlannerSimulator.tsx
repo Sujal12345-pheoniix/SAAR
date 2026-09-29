@@ -65,7 +65,8 @@ export function PlannerSimulator() {
       {/* Header */}
       <div className="max-w-2xl mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-[#226949] bg-[rgba(34,105,73,0.08)] mb-3">
-          04 • What Should I Do Next?
+          <span>04 • What Should I Do Next?</span>
+          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-800 font-medium normal-case">Illustrative Demo</span>
         </div>
         <h2 className="font-editorial text-4xl sm:text-5xl font-bold text-[#0F1115] tracking-tight leading-tight">
           A planner that understands <br />
@@ -111,7 +112,7 @@ export function PlannerSimulator() {
                   {overloadDiff % 60}m.
                 </strong>
                 <p className="text-xs text-[#495057] mt-1">
-                  Executing this unadjusted schedule carries an 84% probability of evening burnout and skipped sleep routines. Click a suggested action below to recalibrate.
+                  Executing this unadjusted schedule carries an elevated risk of evening exhaustion and skipped recovery rituals. Click a suggested action below to recalibrate.
                 </p>
               </div>
             </motion.div>
@@ -190,14 +191,14 @@ export function PlannerSimulator() {
                       }`}
                       title="Condense duration by focusing on core deliverables"
                     >
-                      {task.reduced ? 'Restore' : 'Condense'}
+                      {task.reduced ? 'Restore' : `Condense (-${task.durationMinutes - Math.round(task.durationMinutes * 0.6)}m)`}
                     </button>
                     <button
                       onClick={() => handleMoveTask(task.id)}
                       className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[#FFFFFF] hover:bg-[#F5F2EB] text-[#495057] border border-[rgba(15,17,21,0.1)] transition-colors"
                       title="Shift to tomorrow"
                     >
-                      Move →
+                      Move → (-{currentDuration}m)
                     </button>
                   </div>
                 </div>

@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { label: 'How SAAR Thinks', href: '#how-it-thinks' },
   { label: 'Trade-offs', href: '#tradeoffs' },
   { label: 'Growth Story', href: '#growth-story' },
+  { label: 'Companion', href: '#companion' },
 ];
 
 export function Navbar() {

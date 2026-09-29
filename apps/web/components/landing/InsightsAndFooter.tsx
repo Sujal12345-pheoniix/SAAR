@@ -35,7 +35,7 @@ export function CtaSection() {
               href="/register"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl font-medium text-base bg-[#226949] hover:bg-[#1B543A] text-white transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
             >
-              <span>Begin Your Journey</span>
+              <span>Begin Journey</span>
               <ArrowRight size={17} />
             </Link>
 
@@ -49,12 +49,12 @@ export function CtaSection() {
 
           <div className="pt-6 flex items-center justify-center gap-6 text-xs text-[#868E96]">
             <span className="flex items-center gap-1.5">
-              <ShieldCheck size={14} className="text-[#226949]" /> 100% Data Sovereignty
+              <ShieldCheck size={14} className="text-[#226949]" /> Privacy First
             </span>
             <span>•</span>
             <span>Zero Advertising</span>
             <span>•</span>
-            <span>Encrypted Memory</span>
+            <span>Private Personal Data</span>
           </div>
         </div>
       </div>
@@ -82,13 +82,13 @@ export function Footer() {
         {/* Links */}
         <div className="flex flex-wrap items-center gap-6 text-xs text-[#495057]">
           <Link href="/privacy" className="hover:text-[#0F1115] transition-colors">
-            Privacy Sovereignty
+            Privacy Policy
           </Link>
           <Link href="/terms" className="hover:text-[#0F1115] transition-colors">
-            Terms of Reflection
+            Terms of Service
           </Link>
           <a href="#how-it-thinks" className="hover:text-[#0F1115] transition-colors">
-            Architecture
+            How SAAR Thinks
           </a>
           <a href="#becoming" className="hover:text-[#0F1115] transition-colors">
             Becoming
