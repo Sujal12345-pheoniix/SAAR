@@ -65,7 +65,7 @@ export function Hero() {
             href="/register"
             className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl font-medium text-base bg-[#226949] hover:bg-[#1B543A] text-white transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
           >
-            <span>Begin Understanding Yourself</span>
+            <span>Begin Journey</span>
             <ArrowRight size={17} />
           </Link>
 
@@ -118,9 +118,9 @@ export function Hero() {
               <ShieldCheck size={16} />
             </div>
             <div>
-              <div className="text-sm font-semibold text-[#0F1115]">Data Sovereignty by Design</div>
+              <div className="text-sm font-semibold text-[#0F1115]">Privacy-First Architecture</div>
               <div className="text-xs text-[#868E96] mt-0.5">
-                Every AI memory is consented, visible, and revokable by you at any moment.
+                Designed for user data ownership with planned transparent, revokable memory controls.
               </div>
             </div>
           </div>

@@ -42,7 +42,7 @@ export default function FutureSelfPage() {
   const fetchFutureSelf = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.get<any>('/api/v1/future-self');
+      const res = await apiClient.get<any>('/future-self');
       if (res.ok && res.data?.identityStatement) {
         setIdentity(res.data.identityStatement);
         setEditIdentity(res.data.identityStatement);
@@ -60,7 +60,7 @@ export default function FutureSelfPage() {
 
   const handleSave = async () => {
     try {
-      await apiClient.post('/api/v1/future-self', {
+      await apiClient.post('/future-self', {
         identityStatement: editIdentity,
         horizonYears: 3,
       });

@@ -9,7 +9,9 @@ import { CompanionSection } from '@/components/landing/CompanionSection';
 import { CtaSection, Footer } from '@/components/landing/InsightsAndFooter';
 
 export const metadata: Metadata = {
-  title: 'SAAR — Personal Growth Intelligence',
+  title: {
+    absolute: 'SAAR — Personal Growth Intelligence',
+  },
   description:
     'You are not managing tasks. You are understanding the person behind the tasks. Turn your daily reality into a deliberate path toward who you want to become.',
   robots: { index: true, follow: true },

@@ -20,12 +20,12 @@ const REPORTS: MonthlyReport[] = [
     month: 'September 2026',
     cycleOverview: 'A month characterized by steady boundary consolidation and consistent aerobic recovery.',
     whatChanged: [
-      '18 deliberate morning cardio sessions completed with zero skips.',
+      '18 deliberate morning cardio sessions completed across the month.',
       'Evening shutdown buffer preserved on 22 of 28 tracked days.',
       'Deep architecture sprints scheduled exclusively before 11:30 AM.',
     ],
     whatBecameEasier:
-      'Lacing up running shoes at 07:15 AM transitioned from an internal debate into an automatic morning baseline.',
+      'Lacing up running shoes at 07:30 AM transitioned from an internal debate into an automatic morning baseline.',
     whatStillFrictions:
       'Unplanned late-night messages after 10:00 PM periodically elevate pre-sleep cognitive arousal.',
     whatYouLearned:
@@ -33,9 +33,9 @@ const REPORTS: MonthlyReport[] = [
     whatToTryNext:
       'Relocate the phone charging station outside the bedroom at 09:30 PM to eliminate late-night context re-entry.',
     headlineMetric: {
-      value: '84%',
+      value: '79%',
       label: 'Behavioral Consistency',
-      context: '+14% compared to pre-SAAR baseline',
+      context: '22 of 28 tracked days preserved',
     },
   },
   {
@@ -71,7 +71,8 @@ export function GrowthStorySection() {
       {/* Header */}
       <div className="max-w-2xl mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-[#226949] bg-[rgba(34,105,73,0.08)] mb-3">
-          05 • What Changed?
+          <span>05 • What Changed?</span>
+          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-800 font-medium normal-case">Illustrative Demo</span>
         </div>
         <h2 className="font-editorial text-4xl sm:text-5xl font-bold text-[#0F1115] tracking-tight leading-tight">
           Your story of change, <br />

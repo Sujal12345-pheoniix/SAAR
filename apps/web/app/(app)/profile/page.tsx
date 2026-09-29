@@ -6,8 +6,6 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Skeleton } from '@/components/ui/Skeleton';
 
 interface ConsentedMemory {
@@ -26,14 +24,13 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState('');
   const [timezone, setTimezone] = useState('');
   const [isSaved, setIsSaved] = useState(false);
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const fetchProfile = useCallback(async () => {
     setIsLoading(true);
     try {
       const [meRes, memRes] = await Promise.all([
-        apiClient.get<any>('/api/v1/users/me'),
-        apiClient.get<any>('/api/v1/memories'),
+        apiClient.get<any>('/me'),
+        apiClient.get<any>('/memories'),
       ]);
       const meData = meRes.ok ? (meRes.data as any) : null;
       const memData = memRes.ok ? (memRes.data as any) : null;
@@ -45,47 +42,13 @@ export default function ProfilePage() {
       if (Array.isArray(memData)) {
         setMemories(memData);
       } else {
-        setMemories([
-          {
-            id: 'mem-1',
-            type: 'BEHAVIORAL_PATTERN',
-            summary: 'Cognitive peak window verified between 08:30 AM and 11:30 AM when preceded by aerobic exercise.',
-            confidence: 0.94,
-            sensitivity: 'NORMAL',
-            consentedAt: '2026-09-20',
-          },
-          {
-            id: 'mem-2',
-            type: 'GOAL_CONTEXT',
-            summary: 'Targeting 10K sub-50 minute race to anchor physical endurance for long-term health.',
-            confidence: 0.98,
-            sensitivity: 'NORMAL',
-            consentedAt: '2026-09-18',
-          },
-        ]);
+        setMemories([]);
       }
     } catch {
-      setUser({ email: 'practitioner@saar.dev', status: 'ACTIVE' });
-      setDisplayName('SAAR Practitioner');
-      setTimezone('Asia/Kolkata');
-      setMemories([
-        {
-          id: 'mem-1',
-          type: 'BEHAVIORAL_PATTERN',
-          summary: 'Cognitive peak window verified between 08:30 AM and 11:30 AM when preceded by aerobic exercise.',
-          confidence: 0.94,
-          sensitivity: 'NORMAL',
-          consentedAt: '2026-09-20',
-        },
-        {
-          id: 'mem-2',
-          type: 'GOAL_CONTEXT',
-          summary: 'Targeting 10K sub-50 minute race to anchor physical endurance for long-term health.',
-          confidence: 0.98,
-          sensitivity: 'NORMAL',
-          consentedAt: '2026-09-18',
-        },
-      ]);
+      setUser(null);
+      setDisplayName('');
+      setTimezone('UTC');
+      setMemories([]);
     } finally {
       setIsLoading(false);
     }
@@ -98,18 +61,17 @@ export default function ProfilePage() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await apiClient.patch('/api/v1/users/me', { displayName, timezone });
+      await apiClient.patch('/me', { displayName, timezone });
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2500);
     } catch {
-      setIsSaved(true);
-      setTimeout(() => setIsSaved(false), 2500);
+      setIsSaved(false);
     }
   };
 
   const handleRevokeMemory = async (id: string) => {
     try {
-      await apiClient.delete(`/api/v1/memories/${id}`);
+      await apiClient.delete(`/memories/${id}`);
     } catch {
       // optimistic
     }
@@ -239,42 +201,27 @@ export default function ProfilePage() {
               Data Sovereignty & Account Erasure
             </h3>
             <p className="text-xs text-[#868E96] leading-relaxed mb-4">
-              Export an encrypted archive of all logged events, check-ins, and goal metrics. Or permanently delete your account, triggering immediate database cascades and outbox purge.
+              Self-sovereign data archive export and permanent automated account erasure pipelines are currently in development.
             </p>
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => alert('Personal data archive export initiated. A secure download package will be delivered.')}
+                disabled
               >
-                Export Complete Data Archive
+                Export Archive (Planned)
               </Button>
               <Button
                 variant="danger"
                 size="sm"
-                onClick={() => setDeleteModalOpen(true)}
+                disabled
               >
-                Permanently Erase Account
+                Erase Account (Planned)
               </Button>
             </div>
           </Card>
         </>
       )}
-
-      {/* Delete Confirmation Gate */}
-      <ConfirmDialog
-        isOpen={deleteModalOpen}
-        onClose={() => setDeleteModalOpen(false)}
-        onConfirm={async () => {
-          setDeleteModalOpen(false);
-          alert('Account erasure request accepted. Your active sessions will be terminated.');
-          window.location.href = '/login';
-        }}
-        title="Permanently Delete SAAR Account?"
-        message="This operation immediately and irrevocably erases your user profile, future self identity, all goals, tasks, habit streaks, check-in history, and AI memory records."
-        confirmLabel="Erase Everything"
-        variant="danger"
-      />
     </div>
   );
 }

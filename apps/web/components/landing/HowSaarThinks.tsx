@@ -33,7 +33,7 @@ const CASES: TransformationCase[] = [
       friction: 'Tuesday and Thursday workouts skipped after 9.5-hour engineering sprints.',
     },
     patternDetected:
-      'Your consistency drops by 42% on days where cognitive load exceeds 8.5 hours. It is not an issue of motivation; your nervous system lacks an evening shutdown buffer.',
+      'Your consistency drops noticeably on days where cognitive load exceeds 8.5 hours. It is not an issue of motivation; your nervous system lacks an evening shutdown buffer.',
     evidencePoints: [
       { label: 'Workload Threshold', metric: '>8.5h work', detail: 'Consistent drop in physical readiness' },
       { label: 'Heart Rate Variability', metric: '-18ms dip', detail: 'Elevated sympathetic tone at 7:30 PM' },
@@ -42,7 +42,7 @@ const CASES: TransformationCase[] = [
     proposedExperiment: {
       headline: 'Protect a 30-minute recovery buffer before evening exercise',
       action: 'Shift workout to 07:30 AM or introduce a mandatory 20m zero-screen transition ritual before training.',
-      expectedOutcome: '+24% weekly habit completion rate without increasing perceived exertion.',
+      expectedOutcome: 'Substantially higher habit completion rate without increasing perceived exertion.',
     },
   },
   {
@@ -64,7 +64,7 @@ const CASES: TransformationCase[] = [
     proposedExperiment: {
       headline: 'Front-load complex architecture blocks to morning windows',
       action: 'Schedule heavy analytical work between 09:30 AM and 11:30 AM; reserve afternoons for async collaboration.',
-      expectedOutcome: '90%+ deep work sprint completion rate with zero forced willpower.',
+      expectedOutcome: 'Significantly higher deep work sprint completion rate with sustainable cognitive reserve.',
     },
   },
   {
@@ -102,7 +102,8 @@ export function HowSaarThinks() {
       {/* Section Header */}
       <div className="max-w-2xl mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-[#226949] bg-[rgba(34,105,73,0.08)] mb-3">
-          03 • What Does SAAR Notice?
+          <span>03 • What Does SAAR Notice?</span>
+          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-800 font-medium normal-case">Illustrative Demo</span>
         </div>
         <h2 className="font-editorial text-4xl sm:text-5xl font-bold text-[#0F1115] tracking-tight leading-tight">
           Intelligence you can <br />

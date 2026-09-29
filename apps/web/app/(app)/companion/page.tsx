@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { CompanionPulse } from '@/components/domain/CompanionPulse';
 import { CompanionMessage, type ActionProposal } from '@/components/domain/CompanionMessage';
+import { ErrorState } from '@/components/ui/ErrorState';
 
 interface MessageItem {
   id: string;
@@ -26,8 +27,6 @@ const initialMessages: MessageItem[] = [
     content:
       'I am your SAAR Companion. I am grounded in your real behavior, your stated goals, and who you want to become. What is on your mind today, or shall we inspect your recent execution patterns?',
     timestamp: '10:00 AM',
-    facts: ['3 of 4 planned tasks completed yesterday', '140 minutes cardio logged this week'],
-    signals: ['Consistency score is 84 (improving)'],
   },
 ];
 
@@ -35,6 +34,7 @@ export default function CompanionPage() {
   const [messages, setMessages] = useState<MessageItem[]>(initialMessages);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isUnavailable, setIsUnavailable] = useState(false);
   const [pulseState, setPulseState] = useState<'idle' | 'listening' | 'reflecting' | 'speaking'>('idle');
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +44,7 @@ export default function CompanionPage() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isSending) return;
+    if (!input.trim() || isSending || isUnavailable) return;
 
     const userText = input.trim();
     setInput('');
@@ -61,89 +61,40 @@ export default function CompanionPage() {
     setPulseState('reflecting');
 
     try {
-      const res = await apiClient.post<any>('/api/v1/companion/chat', { message: userText });
-      const resData = res.ok ? (res.data as any) : null;
+      const res = await apiClient.post<any>('/companion/chat', { message: userText });
+      if (!res.ok) {
+        setIsUnavailable(true);
+        setPulseState('idle');
+        return;
+      }
+      const resData = res.data;
       const reply = resData?.content || resData?.response;
+      if (!reply) {
+        setIsUnavailable(true);
+        setPulseState('idle');
+        return;
+      }
       setPulseState('speaking');
 
       const companionMsg: MessageItem = {
         id: `c-${Date.now()}`,
         role: 'assistant',
-        content: reply || 'I reviewed your recent activity. You are maintaining strong morning momentum, though your evening wind-down routine has shown some friction.',
+        content: reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        facts: resData?.facts || ['Logged 4 consecutive days of morning deep focus'],
-        signals: resData?.signals || ['Evening capacity overload detected (+45m)'],
-        hypotheses: resData?.hypotheses || ['Pushing high-stimulus tasks past 8 PM delays restorative sleep'],
-        actions: resData?.actions || [
-          {
-            id: 'act-1',
-            type: 'suggest_reschedule',
-            title: 'Move evening administrative task to 10:00 AM tomorrow',
-            description: 'Protects a minimum 90-minute decompression runway before sleep.',
-            requiresConfirmation: true,
-            status: 'PROPOSED',
-          },
-        ],
+        facts: resData?.facts,
+        signals: resData?.signals,
+        hypotheses: resData?.hypotheses,
+        actions: resData?.actions,
       };
 
       setMessages((prev) => [...prev, companionMsg]);
+      setTimeout(() => setPulseState('idle'), 2000);
     } catch {
-      // Fallback
-      setTimeout(() => {
-        setPulseState('speaking');
-        const fallbackMsg: MessageItem = {
-          id: `c-${Date.now()}`,
-          role: 'assistant',
-          content: `I hear you regarding "${userText}". Based on your recent execution records, your consistency is solid at 84%, but your planned evening schedule is currently overloaded. Would you like me to propose a gentle adjustment?`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          facts: ['Logged 4 consecutive days of morning deep focus'],
-          hypotheses: ['Shifting secondary tasks to tomorrow creates necessary recovery space'],
-          actions: [
-            {
-              id: 'act-1',
-              type: 'suggest_reschedule',
-              title: 'Move evening administrative task to 10:00 AM tomorrow',
-              description: 'Protects a minimum 90-minute decompression runway before sleep.',
-              requiresConfirmation: true,
-              status: 'PROPOSED',
-            },
-          ],
-        };
-        setMessages((prev) => [...prev, fallbackMsg]);
-        setTimeout(() => setPulseState('idle'), 2000);
-      }, 700);
+      setIsUnavailable(true);
+      setPulseState('idle');
     } finally {
       setIsSending(false);
     }
-  };
-
-  const handleConfirmAction = (actionId: string) => {
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (!m.actions) return m;
-        return {
-          ...m,
-          actions: m.actions.map((a) =>
-            a.id === actionId ? { ...a, status: 'CONFIRMED' as const } : a
-          ),
-        };
-      })
-    );
-    alert('Action confirmed! The change has been committed to your schedule.');
-  };
-
-  const handleRejectAction = (actionId: string) => {
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (!m.actions) return m;
-        return {
-          ...m,
-          actions: m.actions.map((a) =>
-            a.id === actionId ? { ...a, status: 'REJECTED' as const } : a
-          ),
-        };
-      })
-    );
   };
 
   return (
@@ -161,8 +112,8 @@ export default function CompanionPage() {
             </span>
           </div>
         </div>
-        <Badge variant="reflection" size="sm">
-          Evidence Connected
+        <Badge variant={isUnavailable ? 'neutral' : 'reflection'} size="sm">
+          {isUnavailable ? 'Service Unavailable' : 'Evidence Connected'}
         </Badge>
       </div>
 
@@ -183,10 +134,16 @@ export default function CompanionPage() {
                 signals={m.signals}
                 hypotheses={m.hypotheses}
                 actions={m.actions}
-                onConfirmAction={handleConfirmAction}
-                onRejectAction={handleRejectAction}
               />
             ))}
+            {isUnavailable && (
+              <div className="my-4">
+                <ErrorState
+                  title="The Companion isn't available yet."
+                  message="Conversational reflection and schedule adjustments are currently in development. Your goals and tracked habits remain secure."
+                />
+              </div>
+            )}
             <div ref={chatEndRef} />
           </div>
 
@@ -199,14 +156,19 @@ export default function CompanionPage() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Reflect on your day, explore a pattern, or discuss a goal..."
-              className="flex-1 px-4 py-2 text-sm bg-transparent text-[#0F1115] dark:text-[#FAF8F5] focus:outline-none placeholder:text-[#868E96]"
+              disabled={isUnavailable || isSending}
+              placeholder={
+                isUnavailable
+                  ? "The Companion isn't available yet."
+                  : 'Reflect on your day, explore a pattern, or discuss a goal...'
+              }
+              className="flex-1 px-4 py-2 text-sm bg-transparent text-[#0F1115] dark:text-[#FAF8F5] focus:outline-none placeholder:text-[#868E96] disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <Button
               variant="growth"
               size="sm"
               type="submit"
-              disabled={!input.trim() || isSending}
+              disabled={!input.trim() || isSending || isUnavailable}
               isLoading={isSending}
             >
               Send
@@ -221,18 +183,9 @@ export default function CompanionPage() {
               Grounding Context
             </span>
             <div className="flex flex-col gap-2 text-xs">
-              <div className="p-2.5 bg-[#FAF8F5] dark:bg-[#12141A] rounded-md border border-[rgba(15,17,21,0.06)] dark:border-[rgba(255,255,255,0.06)]">
-                <strong className="block text-[#0F1115] dark:text-[#FAF8F5] mb-0.5">Active Future Self:</strong>
-                <span className="italic text-[#868E96]">&ldquo;Physical vitality, intellectual depth, and continuous personal growth.&rdquo;</span>
-              </div>
-              <div className="p-2.5 bg-[#FAF8F5] dark:bg-[#12141A] rounded-md border border-[rgba(15,17,21,0.06)] dark:border-[rgba(255,255,255,0.06)]">
-                <strong className="block text-[#0F1115] dark:text-[#FAF8F5] mb-0.5">Consistency Signal:</strong>
-                <span className="text-[#226949] dark:text-[#4ADE80] font-semibold">84 / 100 (High regularity)</span>
-              </div>
-              <div className="p-2.5 bg-[#FAF8F5] dark:bg-[#12141A] rounded-md border border-[rgba(15,17,21,0.06)] dark:border-[rgba(255,255,255,0.06)]">
-                <strong className="block text-[#0F1115] dark:text-[#FAF8F5] mb-0.5">Active Gap:</strong>
-                <span className="text-[#B45309] dark:text-[#FBBF24]">Evening wind-down routine skipped 2x this week.</span>
-              </div>
+              <p className="text-[#868E96] text-xs leading-relaxed">
+                Grounding signals and active behavioral gaps will appear here once the Companion service is connected.
+              </p>
             </div>
           </Card>
 

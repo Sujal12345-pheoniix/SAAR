@@ -27,9 +27,10 @@ export default function CompanionScreen() {
   ]);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isUnavailable, setIsUnavailable] = useState(false);
 
   const handleSend = async () => {
-    if (!input.trim() || isSending) return;
+    if (!input.trim() || isSending || isUnavailable) return;
     const userText = input.trim();
     setInput('');
 
@@ -53,55 +54,25 @@ export default function CompanionScreen() {
         };
       }
       const res = await apiClient.post<ChatApiResponse>('/api/v1/companion/chat', { message: userText });
-      const reply = res.content || res.response || res.data?.content || res.data?.response;
+      const reply = res?.content || res?.response || res?.data?.content || res?.data?.response;
+      if (!reply) {
+        setIsUnavailable(true);
+        return;
+      }
       setMessages((prev) => [
         ...prev,
         {
           id: `c-${Date.now()}`,
           role: 'assistant',
-          content: reply || 'I reviewed your pattern. Shifting your evening task to tomorrow creates necessary recovery space.',
+          content: reply,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          actionProposal: {
-            id: 'act-1',
-            title: 'Reschedule evening task to 10:00 AM tomorrow',
-            description: 'Protects a 90-minute shutdown runway before sleep.',
-            status: 'PROPOSED',
-          },
         },
       ]);
     } catch {
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `c-${Date.now()}`,
-            role: 'assistant',
-            content: `I hear you regarding "${userText}". Based on your recent execution records, your consistency is solid at 84%, but your planned evening schedule is currently overloaded. Would you like me to propose a gentle adjustment?`,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            actionProposal: {
-              id: 'act-1',
-              title: 'Reschedule evening task to 10:00 AM tomorrow',
-              description: 'Protects a 90-minute shutdown runway before sleep.',
-              status: 'PROPOSED',
-            },
-          },
-        ]);
-      }, 600);
+      setIsUnavailable(true);
     } finally {
       setIsSending(false);
     }
-  };
-
-  const handleConfirmAction = (actionId: string) => {
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (!m.actionProposal || m.actionProposal.id !== actionId) return m;
-        return {
-          ...m,
-          actionProposal: { ...m.actionProposal, status: 'CONFIRMED' },
-        };
-      })
-    );
   };
 
   return (
@@ -131,46 +102,41 @@ export default function CompanionScreen() {
                   <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextAssistant]}>
                     {m.content}
                   </Text>
-
-                  {/* Proposed Action Confirmation */}
-                  {m.actionProposal && (
-                    <View style={styles.actionCard}>
-                      <Text style={styles.actionEyebrow}>PROPOSED ACTION</Text>
-                      <Text style={styles.actionTitle}>{m.actionProposal.title}</Text>
-                      <Text style={styles.actionDesc}>{m.actionProposal.description}</Text>
-                      {m.actionProposal.status === 'PROPOSED' ? (
-                        <TouchableOpacity
-                          style={styles.confirmBtn}
-                          onPress={() => handleConfirmAction(m.actionProposal!.id)}
-                        >
-                          <Text style={styles.confirmBtnText}>Confirm & Apply</Text>
-                        </TouchableOpacity>
-                      ) : (
-                        <Text style={styles.confirmedText}>✓ Action applied to schedule</Text>
-                      )}
-                    </View>
-                  )}
                 </View>
                 <Text style={styles.timestamp}>{m.time}</Text>
               </View>
             );
           })}
+          {isUnavailable && (
+            <View style={styles.unavailableBanner}>
+              <Text style={styles.unavailableTitle}>The Companion isn&apos;t available yet.</Text>
+              <Text style={styles.unavailableDesc}>
+                Conversational reflection is currently in development. Your goals and tracked habits remain secure.
+              </Text>
+            </View>
+          )}
         </ScrollView>
 
         {/* Input Bar */}
         <View style={styles.inputBar}>
           <TextInput
-            style={styles.input}
-            placeholder="Reflect, ask, or explore an execution pattern..."
+            style={[styles.input, isUnavailable && styles.inputDisabled]}
+            placeholder={
+              isUnavailable
+                ? "The Companion isn't available yet."
+                : 'Reflect, ask, or explore an execution pattern...'
+            }
             placeholderTextColor="#868E96"
             value={input}
             onChangeText={setInput}
+            editable={!isUnavailable && !isSending}
             onSubmitEditing={() => {
               void handleSend();
             }}
           />
           <TouchableOpacity
-            style={styles.sendBtn}
+            style={[styles.sendBtn, (isUnavailable || isSending || !input.trim()) && styles.sendBtnDisabled]}
+            disabled={isUnavailable || isSending || !input.trim()}
             onPress={() => {
               void handleSend();
             }}
@@ -266,11 +232,40 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#0F1115',
   },
+  inputDisabled: {
+    opacity: 0.6,
+  },
   sendBtn: {
     backgroundColor: '#226949',
     paddingHorizontal: 18,
     borderRadius: 20,
     justifyContent: 'center',
   },
+  sendBtnDisabled: {
+    backgroundColor: '#CED4DA',
+    opacity: 0.6,
+  },
   sendBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '600' },
+  unavailableBanner: {
+    backgroundColor: 'rgba(197, 48, 48, 0.06)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(197, 48, 48, 0.2)',
+    padding: 16,
+    marginVertical: 12,
+    alignItems: 'center',
+  },
+  unavailableTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#9B2C2C',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  unavailableDesc: {
+    fontSize: 12,
+    color: '#868E96',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
 });

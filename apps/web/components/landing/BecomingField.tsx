@@ -46,7 +46,7 @@ const STAGES: CalibrationStage[] = [
     alignment: 84,
     gapPercentage: 16,
     todaySummary: {
-      status: 'Sustainable 7h 20m load',
+      status: 'Sustainable 7h 30m load',
       routine: 'Morning zone 2 cardio & deep work locked in',
       evening: '45-minute unhurried shutdown buffer',
       energy: 'Restorative baseline preserved',
@@ -94,7 +94,8 @@ export function BecomingField() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-8 border-b border-[rgba(15,17,21,0.06)] relative z-10">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-[#226949] bg-[rgba(34,105,73,0.08)] mb-2">
-            Signature Interaction • The Becoming Field
+            <span>Signature Interaction • The Becoming Field</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-800 font-medium normal-case">Illustrative Demo</span>
           </div>
           <h2 className="font-editorial text-2xl md:text-3xl font-semibold text-[#0F1115] tracking-tight">
             How small daily calibrations transform who you become

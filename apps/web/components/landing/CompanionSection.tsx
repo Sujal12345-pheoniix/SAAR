@@ -82,18 +82,19 @@ export function CompanionSection() {
   };
 
   return (
-    <section className="py-24 px-4 sm:px-6 max-w-6xl mx-auto w-full">
+    <section id="companion" className="py-24 px-4 sm:px-6 max-w-6xl mx-auto w-full">
       {/* Header */}
       <div className="max-w-2xl mb-14">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-[#226949] bg-[rgba(34,105,73,0.08)] mb-3">
-          06 • Grounded Companion
+          <span>06 • Grounded Companion</span>
+          <span className="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-800 font-medium normal-case">Planned Architecture Demo</span>
         </div>
         <h2 className="font-editorial text-4xl sm:text-5xl font-bold text-[#0F1115] tracking-tight leading-tight">
           A calm companion, <br />
           <span className="italic font-normal text-[#226949]">grounded in your actual life.</span>
         </h2>
         <p className="text-base sm:text-lg text-[#495057] mt-4 leading-relaxed font-interface">
-          Not a generic chatbot that hallucinates advice. The SAAR Companion observes your real behavioral patterns, answers with discoverable evidence, and proposes explicit actions that require your deliberate confirmation.
+          Not a generic chatbot that hallucinates advice. In SAAR&apos;s planned companion architecture, the assistant observes your real behavioral patterns, answers with discoverable evidence, and proposes explicit actions that require your deliberate confirmation.
         </p>
       </div>
 
@@ -145,6 +146,7 @@ export function CompanionSection() {
             <span>Inquiry</span>
             <span>•</span>
             <span className="text-[#0F1115] font-semibold">{activePrompt.label}</span>
+            <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-800 font-medium normal-case">Simulated Preview</span>
           </div>
 
           {/* Response Stream */}

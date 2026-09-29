@@ -47,12 +47,8 @@ export default function TodayScreen() {
         );
       }
     } catch {
-      // Fallback
-      setTasks([
-        { id: 'm1', title: 'Morning Zone 2 cardio jog', estimatedMinutes: 40, scheduledTime: '07:30 AM', status: 'COMPLETED', lifeArea: 'health' },
-        { id: 'm2', title: 'Deep focus architecture design sprint', estimatedMinutes: 90, scheduledTime: '10:00 AM', status: 'TODO', lifeArea: 'career' },
-        { id: 'm3', title: 'Evening mindful reading & reflection', estimatedMinutes: 20, scheduledTime: '09:00 PM', status: 'TODO', lifeArea: 'mind' },
-      ]);
+      // Return empty task list on network or server error
+      setTasks([]);
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -154,6 +150,11 @@ export default function TodayScreen() {
 
           {isLoading ? (
             <ActivityIndicator color="#226949" style={{ marginVertical: 24 }} />
+          ) : tasks.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>No tasks planned</Text>
+              <Text style={styles.emptySubtitle}>You have no tasks scheduled for today.</Text>
+            </View>
           ) : (
             <View style={styles.taskList}>
               {tasks.map((task) => {
@@ -439,5 +440,25 @@ const styles = StyleSheet.create({
     color: '#FAF8F5',
     fontSize: 12,
     fontWeight: '600',
+  },
+  emptyContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 17, 21, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0F1115',
+    marginBottom: 4,
+  },
+  emptySubtitle: {
+    fontSize: 12,
+    color: '#868E96',
+    textAlign: 'center',
   },
 });
