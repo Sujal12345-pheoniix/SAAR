@@ -36,18 +36,11 @@ export default function ProfileScreen() {
   }
 
   function handleExportData() {
-    Alert.alert('Export Data', 'A secure archive of your behavior events and reflections is being prepared.');
+    Alert.alert('Export Archive (Planned)', 'Personal behavior archive export is currently in development.');
   }
 
   function handleDeleteAccount() {
-    Alert.alert(
-      'Delete Account',
-      'Permanently erase your account, memories, and behavior history. This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete Permanently', style: 'destructive', onPress: () => Alert.alert('Request Submitted') },
-      ]
-    );
+    Alert.alert('Account Erasure (Planned)', 'Permanent account erasure pipeline is currently in development.');
   }
 
   return (
@@ -96,12 +89,12 @@ export default function ProfileScreen() {
         <View style={styles.card}>
           <Text style={styles.cardHeader}>Privacy & Companion Memory</Text>
           <TouchableOpacity style={styles.actionRow} onPress={handleExportData}>
-            <Text style={styles.actionRowText}>Export Personal Behavior Archive</Text>
+            <Text style={styles.actionRowText}>Export Behavior Archive (Planned)</Text>
             <Text style={styles.arrowText}>→</Text>
           </TouchableOpacity>
           <View style={styles.divider} />
           <TouchableOpacity style={styles.actionRow} onPress={handleDeleteAccount}>
-            <Text style={[styles.actionRowText, { color: '#9B2C2C' }]}>Erase Account & Memory</Text>
+            <Text style={[styles.actionRowText, { color: '#868E96' }]}>Erase Account & Memory (Planned)</Text>
             <Text style={styles.arrowText}>→</Text>
           </TouchableOpacity>
         </View>

@@ -35,7 +35,7 @@ export default function GoalsPage() {
   const fetchGoals = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.get<any>('/api/v1/goals');
+      const res = await apiClient.get<any>('/goals');
       if (res.ok && Array.isArray(res.data)) {
         setGoals(
           res.data.map((g: any) => ({
@@ -50,44 +50,11 @@ export default function GoalsPage() {
             nextAction: g.nextAction || 'Schedule next milestone session',
           }))
         );
+      } else {
+        setGoals([]);
       }
     } catch {
-      // Fallback
-      setGoals([
-        {
-          id: 'g1',
-          title: 'Complete 10K Sub-50 Minute Endurance Run',
-          lifeArea: 'health',
-          currentValue: 7.2,
-          targetValue: 10,
-          unit: 'km',
-          trend: 'improving',
-          whyStatement: 'Building foundational aerobic base to maintain sustained cognitive energy throughout grueling engineering sprints.',
-          nextAction: 'Tomorrow: 45m Zone 2 tempo intervals',
-        },
-        {
-          id: 'g2',
-          title: 'Publish Distributed Systems Monograph',
-          lifeArea: 'career',
-          currentValue: 4,
-          targetValue: 8,
-          unit: 'chapters',
-          trend: 'stable',
-          whyStatement: 'Deepening personal domain authority and sharing reliable distributed consensus patterns with the broader community.',
-          nextAction: 'Complete chapter 5 draft on transactional outboxes',
-        },
-        {
-          id: 'g3',
-          title: 'Read 12 Foundational Philosophy Books',
-          lifeArea: 'mind',
-          currentValue: 8,
-          targetValue: 12,
-          unit: 'books',
-          trend: 'improving',
-          whyStatement: 'Nourishing perspective and timeless principles to counter transient digital noise.',
-          nextAction: 'Read Marcus Aurelius Meditations Book IV tonight',
-        },
-      ]);
+      setGoals([]);
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +69,7 @@ export default function GoalsPage() {
     if (!newTitle.trim()) return;
 
     try {
-      await apiClient.post('/api/v1/goals', {
+      await apiClient.post('/goals', {
         title: newTitle.trim(),
         targetValue: parseFloat(newTarget) || 100,
         unit: newUnit,

@@ -35,7 +35,7 @@ interface TodayState {
     consistency: number;
     momentum: number;
     balance: number;
-  };
+  } | null;
   dailyGrowthReady: boolean;
 }
 
@@ -50,8 +50,8 @@ export default function TodayPage() {
     try {
       // 1. Fetch daily growth summary or tasks
       const [growthRes, tasksRes] = await Promise.all([
-        apiClient.get<any>('/api/v1/daily-growth/today'),
-        apiClient.get<any>('/api/v1/tasks'),
+        apiClient.get<any>('/daily-growth/today'),
+        apiClient.get<any>('/tasks'),
       ]);
 
       const now = new Date();
@@ -88,52 +88,19 @@ export default function TodayPage() {
         focusPriority: nextAction ? nextAction.title : 'All critical tasks completed for today',
         nextAction,
         tasks: allTasks,
-        signals: {
-          consistency: growthInfo?.signals?.consistency || 78,
-          momentum: growthInfo?.signals?.momentum || 82,
-          balance: growthInfo?.signals?.balance || 71,
-        },
+        signals: growthInfo?.signals || null,
         dailyGrowthReady: hours >= 17 || allTasks.filter((t) => t.status === 'COMPLETED').length >= 3,
       });
-    } catch (err: any) {
-      // Fallback with safe baseline if API is spinning up
+    } catch {
       setData({
         greeting: 'Welcome back',
         dateString: new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
         energyLevel: 'steady',
-        focusPriority: 'Establish consistent morning deep focus',
-        nextAction: {
-          id: 'sample-1',
-          title: 'Review weekly progress and outline high-leverage goals',
-          estimatedMinutes: 30,
-          scheduledTime: '10:00 AM',
-          status: 'TODO',
-          lifeArea: 'career',
-        },
-        tasks: [
-          {
-            id: 'sample-1',
-            title: 'Review weekly progress and outline high-leverage goals',
-            estimatedMinutes: 30,
-            scheduledTime: '10:00 AM',
-            status: 'TODO',
-            lifeArea: 'career',
-          },
-          {
-            id: 'sample-2',
-            title: '45-minute aerobic endurance zone 2 run',
-            estimatedMinutes: 45,
-            scheduledTime: '04:30 PM',
-            status: 'TODO',
-            lifeArea: 'health',
-          },
-        ],
-        signals: {
-          consistency: 78,
-          momentum: 82,
-          balance: 71,
-        },
-        dailyGrowthReady: true,
+        focusPriority: 'Establish consistent daily focus',
+        nextAction: null,
+        tasks: [],
+        signals: null,
+        dailyGrowthReady: false,
       });
     } finally {
       setIsLoading(false);
@@ -146,7 +113,7 @@ export default function TodayPage() {
 
   const handleCompleteTask = async (taskId: string) => {
     try {
-      await apiClient.post(`/api/v1/tasks/${taskId}/complete`, {});
+      await apiClient.post(`/tasks/${taskId}/complete`, {});
       // Optimistic update
       setData((prev) => {
         if (!prev) return null;
@@ -163,7 +130,7 @@ export default function TodayPage() {
 
   const handleSkipTask = async (taskId: string) => {
     try {
-      await apiClient.post(`/api/v1/tasks/${taskId}/skip`, {});
+      await apiClient.post(`/tasks/${taskId}/skip`, {});
       setData((prev) => {
         if (!prev) return null;
         const updated = prev.tasks.map((t) =>
@@ -361,26 +328,34 @@ export default function TodayPage() {
             View full analytics →
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <SignalIndicator
-            signalType="CONSISTENCY"
-            score={data.signals.consistency}
-            direction="UP"
-            summary="Strong 14-day completion regularity across morning routine and workouts."
-          />
-          <SignalIndicator
-            signalType="MOMENTUM"
-            score={data.signals.momentum}
-            direction="STABLE"
-            summary="Steady goal progression with minimal skipped habits this cycle."
-          />
-          <SignalIndicator
-            signalType="BALANCE"
-            score={data.signals.balance}
-            direction="UP"
-            summary="Balanced distribution across Mind, Health, and Career life areas."
-          />
-        </div>
+        {data.signals ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <SignalIndicator
+              signalType="CONSISTENCY"
+              score={data.signals.consistency}
+              direction="STABLE"
+              summary="Regularity across your daily commitments."
+            />
+            <SignalIndicator
+              signalType="MOMENTUM"
+              score={data.signals.momentum}
+              direction="STABLE"
+              summary="Habit execution velocity over rolling 14 days."
+            />
+            <SignalIndicator
+              signalType="BALANCE"
+              score={data.signals.balance}
+              direction="STABLE"
+              summary="Distribution across deliberate life areas."
+            />
+          </div>
+        ) : (
+          <Card variant="subtle" padding="md">
+            <p className="text-xs text-[#868E96] text-center py-4">
+              Growth signals will generate here once you begin completing scheduled actions and logging check-ins.
+            </p>
+          </Card>
+        )}
       </div>
     </div>
   );

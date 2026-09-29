@@ -39,7 +39,7 @@ export default function PlannerPage() {
   const fetchPlannerData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await apiClient.get<any>('/api/v1/tasks');
+      const res = await apiClient.get<any>('/tasks');
       if (res.ok && Array.isArray(res.data)) {
         setTasks(
           res.data.map((t: any, idx: number) => ({
@@ -53,16 +53,11 @@ export default function PlannerPage() {
             dayOfWeek: idx % 5, // Spread across weekdays for realistic plan
           }))
         );
+      } else {
+        setTasks([]);
       }
     } catch {
-      // Fallback
-      setTasks([
-        { id: 'p1', title: 'Deep Work: Architecture documentation', estimatedMinutes: 90, scheduledTime: '09:00 AM', priority: 1, status: 'TODO', lifeArea: 'career', dayOfWeek: 0 },
-        { id: 'p2', title: 'Cardio Zone 2 training', estimatedMinutes: 45, scheduledTime: '11:00 AM', priority: 2, status: 'COMPLETED', lifeArea: 'health', dayOfWeek: 0 },
-        { id: 'p3', title: 'Weekly review & financial audit', estimatedMinutes: 60, scheduledTime: '02:00 PM', priority: 2, status: 'TODO', lifeArea: 'finance', dayOfWeek: 0 },
-        { id: 'p4', title: 'Mindful evening reading', estimatedMinutes: 30, scheduledTime: '08:30 PM', priority: 3, status: 'TODO', lifeArea: 'mind', dayOfWeek: 0 },
-        { id: 'p5', title: 'Sprint planning and backlog grooming', estimatedMinutes: 60, scheduledTime: '10:00 AM', priority: 1, status: 'TODO', lifeArea: 'career', dayOfWeek: 1 },
-      ]);
+      setTasks([]);
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +72,7 @@ export default function PlannerPage() {
     if (!newTaskTitle.trim()) return;
 
     try {
-      await apiClient.post('/api/v1/tasks', {
+      await apiClient.post('/tasks', {
         title: newTaskTitle.trim(),
         estimatedMinutes: parseInt(newTaskMinutes, 10) || 30,
       });
@@ -171,7 +166,19 @@ export default function PlannerPage() {
         overloadMinutes={overloadMinutes}
         adjustments={adjustments}
         onApplyAdjustment={(adjId) => {
-          alert(`Applied adaptive recommendation (${adjId}). Schedule rebalanced.`);
+          if (adjId === 'adj-2') {
+            setTasks((prev) =>
+              prev.map((t, idx) =>
+                idx === 0 ? { ...t, estimatedMinutes: Math.max(15, t.estimatedMinutes - 30) } : t
+              )
+            );
+          } else {
+            setTasks((prev) =>
+              prev.map((t, idx) =>
+                idx === prev.length - 1 ? { ...t, dayOfWeek: (t.dayOfWeek + 1) % 7 } : t
+              )
+            );
+          }
         }}
       />
 

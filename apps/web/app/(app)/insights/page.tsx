@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Sparkles, TrendingUp, Lightbulb, Clock, CheckCircle2, ArrowRight } from 'lucide-react';
 
+import { EmptyState } from '@/components/ui/EmptyState';
+
 interface InsightItem {
   id: string;
   category: string;
@@ -14,38 +16,8 @@ interface InsightItem {
   color: string;
 }
 
-const SAMPLE_INSIGHTS: InsightItem[] = [
-  {
-    id: '1',
-    category: 'Habit Consistency',
-    title: 'Morning Routine Momentum',
-    description: 'You achieve 85% higher task completion rates on days when you start your morning routine before 8:00 AM.',
-    metric: '+85% Execution Rate',
-    impact: 'High',
-    color: '#22c55e',
-  },
-  {
-    id: '2',
-    category: 'Life Balance & Energy',
-    title: 'Mind & Focus Correlation',
-    description: 'Deep work blocks scheduled after reflection sessions show a 2x reduction in task procrastination.',
-    metric: '2.1x Focus Duration',
-    impact: 'Optimal',
-    color: '#6366f1',
-  },
-  {
-    id: '3',
-    category: 'Goal Alignment',
-    title: 'Goal Velocity Ahead of Schedule',
-    description: 'Your health and fitness goals are progressing 14% faster than your projected 30-day baseline target.',
-    metric: '+14% Pace',
-    impact: 'Medium',
-    color: '#06b6d4',
-  },
-];
-
 export default function InsightsPage() {
-  const [insights, setInsights] = useState<InsightItem[]>(SAMPLE_INSIGHTS);
+  const [insights, setInsights] = useState<InsightItem[]>([]);
   const [filter, setFilter] = useState<'all' | 'high' | 'recent'>('all');
 
   const filteredInsights = insights.filter((item) => {
@@ -82,9 +54,9 @@ export default function InsightsPage() {
             boxShadow: 'var(--shadow-card)',
           }}
         >
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--green)' }} />
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: insights.length > 0 ? 'var(--green)' : 'var(--text-secondary)' }} />
           <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-            3 Active Insights Generated
+            {insights.length} Active Insights Generated
           </span>
         </div>
       </div>
@@ -125,106 +97,117 @@ export default function InsightsPage() {
         </button>
       </div>
 
-      {/* Insights Cards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
-        {filteredInsights.map((insight) => (
-          <div
-            key={insight.id}
-            style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius-xl)',
-              padding: '1.5rem',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              boxShadow: 'var(--shadow-card)',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Top accent border */}
+      {/* Insights Cards Grid or Empty State */}
+      {filteredInsights.length === 0 ? (
+        <EmptyState
+          title="No behavioral insights generated yet"
+          description="Personalized insights, correlations, and momentum observations will appear here once you log sufficient daily tasks and check-ins."
+          actionLabel="View Today's Plan"
+          onAction={() => {
+            window.location.href = '/today';
+          }}
+        />
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+          {filteredInsights.map((insight) => (
             <div
+              key={insight.id}
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '3px',
-                background: insight.color,
-              }}
-            />
-
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
-                <span
-                  style={{
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  {insight.category}
-                </span>
-                <span
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 700,
-                    padding: '0.2rem 0.6rem',
-                    borderRadius: '999px',
-                    background: `${insight.color}15`,
-                    color: insight.color,
-                  }}
-                >
-                  {insight.impact}
-                </span>
-              </div>
-
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                {insight.title}
-              </h3>
-
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-                {insight.description}
-              </p>
-            </div>
-
-            <div
-              style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-xl)',
+                padding: '1.5rem',
                 display: 'flex',
-                alignItems: 'center',
+                flexDirection: 'column',
                 justifyContent: 'space-between',
-                paddingTop: '0.875rem',
-                borderTop: '1px solid var(--border)',
+                boxShadow: 'var(--shadow-card)',
+                position: 'relative',
+                overflow: 'hidden',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                <TrendingUp size={15} style={{ color: insight.color }} />
-                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: insight.color }}>
-                  {insight.metric}
-                </span>
+              {/* Top accent border */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '3px',
+                  background: insight.color,
+                }}
+              />
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.875rem' }}>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    {insight.category}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      padding: '0.2rem 0.6rem',
+                      borderRadius: '999px',
+                      background: `${insight.color}15`,
+                      color: insight.color,
+                    }}
+                  >
+                    {insight.impact}
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                  {insight.title}
+                </h3>
+
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                  {insight.description}
+                </p>
               </div>
 
-              <Link
-                href="/dashboard"
+              <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.25rem',
-                  fontSize: '0.8125rem',
-                  fontWeight: 600,
-                  color: 'var(--accent)',
-                  textDecoration: 'none',
+                  justifyContent: 'space-between',
+                  paddingTop: '0.875rem',
+                  borderTop: '1px solid var(--border)',
                 }}
               >
-                Apply to Today <ArrowRight size={14} />
-              </Link>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                  <TrendingUp size={15} style={{ color: insight.color }} />
+                  <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: insight.color }}>
+                    {insight.metric}
+                  </span>
+                </div>
+
+                <Link
+                  href="/dashboard"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    color: 'var(--accent)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  Apply to Today <ArrowRight size={14} />
+                </Link>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Behavioral Intelligence Philosophy Banner */}
       <div

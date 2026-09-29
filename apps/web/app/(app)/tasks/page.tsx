@@ -30,39 +30,6 @@ interface TaskItem {
   goal?: Goal;
 }
 
-const DEFAULT_TASKS: TaskItem[] = [
-  {
-    id: 'task-1',
-    title: 'Complete 45-minute deep focus learning block',
-    description: 'Work through key system architecture concepts without phone or tab switching.',
-    status: 'pending',
-    priority: 'HIGH',
-    lifeAreaId: 'career',
-    lifeArea: { id: 'career', name: 'Career & Work', color: '#6366f1' },
-    dueDate: new Date().toISOString().split('T')[0],
-  },
-  {
-    id: 'task-2',
-    title: 'Morning hydration & 20-min mobility exercise',
-    description: 'Full body movement, dynamic stretching, and mindful breathwork.',
-    status: 'completed',
-    priority: 'HIGH',
-    lifeAreaId: 'health',
-    lifeArea: { id: 'health', name: 'Health & Fitness', color: '#22c55e' },
-    dueDate: new Date().toISOString().split('T')[0],
-  },
-  {
-    id: 'task-3',
-    title: 'Evening 10-minute mindfulness & day reflection',
-    description: 'Log wins, evaluate alignment, and prepare intentional targets for tomorrow.',
-    status: 'pending',
-    priority: 'MEDIUM',
-    lifeAreaId: 'mind',
-    lifeArea: { id: 'mind', name: 'Mind & Mental', color: '#8b5cf6' },
-    dueDate: new Date().toISOString().split('T')[0],
-  },
-];
-
 const DEFAULT_LIFE_AREAS_TASK: LifeArea[] = [
   { id: 'health', name: 'Health & Fitness', color: '#22c55e' },
   { id: 'career', name: 'Career & Work', color: '#6366f1' },
@@ -73,10 +40,10 @@ const DEFAULT_LIFE_AREAS_TASK: LifeArea[] = [
 ];
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<TaskItem[]>(DEFAULT_TASKS);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [lifeAreas, setLifeAreas] = useState<LifeArea[]>(DEFAULT_LIFE_AREAS_TASK);
   const [goals, setGoals] = useState<Goal[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filters
@@ -109,12 +76,14 @@ export default function TasksPage() {
       if (tasksRes.ok && tasksRes.data) {
         setTasks(tasksRes.data);
         setError(null);
+      } else {
+        setTasks([]);
       }
 
       if (areasRes.ok && areasRes.data && areasRes.data.length > 0) setLifeAreas(areasRes.data);
       if (goalsRes.ok && goalsRes.data) setGoals(goalsRes.data);
     } catch {
-      // Retain the default task items seamlessly
+      setTasks([]);
     } finally {
       setLoading(false);
     }
