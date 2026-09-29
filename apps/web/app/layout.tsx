@@ -7,8 +7,8 @@ export const metadata: Metadata = {
     template: '%s | SAAR',
   },
   description:
-    'Know how you live. Understand where you\'re going. Become who you want to be.',
-  robots: { index: false, follow: false }, // private app — no indexing
+    'You are not managing tasks. You are understanding the person behind the tasks. Personal growth intelligence grounded in real human behavior.',
+  robots: { index: true, follow: true },
   icons: {
     icon: [
       { url: '/favicon.ico' },
@@ -34,7 +34,7 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
-      <body className="overflow-x-hidden min-h-screen">
+      <body className="overflow-x-hidden min-h-screen bg-[var(--bg)] text-[var(--text-primary)]">
         {children}
       </body>
     </html>

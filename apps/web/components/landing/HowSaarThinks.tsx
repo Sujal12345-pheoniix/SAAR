@@ -1,373 +1,281 @@
 'use client';
 
-import { motion, useInView } from 'framer-motion';
-import { useRef, useState } from 'react';
-import { FadeIn } from '@/components/motion/FadeIn';
-import { CheckCircle2, Sparkles, Activity, Compass, Target, Brain, Lightbulb, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2, ChevronRight, Eye, Sparkles, AlertCircle, ArrowUpRight } from 'lucide-react';
 
-const PIPELINE_NODES = [
+interface TransformationCase {
+  id: string;
+  title: string;
+  lifeArea: string;
+  rawReality: {
+    planned: string;
+    actual: string;
+    friction: string;
+  };
+  patternDetected: string;
+  evidencePoints: { label: string; metric: string; detail: string }[];
+  proposedExperiment: {
+    headline: string;
+    action: string;
+    expectedOutcome: string;
+  };
+}
+
+const CASES: TransformationCase[] = [
   {
-    id: 0,
-    step: '01',
-    label: 'Daily Activity Capture',
-    sub: 'Habits · Tasks · Micro-behaviors',
-    color: '#06B6D4',
-    icon: Activity,
-    insight: '"You completed 4 out of 5 habits today. Morning focus sessions had a 94% completion rate."',
-    metric: '94% completion rate',
-    confidence: 94,
+    id: 'case-workload',
+    title: 'The High-Workload Paradox',
+    lifeArea: 'Health & Career',
+    rawReality: {
+      planned: '5 strength & Zone 2 cardio sessions scheduled this week.',
+      actual: '3 completed on Monday, Wednesday, and Saturday.',
+      friction: 'Tuesday and Thursday workouts skipped after 9.5-hour engineering sprints.',
+    },
+    patternDetected:
+      'Your consistency drops by 42% on days where cognitive load exceeds 8.5 hours. It is not an issue of motivation; your nervous system lacks an evening shutdown buffer.',
+    evidencePoints: [
+      { label: 'Workload Threshold', metric: '>8.5h work', detail: 'Consistent drop in physical readiness' },
+      { label: 'Heart Rate Variability', metric: '-18ms dip', detail: 'Elevated sympathetic tone at 7:30 PM' },
+      { label: 'Historical Baseline', metric: '6 cycles analyzed', detail: 'Pattern repeated across 8 of 10 prior weeks' },
+    ],
+    proposedExperiment: {
+      headline: 'Protect a 30-minute recovery buffer before evening exercise',
+      action: 'Shift workout to 07:30 AM or introduce a mandatory 20m zero-screen transition ritual before training.',
+      expectedOutcome: '+24% weekly habit completion rate without increasing perceived exertion.',
+    },
   },
   {
-    id: 1,
-    step: '02',
-    label: 'Life Area Mapping',
-    sub: 'Health · Career · Mind · Relationships',
-    color: '#6366F1',
-    icon: Compass,
-    insight: '"Health & Fitness is your highest engagement area this week at 82%, up 14% from last week."',
-    metric: '82% engagement',
-    confidence: 89,
+    id: 'case-sleep-focus',
+    title: 'Sleep Depth & Deep Focus Resonance',
+    lifeArea: 'Mind & Craft',
+    rawReality: {
+      planned: '4 deep architecture design blocks (90 min each) scheduled.',
+      actual: '2 completed successfully; 2 abandoned midway due to context fatigue.',
+      friction: 'Both abandoned sessions occurred following nights with under 6.5 hours of sleep.',
+    },
+    patternDetected:
+      'High-complexity synthesis requires sustained prefrontal reserve. When sleep falls below 7 hours, your threshold for distraction drops by half.',
+    evidencePoints: [
+      { label: 'Sleep Boundary', metric: '<6.5h sleep', detail: 'Task abandonment rate jumps from 8% to 46%' },
+      { label: 'Time to First Distraction', metric: '14 min vs 48 min', detail: 'Measured during complex analytical tasks' },
+      { label: 'Recovery Correlation', metric: 'r = 0.82', detail: 'Strong correlation between deep sleep and sprint success' },
+    ],
+    proposedExperiment: {
+      headline: 'Front-load complex architecture blocks to morning windows',
+      action: 'Schedule heavy analytical work between 09:30 AM and 11:30 AM; reserve afternoons for async collaboration.',
+      expectedOutcome: '90%+ deep work sprint completion rate with zero forced willpower.',
+    },
   },
   {
-    id: 2,
-    step: '03',
-    label: 'Goal & Identity Alignment',
-    sub: 'Future Self · Core Values · Priorities',
-    color: '#8B5CF6',
-    icon: Target,
-    insight: '"Your recorded actions are 78% aligned with your desired Future Self identity vector."',
-    metric: '78% alignment index',
-    confidence: 91,
-  },
-  {
-    id: 3,
-    step: '04',
-    label: 'Pattern & Correlation Engine',
-    sub: 'Trends · Energy Cycles · Blockers',
-    color: '#F59E0B',
-    icon: Brain,
-    insight: '"Deep focus scores drop 38% on days following less than 7 hours of restorative sleep."',
-    metric: 'Strong sleep-focus correlation',
-    confidence: 96,
-  },
-  {
-    id: 4,
-    step: '05',
-    label: 'Synthesis & Actionable Insight',
-    sub: 'Root causes · Growth leverage points',
-    color: '#22C55E',
-    icon: Lightbulb,
-    insight: '"Prioritizing afternoon recovery rituals leads to 2.1x higher consistency across the following week."',
-    metric: '2.1x consistency multiplier',
-    confidence: 92,
-  },
-  {
-    id: 5,
-    step: '06',
-    label: 'Contextual Action Guidance',
-    sub: 'Adaptive priorities · Tomorrow\'s blueprint',
-    color: '#6366F1',
-    icon: Zap,
-    insight: '"Front-load tomorrow\'s primary learning block before 10:30 AM for peak cognitive alignment."',
-    metric: 'Peak focus window: 8-10:30 AM',
-    confidence: 95,
+    id: 'case-values-drift',
+    title: 'Stated Priorities vs Actual Calendar',
+    lifeArea: 'Relationships & Purpose',
+    rawReality: {
+      planned: 'Future Self identity: "A calm, present partner and unhurried mentor."',
+      actual: '18 back-to-back calendar meetings logged; 0 unhurried conversations.',
+      friction: 'Arrived at family dinner cognitively exhausted, mentally still checking Slack.',
+    },
+    patternDetected:
+      'There is a persistent structural gap between your desired identity and your calendar allocation. Secondary obligations are quietly consuming primary life areas.',
+    evidencePoints: [
+      { label: 'Calendar Congestion', metric: '88% booked', detail: 'Less than 15 min transition buffer between meetings' },
+      { label: 'Presence Score', metric: '2.4 / 5.0 self-rating', detail: 'Check-in data indicates frequent divided attention' },
+      { label: 'Priority Inversion', metric: '12 hours on low-impact comms', detail: 'Outweighs time allocated to core relationships' },
+    ],
+    proposedExperiment: {
+      headline: 'Institute an untouchable Friday afternoon sanctuary block',
+      action: 'Block 2:00 PM to 4:00 PM every Friday for unhurried mentoring, reading, or family time.',
+      expectedOutcome: 'Immediate restoration of intentional alignment between stated values and real life.',
+    },
   },
 ];
 
 export function HowSaarThinks() {
-  const [activeNode, setActiveNode] = useState<number>(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(containerRef, { once: true, margin: '-60px' });
+  const [selectedCaseId, setSelectedCaseId] = useState('case-workload');
+  const [showEvidence, setShowEvidence] = useState(false);
 
-  const activeData = PIPELINE_NODES[activeNode] ?? PIPELINE_NODES[0];
-  const ActiveIcon = activeData.icon;
+  const activeCase = CASES.find((c) => c.id === selectedCaseId) || CASES[0];
 
   return (
-    <section
-      id="how-it-works"
-      className="relative py-24 md:py-32 px-4 sm:px-6 w-full flex flex-col items-center justify-center overflow-hidden"
-      style={{ background: 'var(--surface)' }}
-    >
-      <div className="w-full max-w-6xl mx-auto">
-        {/* Section Header */}
-        <FadeIn className="text-center mb-16 md:mb-20 w-full flex flex-col items-center">
-          <div
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider mb-4"
-            style={{
-              background: 'rgba(99,102,241,0.08)',
-              color: 'var(--accent)',
-              border: '1px solid rgba(99,102,241,0.18)',
-              letterSpacing: '0.08em',
+    <section id="how-it-thinks" className="py-24 px-4 sm:px-6 max-w-6xl mx-auto w-full">
+      {/* Section Header */}
+      <div className="max-w-2xl mb-14">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-[#226949] bg-[rgba(34,105,73,0.08)] mb-3">
+          03 • What Does SAAR Notice?
+        </div>
+        <h2 className="font-editorial text-4xl sm:text-5xl font-bold text-[#0F1115] tracking-tight leading-tight">
+          Intelligence you can <br />
+          <span className="italic font-normal text-[#226949]">actually understand.</span>
+        </h2>
+        <p className="text-base sm:text-lg text-[#495057] mt-4 leading-relaxed font-interface">
+          No vague affirmations. No black-box algorithms. SAAR converts what happened in your real day into trustworthy behavioral patterns, surfaces discoverable evidence, and tests actionable experiments.
+        </p>
+      </div>
+
+      {/* Case Selector Tabs */}
+      <div className="flex flex-wrap gap-2 mb-8 p-1.5 rounded-2xl bg-[#F5F2EB] border border-[rgba(15,17,21,0.06)] w-fit">
+        {CASES.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => {
+              setSelectedCaseId(c.id);
+              setShowEvidence(false);
             }}
+            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+              selectedCaseId === c.id
+                ? 'bg-[#FFFFFF] text-[#0F1115] shadow-sm font-semibold'
+                : 'text-[#495057] hover:text-[#0F1115]'
+            }`}
           >
-            <Sparkles size={12} className="text-indigo-500" />
-            Intelligence Architecture
-          </div>
+            {c.title}
+          </button>
+        ))}
+      </div>
 
-          <h2
-            className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-5 text-center"
-            style={{ letterSpacing: '-0.03em', color: 'var(--text-primary)' }}
-          >
-            How SAAR thinks
-          </h2>
-          <p
-            className="text-lg sm:text-xl max-w-2xl mx-auto text-center"
-            style={{ color: 'var(--text-secondary)', lineHeight: 1.65 }}
-          >
-            Every signal you log flows through a multi-tier neural pipeline that transforms raw everyday behavior into crystal clear actionable clarity.
-          </p>
-        </FadeIn>
-
-        {/* 2-Column Responsive Layout */}
-        <div
-          ref={containerRef}
-          className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start w-full"
+      {/* The 4-Stage Human Transformation Grid */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeCase.id}
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -14 }}
+          transition={{ duration: 0.25 }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          {/* Left Column: Interactive Pipeline Steps */}
-          <div className="lg:col-span-6 flex flex-col gap-3">
-            <p
-              className="text-xs font-bold tracking-widest uppercase mb-2 px-2"
-              style={{ color: 'var(--text-tertiary)', letterSpacing: '0.12em' }}
-            >
-              Pipeline Stages · Click or Hover to Explore
-            </p>
+          {/* 1. What Happened */}
+          <div className="rounded-3xl bg-[#FFFFFF] border border-[rgba(15,17,21,0.08)] p-6 sm:p-8 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#868E96]">
+                  Step 01 • What Happened
+                </span>
+                <span className="text-xs font-medium text-[#B45309] bg-[rgba(180,83,9,0.08)] px-2.5 py-0.5 rounded-full">
+                  {activeCase.lifeArea}
+                </span>
+              </div>
+              <h3 className="font-editorial text-2xl font-bold text-[#0F1115] mb-4">
+                The Raw Reality
+              </h3>
 
-            {PIPELINE_NODES.map((node, i) => {
-              const IconComp = node.icon;
-              const isActive = activeNode === i;
-
-              return (
-                <motion.div
-                  key={node.id}
-                  onClick={() => setActiveNode(i)}
-                  onMouseEnter={() => setActiveNode(i)}
-                  className="group relative p-4 sm:p-5 rounded-2xl cursor-pointer transition-all duration-300"
-                  style={{
-                    background: isActive ? 'var(--surface)' : 'var(--bg)',
-                    border: `1.5px solid ${isActive ? node.color : 'var(--border)'}`,
-                    boxShadow: isActive
-                      ? `0 10px 30px -8px ${node.color}25, 0 2px 10px rgba(11,16,32,0.04)`
-                      : 'none',
-                    transform: isActive ? 'translateX(4px)' : 'translateX(0)',
-                  }}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={isInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.4, delay: i * 0.06 }}
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Icon & Step Number */}
-                    <div
-                      className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300"
-                      style={{
-                        background: isActive ? `${node.color}18` : 'rgba(255,255,255,0.8)',
-                        border: `1px solid ${isActive ? `${node.color}40` : 'var(--border)'}`,
-                        color: node.color,
-                        boxShadow: isActive ? `0 0 16px ${node.color}30` : 'none',
-                      }}
-                    >
-                      <IconComp size={22} />
-                    </div>
-
-                    {/* Step Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span
-                          className="text-[11px] font-mono font-bold tracking-wider"
-                          style={{ color: node.color }}
-                        >
-                          STAGE {node.step}
-                        </span>
-                        {isActive && (
-                          <span
-                            className="inline-block w-1.5 h-1.5 rounded-full animate-ping"
-                            style={{ background: node.color }}
-                          />
-                        )}
-                      </div>
-                      <h3
-                        className="font-bold text-base sm:text-lg leading-tight truncate"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        {node.label}
-                      </h3>
-                      <p
-                        className="text-xs sm:text-sm mt-0.5 truncate"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        {node.sub}
-                      </p>
-                    </div>
-
-                    {/* Active Arrow indicator */}
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-opacity"
-                      style={{
-                        background: isActive ? `${node.color}15` : 'transparent',
-                        color: isActive ? node.color : 'var(--text-tertiary)',
-                        opacity: isActive ? 1 : 0.4,
-                      }}
-                    >
-                      <span className="text-sm font-bold">→</span>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* Right Column: Bounded Live Intelligence Console */}
-          <div className="lg:col-span-6 lg:sticky lg:top-28 self-start w-full">
-            <motion.div
-              className="rounded-3xl p-6 sm:p-8 relative overflow-hidden"
-              style={{
-                background: 'linear-gradient(155deg, #0B1020 0%, #151A30 60%, #1E1B4B 100%)',
-                boxShadow: '0 25px 60px -12px rgba(11,16,32,0.35), 0 0 0 1px rgba(255,255,255,0.08)',
-              }}
-            >
-              {/* Ambient Glow */}
-              <div
-                className="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none"
-                style={{
-                  background: `radial-gradient(circle, ${activeData.color}35 0%, transparent 70%)`,
-                  filter: 'blur(40px)',
-                  transition: 'background 0.5s ease',
-                }}
-              />
-
-              {/* Console Top Bar */}
-              <div className="flex items-center justify-between pb-5 border-b border-white/10 mb-6 relative z-10">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="w-2.5 h-2.5 rounded-full animate-pulse"
-                    style={{ background: '#22C55E', boxShadow: '0 0 10px #22C55E' }}
-                  />
-                  <span
-                    className="text-xs font-mono font-bold tracking-widest uppercase"
-                    style={{ color: '#E2E8F0', letterSpacing: '0.12em' }}
-                  >
-                    LIVE INTELLIGENCE CONSOLE
-                  </span>
+              <div className="space-y-3 text-sm text-[#495057]">
+                <div className="p-3.5 rounded-xl bg-[#FAF8F5] border border-[rgba(15,17,21,0.04)]">
+                  <div className="text-xs text-[#868E96] font-medium">Planned Intent</div>
+                  <div className="text-[#0F1115] font-medium mt-0.5">{activeCase.rawReality.planned}</div>
                 </div>
 
-                <div
-                  className="px-3 py-1 rounded-full text-[11px] font-mono font-semibold"
-                  style={{
-                    background: `${activeData.color}25`,
-                    color: '#FFFFFF',
-                    border: `1px solid ${activeData.color}50`,
-                  }}
-                >
-                  STAGE {activeData.step} ACTIVE
+                <div className="p-3.5 rounded-xl bg-[#FAF8F5] border border-[rgba(15,17,21,0.04)]">
+                  <div className="text-xs text-[#868E96] font-medium">Actual Execution</div>
+                  <div className="text-[#0F1115] font-medium mt-0.5">{activeCase.rawReality.actual}</div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-[#FAF8F5] border border-[rgba(15,17,21,0.04)]">
+                  <div className="text-xs text-[#9B2C2C] font-medium flex items-center gap-1">
+                    <AlertCircle size={12} /> Friction Logged
+                  </div>
+                  <div className="text-[#495057] mt-0.5">{activeCase.rawReality.friction}</div>
                 </div>
               </div>
+            </div>
 
-              {/* Dynamic Layer Content */}
-              <motion.div
-                key={activeNode}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="relative z-10 flex flex-col gap-5"
-              >
-                {/* Active Layer Header Pill */}
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-white"
-                    style={{
-                      background: activeData.color,
-                      boxShadow: `0 0 20px ${activeData.color}60`,
-                    }}
-                  >
-                    <ActiveIcon size={20} />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold" style={{ color: '#94A3B8' }}>
-                      Synthesized Insight
-                    </span>
-                    <h4 className="text-lg font-bold text-white leading-tight">
-                      {activeData.label}
-                    </h4>
-                  </div>
-                </div>
+            <div className="mt-6 pt-4 border-t border-[rgba(15,17,21,0.06)] text-xs text-[#868E96]">
+              Extracted from task completions, schedule stamps, and check-ins.
+            </div>
+          </div>
 
-                {/* Insight Quote Card */}
-                <div
-                  className="p-5 rounded-2xl border"
-                  style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    backdropFilter: 'blur(10px)',
-                  }}
+          {/* 2. What SAAR Noticed */}
+          <div className="rounded-3xl bg-[#FAF8F5] border border-[rgba(15,17,21,0.08)] p-6 sm:p-8 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-semibold uppercase tracking-wider text-[#868E96]">
+                  Step 02 • What SAAR Noticed
+                </span>
+                <span className="text-xs font-medium text-[#226949] bg-[rgba(34,105,73,0.08)] px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                  <Sparkles size={12} /> Pattern Synthesized
+                </span>
+              </div>
+              <h3 className="font-editorial text-2xl font-bold text-[#0F1115] mb-4">
+                The Underlying Pattern
+              </h3>
+
+              <div className="p-5 rounded-2xl bg-[#FFFFFF] border border-[rgba(15,17,21,0.06)]">
+                <p className="text-base text-[#0F1115] leading-relaxed italic font-editorial font-medium">
+                  &ldquo;{activeCase.patternDetected}&rdquo;
+                </p>
+              </div>
+
+              {/* Discoverable Evidence Toggle */}
+              <div className="mt-4">
+                <button
+                  onClick={() => setShowEvidence(!showEvidence)}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#226949] hover:underline"
                 >
-                  <p
-                    className="text-base sm:text-lg font-medium leading-relaxed"
-                    style={{ color: '#F8FAFC' }}
+                  <Eye size={14} />
+                  <span>{showEvidence ? 'Hide Underlying Evidence' : 'Inspect Supporting Evidence (3 data points)'}</span>
+                </button>
+
+                {showEvidence && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-3 space-y-2"
                   >
-                    {activeData.insight}
-                  </p>
-                </div>
-
-                {/* Metric & Confidence Meter */}
-                <div className="flex flex-col gap-2 pt-2">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="font-semibold" style={{ color: '#CBD5E1' }}>
-                      Signal Confidence
-                    </span>
-                    <span className="font-bold text-white">
-                      {activeData.confidence}% verified
-                    </span>
-                  </div>
-
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.12)' }}>
-                    <motion.div
-                      className="h-full rounded-full"
-                      style={{
-                        background: `linear-gradient(90deg, ${activeData.color}, #67E8F9)`,
-                        boxShadow: `0 0 12px ${activeData.color}80`,
-                      }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${activeData.confidence}%` }}
-                      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2 mt-1">
-                    <CheckCircle2 size={13} className="text-emerald-400" />
-                    <span className="text-xs" style={{ color: '#94A3B8' }}>
-                      Primary Metric: <strong className="text-white font-semibold">{activeData.metric}</strong>
-                    </span>
-                  </div>
-                </div>
-
-                {/* System Capabilities Checklist */}
-                <div className="pt-4 border-t border-white/10 flex flex-col gap-2.5">
-                  <span className="text-xs font-mono font-semibold uppercase tracking-wider" style={{ color: '#94A3B8' }}>
-                    Active Feedback Loops
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {[
-                      { label: 'Real-time telemetry', active: true },
-                      { label: 'Cross-area correlation', active: true },
-                      { label: 'Personalized calibration', active: true },
-                    ].map((item, idx) => (
+                    {activeCase.evidencePoints.map((pt, i) => (
                       <div
-                        key={idx}
-                        className="px-3 py-2 rounded-xl flex items-center gap-2"
-                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        key={i}
+                        className="p-3 rounded-xl bg-[#FFFFFF] border border-[rgba(15,17,21,0.06)] flex items-center justify-between text-xs"
                       >
-                        <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#22C55E' }} />
-                        <span className="text-[11px] font-medium truncate" style={{ color: '#E2E8F0' }}>
-                          {item.label}
-                        </span>
+                        <div>
+                          <div className="font-semibold text-[#0F1115]">{pt.label}</div>
+                          <div className="text-[#868E96]">{pt.detail}</div>
+                        </div>
+                        <span className="font-bold tabular-nums text-[#226949]">{pt.metric}</span>
                       </div>
                     ))}
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
+                  </motion.div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-[rgba(15,17,21,0.06)] text-xs text-[#868E96]">
+              Evidence is always discoverable. SAAR never claims insights without supporting data.
+            </div>
           </div>
-        </div>
-      </div>
+
+          {/* 3. The Calibrated Experiment (Bottom Wide Card) */}
+          <div className="md:col-span-2 rounded-3xl bg-[#0F1115] text-[#FAF8F5] p-6 sm:p-8 shadow-md">
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#868E96]">
+                Step 03 • Actionable Experiment
+              </span>
+              <span className="text-xs font-semibold text-[#226949] bg-[rgba(34,105,73,0.2)] px-3 py-1 rounded-full">
+                Safe to test for 7 days
+              </span>
+            </div>
+
+            <h3 className="font-editorial text-2xl sm:text-3xl font-bold text-[#FAF8F5] mb-2">
+              {activeCase.proposedExperiment.headline}
+            </h3>
+            <p className="text-sm sm:text-base text-[#C5CCD3] leading-relaxed max-w-3xl mb-6">
+              {activeCase.proposedExperiment.action}
+            </p>
+
+            <div className="p-4 rounded-2xl bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 size={18} className="text-[#226949] flex-shrink-0" />
+                <span className="text-sm font-medium text-[#FAF8F5]">
+                  <strong>Projected Result:</strong> {activeCase.proposedExperiment.expectedOutcome}
+                </span>
+              </div>
+
+              <span className="text-xs text-[#868E96]">
+                Zero forced willpower • Structural adaptation
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </section>
   );
 }

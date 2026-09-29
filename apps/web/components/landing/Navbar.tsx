@@ -1,15 +1,15 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { SaarLogo } from '@/components/ui/SaarLogo';
 
 const NAV_LINKS = [
-  { label: 'Product', href: '#product' },
-  { label: 'How it works', href: '#how-it-works' },
-  { label: 'Insights', href: '#insights' },
-  { label: 'About', href: '#how-it-works' },
+  { label: 'Becoming', href: '#becoming' },
+  { label: 'Life Intelligence', href: '#life-intelligence' },
+  { label: 'How SAAR Thinks', href: '#how-it-thinks' },
+  { label: 'Trade-offs', href: '#tradeoffs' },
+  { label: 'Growth Story', href: '#growth-story' },
 ];
 
 export function Navbar() {
@@ -18,150 +18,122 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    return scrollY.on('change', (v) => setScrolled(v > 40));
+    return scrollY.on('change', (v) => setScrolled(v > 30));
   }, [scrollY]);
 
   return (
-    <motion.header
-      className="fixed top-0 left-0 right-0 z-50 flex justify-center w-full"
-      initial={{ y: -80, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-    >
-      <motion.div
-        className="w-full max-w-6xl mx-auto px-4 sm:px-6"
-        style={{ width: '100%', maxWidth: '72rem', marginLeft: 'auto', marginRight: 'auto' }}
-      >
+    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center w-full">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
         <motion.nav
           animate={{
-            backgroundColor: scrolled ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0)',
-            backdropFilter: scrolled ? 'blur(20px)' : 'blur(0px)',
-            borderColor: scrolled ? 'rgba(11,16,32,0.08)' : 'rgba(11,16,32,0)',
-            marginTop: scrolled ? '12px' : '20px',
-            borderRadius: scrolled ? '20px' : '0px',
-            boxShadow: scrolled ? '0 4px 24px rgba(11,16,32,0.07)' : 'none',
+            backgroundColor: scrolled ? 'rgba(250, 248, 245, 0.92)' : 'rgba(250, 248, 245, 0.65)',
+            backdropFilter: scrolled ? 'blur(16px)' : 'blur(8px)',
+            borderColor: scrolled ? 'rgba(15, 17, 21, 0.08)' : 'rgba(15, 17, 21, 0.04)',
+            boxShadow: scrolled ? '0 4px 20px rgba(15, 17, 21, 0.04)' : 'none',
+            marginTop: scrolled ? '12px' : '18px',
           }}
-          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0.875rem 1.5rem',
-            border: '1px solid',
-          }}
+          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+          className="flex items-center justify-between px-6 py-3.5 rounded-2xl border transition-all"
         >
-          {/* Logo */}
-          <SaarLogo href="/home" size="md" />
+          {/* Logo — Editorial Typography */}
+          <Link href="/home" className="inline-flex items-center gap-2.5 text-decoration-none group">
+            <div className="w-7 h-7 rounded-lg bg-[#0F1115] text-[#FAF8F5] flex items-center justify-center font-editorial font-semibold text-base transition-transform group-hover:scale-105">
+              S
+            </div>
+            <div className="flex flex-col">
+              <span className="font-editorial text-xl font-bold tracking-tight text-[#0F1115] leading-none">
+                SAAR
+              </span>
+              <span className="text-[10px] uppercase tracking-wider text-[#868E96] font-medium mt-0.5">
+                Growth Intelligence
+              </span>
+            </div>
+          </Link>
 
-          {/* Nav links — desktop */}
-          <div className="hidden md:flex items-center gap-1">
+          {/* Desktop Links */}
+          <div className="hidden md:flex items-center gap-7">
             {NAV_LINKS.map((link) => (
-              <motion.a
+              <a
                 key={link.label}
                 href={link.href}
-                className="px-4 py-2 rounded-xl text-sm font-medium transition-colors"
-                style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
-                whileHover={{ color: 'var(--text-primary)', backgroundColor: 'rgba(11,16,32,0.04)' }}
-                transition={{ duration: 0.15 }}
+                className="text-sm font-medium text-[#495057] hover:text-[#0F1115] transition-colors"
               >
                 {link.label}
-              </motion.a>
+              </a>
             ))}
           </div>
 
-          {/* CTA buttons */}
-          <div className="flex items-center gap-3">
+          {/* Action Triggers */}
+          <div className="hidden md:flex items-center gap-3">
             <Link
               href="/login"
-              className="hidden sm:inline-flex items-center text-sm font-semibold px-4 py-2 rounded-xl transition-all duration-200"
-              style={{
-                color: 'var(--text-primary)',
-                textDecoration: 'none',
-                backgroundColor: 'transparent',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(99,102,241,0.08)';
-                e.currentTarget.style.color = '#6366F1';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }}
+              className="text-sm font-medium text-[#495057] hover:text-[#0F1115] px-3 py-1.5 transition-colors"
             >
-              Sign in
+              Sign In
             </Link>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link
-                href="/register"
-                className="text-sm font-semibold px-5 py-2.5 rounded-xl !text-white inline-flex items-center justify-center transition-all duration-200"
-                style={{
-                  background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-                  boxShadow: '0 2px 14px rgba(99,102,241,0.35)',
-                  textDecoration: 'none',
-                  color: '#FFFFFF',
-                  fontWeight: 600,
-                }}
-              >
-                Get started
-              </Link>
-            </motion.div>
-
-            {/* Mobile hamburger */}
-            <button
-              className="md:hidden p-2 rounded-lg"
-              style={{ border: '1px solid var(--border)' }}
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
+            <Link
+              href="/register"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#226949] hover:bg-[#1B543A] text-white transition-all shadow-sm hover:shadow hover:-translate-y-0.5"
             >
-              <div className="w-5 h-4 flex flex-col justify-between">
-                {[0, 1, 2].map((i) => (
-                  <motion.span
-                    key={i}
-                    className="block h-[1.5px] w-5 rounded"
-                    style={{ background: 'var(--text-primary)' }}
-                    animate={mobileOpen ? {
-                      rotate: i === 0 ? 45 : i === 2 ? -45 : 0,
-                      y: i === 0 ? 7 : i === 2 ? -7 : 0,
-                      opacity: i === 1 ? 0 : 1,
-                    } : { rotate: 0, y: 0, opacity: 1 }}
-                  />
-                ))}
-              </div>
-            </button>
+              Begin Journey
+            </Link>
           </div>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded-lg text-[#0F1115] hover:bg-[#F5F2EB] transition-colors"
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileOpen}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              {mobileOpen ? (
+                <path d="M18 6 6 18M6 6l12 12" />
+              ) : (
+                <path d="M3 12h18M3 6h18M3 18h18" />
+              )}
+            </svg>
+          </button>
         </motion.nav>
 
-        {/* Mobile menu */}
-        <motion.div
-          initial={false}
-          animate={mobileOpen ? { height: 'auto', opacity: 1 } : { height: 0, opacity: 0 }}
-          className="md:hidden overflow-hidden"
-          style={{
-            background: 'rgba(255,255,255,0.95)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '0 0 20px 20px',
-            border: '1px solid var(--border)',
-            borderTop: 'none',
-          }}
-        >
-          <div className="px-6 py-4 flex flex-col gap-2">
+        {/* Mobile Dropdown */}
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="md:hidden mt-2 p-5 rounded-2xl bg-[#FAF8F5] border border-[rgba(15,17,21,0.08)] shadow-lg flex flex-col gap-4"
+          >
             {NAV_LINKS.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="py-2.5 text-sm font-medium"
-                style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}
+                className="text-base font-medium text-[#495057] hover:text-[#0F1115] py-1"
               >
                 {link.label}
               </a>
             ))}
-            <div className="pt-2 border-t" style={{ borderColor: 'var(--border)' }}>
-              <Link href="/login" className="block py-2.5 text-sm font-medium" style={{ color: 'var(--text-secondary)', textDecoration: 'none' }}>Sign in</Link>
+            <hr className="border-[rgba(15,17,21,0.06)]" />
+            <div className="flex flex-col gap-2 pt-1">
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="text-center py-2 text-sm font-medium text-[#495057]"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                onClick={() => setMobileOpen(false)}
+                className="text-center py-2.5 rounded-xl text-sm font-medium bg-[#226949] text-white"
+              >
+                Begin Journey
+              </Link>
             </div>
-          </div>
-        </motion.div>
-      </motion.div>
-    </motion.header>
+          </motion.div>
+        )}
+      </div>
+    </header>
   );
 }

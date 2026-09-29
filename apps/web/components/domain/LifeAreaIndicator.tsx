@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
+import { LifeAreaIcon, type LifeAreaType } from '../icons/LifeAreaIcons';
 
-export type LifeAreaType = 'mind' | 'health' | 'career' | 'relationships' | 'personal' | 'finance' | 'purpose';
+export type { LifeAreaType };
 
 export interface LifeAreaIndicatorProps {
   area: LifeAreaType;
@@ -13,48 +14,48 @@ export interface LifeAreaIndicatorProps {
   size?: 'sm' | 'md';
 }
 
-const areaConfig: Record<LifeAreaType, { name: string; color: string; bgLight: string; bgDark: string }> = {
+const areaConfig: Record<LifeAreaType, { name: string; color: string; bgLight: string; border: string }> = {
   mind: {
     name: 'Mind',
-    color: '#6366F1',
-    bgLight: 'rgba(99, 102, 241, 0.1)',
-    bgDark: 'rgba(129, 140, 248, 0.15)',
+    color: '#4D5091', // Slate Indigo
+    bgLight: 'rgba(77, 80, 145, 0.08)',
+    border: 'rgba(77, 80, 145, 0.2)',
   },
   health: {
     name: 'Health',
-    color: '#10B981',
-    bgLight: 'rgba(16, 185, 129, 0.1)',
-    bgDark: 'rgba(52, 211, 153, 0.15)',
+    color: '#226949', // Forest Sage
+    bgLight: 'rgba(34, 105, 73, 0.08)',
+    border: 'rgba(34, 105, 73, 0.2)',
   },
   career: {
     name: 'Career',
-    color: '#0284C7',
-    bgLight: 'rgba(2, 132, 199, 0.1)',
-    bgDark: 'rgba(56, 189, 248, 0.15)',
+    color: '#B45309', // Warm Amber
+    bgLight: 'rgba(180, 83, 9, 0.08)',
+    border: 'rgba(180, 83, 9, 0.2)',
   },
   relationships: {
     name: 'Relationships',
-    color: '#EC4899',
-    bgLight: 'rgba(236, 72, 153, 0.1)',
-    bgDark: 'rgba(244, 114, 182, 0.15)',
+    color: '#9B2C2C', // Deep Rose / Attention
+    bgLight: 'rgba(155, 44, 44, 0.08)',
+    border: 'rgba(155, 44, 44, 0.2)',
   },
   personal: {
     name: 'Personal',
-    color: '#F59E0B',
-    bgLight: 'rgba(245, 158, 11, 0.1)',
-    bgDark: 'rgba(251, 191, 36, 0.15)',
+    color: '#495057', // Graphite
+    bgLight: 'rgba(73, 80, 87, 0.08)',
+    border: 'rgba(73, 80, 87, 0.2)',
   },
   finance: {
     name: 'Finance',
-    color: '#14B8A6',
-    bgLight: 'rgba(20, 184, 166, 0.1)',
-    bgDark: 'rgba(45, 212, 191, 0.15)',
+    color: '#0F766E', // Deep Teal
+    bgLight: 'rgba(15, 118, 110, 0.08)',
+    border: 'rgba(15, 118, 110, 0.2)',
   },
   purpose: {
     name: 'Purpose',
-    color: '#8B5CF6',
-    bgLight: 'rgba(139, 92, 246, 0.1)',
-    bgDark: 'rgba(167, 139, 250, 0.15)',
+    color: '#8C6D3B', // Quiet Bronze
+    bgLight: 'rgba(140, 109, 59, 0.08)',
+    border: 'rgba(140, 109, 59, 0.2)',
   },
 };
 
@@ -62,32 +63,44 @@ export function LifeAreaIndicator({
   area,
   label,
   score,
+  showIcon = true,
   className = '',
   size = 'md',
 }: LifeAreaIndicatorProps) {
-  const cfg = areaConfig[area] || areaConfig.mind;
-  const displayName = label || cfg.name;
-  const sizeClasses = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs';
+  const normArea = area.toLowerCase() as LifeAreaType;
+  const config = areaConfig[normArea] || areaConfig.mind;
+  const displayLabel = label || config.name;
+
+  const isSmall = size === 'sm';
 
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 font-medium rounded-full border border-transparent ${sizeClasses} ${className}`}
+    <div
+      className={`inline-flex items-center gap-1.5 rounded-full font-medium transition-colors ${
+        isSmall ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
+      } ${className}`}
       style={{
-        backgroundColor: cfg.bgLight,
-        color: cfg.color,
+        backgroundColor: config.bgLight,
+        color: config.color,
+        border: `1px solid ${config.border}`,
       }}
     >
-      <span
-        className="w-1.5 h-1.5 rounded-full shrink-0"
-        style={{ backgroundColor: cfg.color }}
-        aria-hidden="true"
-      />
-      <span>{displayName}</span>
+      {showIcon && (
+        <LifeAreaIcon
+          area={normArea}
+          size={isSmall ? 12 : 14}
+          color={config.color}
+          strokeWidth={2}
+        />
+      )}
+      <span>{displayLabel}</span>
       {score !== undefined && (
-        <span className="tabular-nums font-semibold opacity-90 ml-0.5">
-          {score}
+        <span
+          className="font-semibold tabular-nums ml-0.5 opacity-90"
+          style={{ fontVariantNumeric: 'tabular-nums' }}
+        >
+          {score}%
         </span>
       )}
-    </span>
+    </div>
   );
 }

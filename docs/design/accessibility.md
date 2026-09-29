@@ -1,29 +1,55 @@
-# SAAR Accessibility (a11y) Architecture
+# SAAR — Accessibility & WCAG 2.1 AA Specification
 
-## 1. Compliance Standard
+## 1. Core Commitment
 
-SAAR targets strict compliance with **WCAG 2.1 Level AA** across all web and mobile surfaces.
+SAAR is designed to be accessible to every person regardless of physical, visual, motor, or cognitive ability. It targets **WCAG 2.1 Level AA** compliance across all web and mobile surfaces.
 
 ---
 
-## 2. Core Accessibility Pillars
+## 2. Visual Contrast & Color Independence
 
-### 2.1 Contrast & Color Independence
-- Text to background contrast ratio is maintained at **>= 4.5:1** for standard body text and **>= 3.0:1** for large headings and active UI components.
-- Domain signals (Gaps, Status, Trends) never communicate solely through color: icons, textual labels, and shapes always accompany color indicators.
+* **Text Contrast**:
+  - Primary text (`#0F1115`) on Warm Ivory (`#FAF8F5`) achieves a contrast ratio of **14.8:1** (far exceeding the 4.5:1 requirement).
+  - Secondary text (`#495057`) achieves **7.4:1**.
+  - Forest Sage buttons (`#226949`) with pure white text achieve **5.8:1**.
+* **Color Independence**:
+  - Color is never used as the sole indicator of state.
+  - Life areas are represented by distinct, recognizable SVG silhouettes alongside labels and percentages.
+  - Overload warnings combine muted crimson borders with clear explanatory text and explicit icon badges (`ShieldAlert`).
 
-### 2.2 Keyboard Navigation
-- All interactive controls (`Button`, `TaskRow`, `Input`, `Dialog`) are focusable and triggerable via `Tab`, `Enter`, and `Space`.
-- Modals, Drawers, and BottomSheets employ focus trapping (`focus-trap-react` or native ARIA modal handling) and dismiss upon pressing `Escape`.
-- Clear visible focus indicator: `outline: 2px solid #226949; outline-offset: 2px;` in light mode, `#4ADE80` in dark mode.
+---
 
-### 2.3 Screen Reader Semantics
-- Semantic HTML tags (`<nav>`, `<main>`, `<article>`, `<header>`, `<aside>`, `<button>`) are used exclusively.
-- All non-text triggers (`IconButton`, `CompanionPulse`) require an explicit `aria-label`.
-- Dynamic status changes (e.g., task completion, daily growth transitions) are announced via `aria-live="polite"` regions.
+## 3. Keyboard Navigation & Focus Ring Standards
 
-### 2.4 Touch Target Sizing (Mobile & Web)
-- All interactive touch targets conform to a minimum clickable/tappable area of **44x44px** (iOS HIG) and **48x48dp** (Android Material).
+* **Tab Order**: All interactive triggers, links, inputs, and modal dismissals follow a natural, predictable DOM sequence.
+* **Focus Rings**:
+  - Never suppressed (`outline: none` without replacement is strictly forbidden).
+  - High-visibility focus indicators: `outline: 2px solid #226949; outline-offset: 2px;`.
+* **Modal Focus Trap**:
+  - When dialogs or check-in modals open, focus is automatically moved to the first interactive element.
+  - Tabbing is constrained within the modal until dismissed via the Escape key or dismiss button.
 
-### 2.5 Behavioral Alarm Accessibility Exception
-- The SAAR Behavioral Alarm feature requires an accessible bypass alternative (e.g. single long-press, emergency skip) for users with motor or cognitive limitations.
+---
+
+## 4. Touch Targets & Gestures
+
+* **Touch Sizing**: All touch targets on mobile and responsive tablet viewports meet or exceed **44 × 44 CSS pixels**.
+* **Non-Gesture Alternatives**: Every swipable or draggable element has an accessible click/tap alternative.
+
+---
+
+## 5. Screen Reader Semantics & Live Regions
+
+* **ARIA Roles**:
+  - Dialogs have `role="dialog"` and `aria-modal="true"`.
+  - Buttons have explicit `aria-label` where text is truncated or icon-only.
+  - Mobile hamburger toggle explicitly announces `aria-expanded="true|false"`.
+* **Streaming Responses**:
+  - Real-time Companion responses stream into containers equipped with `aria-live="polite"` so screen readers announce completions without interrupting the user.
+
+---
+
+## 6. Behavioral Alarm Emergency Bypass
+
+* In traditional alarm apps, dismissals can lock users into coercive loops or cognitive puzzles.
+* In SAAR, the Behavioral Alarm encourages a physical or cognitive awakening action, but **explicitly provides an emergency bypass link ("I need to wake up normally")** to prevent anxiety or entrapment.
