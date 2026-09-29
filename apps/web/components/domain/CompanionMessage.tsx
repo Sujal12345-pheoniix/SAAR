@@ -112,22 +112,32 @@ export function CompanionMessage({
                   <p className="text-xs text-[#868E96] mt-0.5">{act.description}</p>
                 </div>
                 {act.status === 'PROPOSED' ? (
-                  <div className="flex items-center gap-2 pt-1">
-                    <Button
-                      variant="growth"
-                      size="sm"
-                      onClick={() => onConfirmAction?.(act.id)}
-                    >
-                      Confirm Action
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onRejectAction?.(act.id)}
-                    >
-                      Dismiss
-                    </Button>
-                  </div>
+                  (onConfirmAction || onRejectAction) ? (
+                    <div className="flex items-center gap-2 pt-1">
+                      {onConfirmAction && (
+                        <Button
+                          variant="growth"
+                          size="sm"
+                          onClick={() => onConfirmAction(act.id)}
+                        >
+                          Confirm Action
+                        </Button>
+                      )}
+                      {onRejectAction && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onRejectAction(act.id)}
+                        >
+                          Dismiss
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-[#868E96] italic">
+                      Action application is currently unavailable.
+                    </span>
+                  )
                 ) : (
                   <span className="text-[11px] font-semibold text-[#226949] dark:text-[#4ADE80]">
                     ✓ Action {act.status.toLowerCase()}
