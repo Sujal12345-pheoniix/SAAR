@@ -5,7 +5,7 @@ services:
     plan: starter
     region: oregon
     rootDir: .
-    buildCommand: pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @saar/contracts build && pnpm --filter @saar/api build
+    buildCommand: pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @saar/contracts build && pnpm --filter @saar/domain build && pnpm --filter @saar/api build
     startCommand: node apps/api/dist/main.js
     envVars:
       - key: NODE_ENV
