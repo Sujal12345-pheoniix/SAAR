@@ -7,6 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
+import { Prisma } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../database/prisma.service';
 import type { RegisterDto } from './dto/register.dto';
@@ -171,6 +172,19 @@ describe('AuthService', () => {
       prisma.user.findUnique.mockResolvedValueOnce(makeUser());
 
       await expect(service.register(dto)).rejects.toThrow(ConflictException);
+    });
+
+    it('throws ConflictException when unique constraint race condition occurs on create (P2002)', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+      const p2002Error = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`email`)',
+        { code: 'P2002', clientVersion: '5.20.0' },
+      );
+      prisma.$transaction.mockRejectedValueOnce(p2002Error);
+
+      await expect(service.register(dto)).rejects.toThrow(
+        new ConflictException('Email is already registered'),
+      );
     });
   });
 
