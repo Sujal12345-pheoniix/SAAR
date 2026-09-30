@@ -5,27 +5,27 @@ import React from 'react';
 const MEDIA_LOGOS = [
   { name: 'TechCrunch', label: 'TechCrunch' },
   { name: 'Forbes', label: 'Forbes' },
-  { name: 'Wired', label: 'WIRED' },
+  { name: 'WIRED', label: 'WIRED' },
   { name: 'FastCompany', label: 'Fast Company' },
   { name: 'Bloomberg', label: 'Bloomberg' },
 ];
 
 export function TrustStrip() {
   return (
-    <section className="py-10 border-y border-purple-100/60 bg-white/60 backdrop-blur-sm">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="text-xs font-semibold text-zinc-400 tracking-wider uppercase text-center md:text-left max-w-xs leading-relaxed">
-          As Seen in Global Media & Trusted by Thousands of Mindful Builders
-        </div>
+    <section className="py-14 sm:py-16 bg-white border-b border-slate-200">
+      <div className="max-w-6xl mx-auto px-6 text-center">
+        <h3 className="text-xs font-bold tracking-widest text-slate-400 uppercase mb-8">
+          As Seen in Global Media &bull; Trusted by Thousands of Mindful Builders
+        </h3>
 
-        <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-60 grayscale hover:grayscale-0 transition-all duration-300">
+        <div className="flex flex-wrap items-center justify-center gap-10 sm:gap-16 opacity-75">
           {MEDIA_LOGOS.map((logo) => (
-            <div
+            <span
               key={logo.name}
-              className="text-base sm:text-lg font-bold tracking-tight text-zinc-600 hover:text-purple-600 transition-colors cursor-default"
+              className="text-base sm:text-lg font-bold tracking-tight text-slate-800 hover:text-slate-900 transition-colors"
             >
               {logo.label}
-            </div>
+            </span>
           ))}
         </div>
       </div>
