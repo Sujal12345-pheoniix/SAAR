@@ -5,11 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import type { LoginRequest, SessionUser } from '@/types';
-import { ArrowRight, Sparkles, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import { ArrowRight, Lock, Mail, AlertCircle, Loader2 } from 'lucide-react';
 
 interface FormState {
   errors: Partial<Record<keyof LoginRequest | '_form', string>>;
@@ -17,10 +13,6 @@ interface FormState {
 }
 
 const INITIAL_STATE: FormState = { errors: {}, submitting: false };
-
-// ---------------------------------------------------------------------------
-// Validation
-// ---------------------------------------------------------------------------
 
 function validate(email: string, password: string): FormState['errors'] {
   const errors: FormState['errors'] = {};
@@ -40,16 +32,11 @@ function validate(email: string, password: string): FormState['errors'] {
   return errors;
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
 export default function LoginPage() {
   const router = useRouter();
   const [state, setState] = useState<FormState>(INITIAL_STATE);
 
   useEffect(() => {
-    // Proactively awaken backend if idle so submission is instant
     apiClient.warmServer();
   }, []);
 
@@ -59,7 +46,6 @@ export default function LoginPage() {
     const email = (form.elements.namedItem('email') as HTMLInputElement).value;
     const password = (form.elements.namedItem('password') as HTMLInputElement).value;
 
-    // Client-side validation
     const errors = validate(email, password);
     if (Object.keys(errors).length > 0) {
       setState({ errors, submitting: false });
@@ -76,7 +62,6 @@ export default function LoginPage() {
     if (!result.ok) {
       const apiErrors: FormState['errors'] = {};
 
-      // Map API error codes to field-level messages
       switch (result.error.error.code) {
         case 'TIMEOUT_ERROR':
           apiErrors._form =
@@ -100,7 +85,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Success — persist session token in localStorage AND cookies for bulletproof auth
     const authData = result.data as unknown as { session?: { accessToken?: string }; accessToken?: string };
     const token = authData?.session?.accessToken || authData?.accessToken;
 
@@ -132,38 +116,37 @@ export default function LoginPage() {
   const { errors, submitting } = state;
 
   return (
-    <div className="bg-white/90 backdrop-blur-xl rounded-[36px] p-8 sm:p-10 border border-purple-100/90 shadow-xl shadow-purple-500/5">
-      {/* Pill Tab Switcher matching Image 2 */}
-      <div className="flex items-center p-1 bg-purple-50/70 rounded-full border border-purple-100/60 mb-8 max-w-xs mx-auto">
+    <div className="bg-white rounded-2xl p-8 sm:p-10 border border-slate-200 shadow-sm">
+      {/* Tab Switcher */}
+      <div className="flex items-center p-1 bg-slate-100 rounded-xl mb-8 max-w-xs mx-auto">
         <button
           type="button"
-          className="flex-1 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 shadow-sm"
+          className="flex-1 py-2 rounded-lg text-xs font-bold text-white bg-slate-900 shadow-sm"
         >
           Sign In
         </button>
         <Link
           href="/register"
-          className="flex-1 py-2 text-center rounded-full text-xs font-semibold text-zinc-500 hover:text-purple-700 transition-colors"
+          className="flex-1 py-2 text-center rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
         >
           Create Account
         </Link>
       </div>
 
       <div className="text-center mb-6">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight mb-2">
-          Welcome back
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-1.5">
+          Sign In
         </h1>
-        <p className="text-xs sm:text-sm text-zinc-500 font-normal leading-relaxed">
-          Sign in to access your daily habits, coaching reflections, and progress.
+        <p className="text-xs sm:text-sm text-slate-500 font-normal">
+          Enter your credentials to access your growth workspace.
         </p>
       </div>
 
-      {/* Form-level error */}
       {errors._form && (
         <div
           role="alert"
           aria-live="polite"
-          className="flex items-start gap-2.5 p-3.5 mb-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium"
+          className="flex items-start gap-2.5 p-3.5 mb-5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium"
         >
           <AlertCircle size={16} className="flex-shrink-0 mt-0.5 text-rose-500" />
           <span>{errors._form}</span>
@@ -175,12 +158,12 @@ export default function LoginPage() {
         <div>
           <label
             htmlFor="email"
-            className="block text-xs font-semibold text-zinc-700 mb-1.5 ml-1"
+            className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 ml-1"
           >
             Email Address
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
               <Mail size={16} />
             </div>
             <input
@@ -191,11 +174,11 @@ export default function LoginPage() {
               required
               aria-describedby={errors.email ? 'email-error' : undefined}
               aria-invalid={Boolean(errors.email)}
-              placeholder="you@domain.com"
-              className={`w-full pl-10 pr-4 py-3 rounded-2xl bg-zinc-50/70 border text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:bg-white focus:outline-none ${
+              placeholder="name@domain.com"
+              className={`w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:bg-white focus:outline-none ${
                 errors.email
                   ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20'
-                  : 'border-purple-100 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
+                  : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
               }`}
             />
           </div>
@@ -211,19 +194,19 @@ export default function LoginPage() {
           <div className="flex items-center justify-between mb-1.5 ml-1">
             <label
               htmlFor="password"
-              className="block text-xs font-semibold text-zinc-700"
+              className="block text-xs font-bold text-slate-700 uppercase tracking-wider"
             >
               Password
             </label>
             <Link
               href="/forgot-password"
-              className="text-[11px] text-purple-600 hover:text-purple-800 font-semibold"
+              className="text-[11px] text-blue-900 hover:underline font-semibold"
             >
               Forgot password?
             </Link>
           </div>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
               <Lock size={16} />
             </div>
             <input
@@ -235,10 +218,10 @@ export default function LoginPage() {
               aria-describedby={errors.password ? 'password-error' : undefined}
               aria-invalid={Boolean(errors.password)}
               placeholder="••••••••"
-              className={`w-full pl-10 pr-4 py-3 rounded-2xl bg-zinc-50/70 border text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:bg-white focus:outline-none ${
+              className={`w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:bg-white focus:outline-none ${
                 errors.password
                   ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20'
-                  : 'border-purple-100 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
+                  : 'border-slate-200 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10'
               }`}
             />
           </div>
@@ -254,7 +237,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3.5 px-6 rounded-full text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 transition-all shadow-md shadow-purple-500/20 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3.5 px-6 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
           >
             {submitting ? (
               <>

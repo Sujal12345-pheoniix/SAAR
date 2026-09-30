@@ -11,28 +11,16 @@ import { PurpleNewsletterFooter } from '@/components/landing/PurpleNewsletterFoo
 
 export const metadata: Metadata = {
   title: {
-    absolute: 'SAAR — Take Control of Your Daily Habits with AI Coaching',
+    absolute: 'SAAR — Personal Growth Intelligence & Habit Architecture',
   },
   description:
-    'Track your habits, improve your health and focus, and take control of your growth with AI-powered coaching and data-driven insights.',
+    'Track your habits, improve your focus, and take control of your long-term growth with data-driven behavioral intelligence.',
   robots: { index: true, follow: true },
 };
 
-/**
- * SAAR Master Landing Page (Image 2 Reference Hierarchy):
- * 01 — Pill Navbar with frosted glass
- * 02 — Atmospheric Hero with 4.9 Score & Central High-Fidelity Phone Mockup
- * 03 — Global Media & Trust Strip
- * 04 — Bento Grid: Mint Habit Calendar + Lavender AI Companion Cards
- * 05 — Routine Mastery Split Showcase
- * 06 — 5-Star Builder Testimonials
- * 07 — Dual-Phone App Download Banner
- * 08 — Clean FAQ Accordion
- * 09 — Purple Gradient Newsletter Footer
- */
 export default function HomePage() {
   return (
-    <main className="overflow-x-hidden min-h-screen bg-[#FAF9FF] text-zinc-900 selection:bg-purple-100 selection:text-purple-900">
+    <main className="overflow-x-hidden min-h-screen bg-slate-50 text-slate-900 selection:bg-slate-900 selection:text-white">
       <Navbar />
       <Hero />
       <TrustStrip />
