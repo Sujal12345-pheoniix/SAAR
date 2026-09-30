@@ -312,11 +312,6 @@ describe('SAAR Part 3A — Growth Intelligence Foundation Unit Tests', () => {
       const exec7d = calculateExecutionFeatures(tasks7d, 7);
 
       // Scenario A: 30d had 20% completion rate -> 7d is 40% -> IMPROVING
-      const tasks30dLower = [
-        { status: 'COMPLETED' },
-        ...Array(4).fill({ status: 'SKIPPED' }),
-        ...Array(5).fill({ status: 'COMPLETED' }),
-      ]; // 6 out of 10 = 60%, wait let's make it 2 out of 10 = 20%
       const tasks30dLowerArray = [
         { status: 'COMPLETED' },
         { status: 'COMPLETED' },
