@@ -9,7 +9,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as argon2 from 'argon2';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash, timingSafeEqual } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { Prisma } from '@prisma/client';
 import type { Session, User, UserProfile } from '@prisma/client';
@@ -150,7 +150,7 @@ export class AuthService {
           });
 
           const sessionId = uuidv4();
-          const { rawToken, hash } = await this.generateRefreshToken(sessionId);
+          const { rawToken, hash } = this.generateRefreshToken(sessionId);
           const expiresAt = this.refreshExpiresAt();
 
           const newSession = await tx.session.create({
@@ -237,7 +237,7 @@ export class AuthService {
     }
 
     const sessionId = uuidv4();
-    const { rawToken, hash } = await this.generateRefreshToken(sessionId);
+    const { rawToken, hash } = this.generateRefreshToken(sessionId);
     const expiresAt = this.refreshExpiresAt();
 
     const session = await this.prisma.session.create({
@@ -301,7 +301,7 @@ export class AuthService {
     if (session.revokedAt !== null || session.rotatedAt !== null) {
       let isSecretMatch = false;
       try {
-        isSecretMatch = await argon2.verify(session.refreshHash, secret);
+        isSecretMatch = await this.verifyRefreshToken(session.refreshHash, secret);
       } catch {
         // Hash verification error
       }
@@ -340,7 +340,7 @@ export class AuthService {
     }
 
     // ── Hash verification ────────────────────────────────────────────────────
-    const isValid = await argon2.verify(session.refreshHash, secret);
+    const isValid = await this.verifyRefreshToken(session.refreshHash, secret);
     if (!isValid) {
       await this.auditAuth('auth.refresh.failed', session.userId, { sessionId: session.id });
       throw new UnauthorizedException('Invalid or expired refresh token');
@@ -355,7 +355,7 @@ export class AuthService {
     const now = new Date();
     const newSessionId = uuidv4();
     const { rawToken: newRawToken, hash: newHash } =
-      await this.generateRefreshToken(newSessionId);
+      this.generateRefreshToken(newSessionId);
     const newExpiresAt = this.refreshExpiresAt();
     const tokenFamilyId = session.tokenFamilyId ?? session.id;
 
@@ -562,19 +562,34 @@ export class AuthService {
     return { accessToken };
   }
 
-  private async generateRefreshToken(sessionId: string): Promise<{
+  private generateRefreshToken(sessionId: string): {
     rawToken: string;
     hash: string;
-  }> {
+  } {
     const secret = randomBytes(32).toString('hex');
     const rawToken = `rt_${sessionId}.${secret}`;
-    const hash = await argon2.hash(secret, {
-      type: argon2.argon2id,
-      memoryCost: 65536,
-      timeCost: 3,
-      parallelism: 4,
-    });
+    const hash = createHash('sha256').update(secret).digest('hex');
     return { rawToken, hash };
+  }
+
+  private async verifyRefreshToken(storedHash: string, presentedSecret: string): Promise<boolean> {
+    if (storedHash.startsWith('$argon2')) {
+      try {
+        return await argon2.verify(storedHash, presentedSecret);
+      } catch {
+        return false;
+      }
+    }
+
+    const computedHash = createHash('sha256').update(presentedSecret).digest('hex');
+    const storedBuffer = Buffer.from(storedHash, 'hex');
+    const computedBuffer = Buffer.from(computedHash, 'hex');
+
+    if (storedBuffer.length !== computedBuffer.length) {
+      return false;
+    }
+
+    return timingSafeEqual(storedBuffer, computedBuffer);
   }
 
   private refreshExpiresAt(): Date {
