@@ -55,7 +55,7 @@ export function detectGaps(input: GapEngineInput): GrowthFinding[] {
               unit: goal.unit,
             },
           ],
-          algorithmVersion: '1.0.0',
+          algorithmVersion: '1.1.0',
           generatedAt: now,
         });
       }
@@ -66,35 +66,67 @@ export function detectGaps(input: GapEngineInput): GrowthFinding[] {
   if (input.execution7d.sampleSize >= 3) {
     if (input.execution7d.completionRate < 60 && (input.execution7d.skipRate + input.execution7d.rescheduleRate) >= 35) {
       const frictionRate = input.execution7d.skipRate + input.execution7d.rescheduleRate;
+
+      // Dynamic trend and confidence calculation from 7d vs 30d evidence
+      let trend: 'IMPROVING' | 'STABLE' | 'DECLINING' = 'DECLINING';
+      let confidence = input.execution7d.confidence;
+
+      if (input.execution30d && input.execution30d.sampleSize >= 3) {
+        const delta = input.execution7d.completionRate - input.execution30d.completionRate;
+        if (delta > 5) {
+          trend = 'IMPROVING';
+        } else if (delta < -5) {
+          trend = 'DECLINING';
+        } else {
+          trend = 'STABLE';
+        }
+
+        if (input.execution30d.sampleSize >= 7 || input.execution7d.sampleSize >= 7) {
+          confidence = 'ESTABLISHED_SIGNAL';
+        }
+      }
+
+      const evidence = [
+        {
+          metricName: 'completion_rate',
+          expected: '80%',
+          actual: `${input.execution7d.completionRate}%`,
+          windowDays: 7,
+        },
+        ...(input.execution30d && input.execution30d.sampleSize >= 3
+          ? [
+              {
+                metricName: 'completion_rate_30d_baseline',
+                expected: '80%',
+                actual: `${input.execution30d.completionRate}%`,
+                windowDays: 30,
+              },
+            ]
+          : []),
+        {
+          metricName: 'reschedule_rate',
+          expected: '< 15%',
+          actual: `${input.execution7d.rescheduleRate}%`,
+          windowDays: 7,
+        },
+        {
+          metricName: 'skip_rate',
+          expected: '< 10%',
+          actual: `${input.execution7d.skipRate}%`,
+          windowDays: 7,
+        },
+      ];
+
       findings.push({
         id: `gap-execution-7d`,
         gapType: 'EXECUTION_GAP',
         title: 'Planning-to-Execution Friction',
         summary: `Out of ${input.execution7d.tasksPlanned} planned tasks in the last 7 days, ${frictionRate}% were skipped or rescheduled, resulting in a ${input.execution7d.completionRate}% completion rate.`,
         magnitude: Math.round((100 - input.execution7d.completionRate) * 10) / 10,
-        confidence: input.execution7d.confidence,
-        trend: 'DECLINING',
-        evidence: [
-          {
-            metricName: 'completion_rate',
-            expected: '80%',
-            actual: `${input.execution7d.completionRate}%`,
-            windowDays: 7,
-          },
-          {
-            metricName: 'reschedule_rate',
-            expected: '< 15%',
-            actual: `${input.execution7d.rescheduleRate}%`,
-            windowDays: 7,
-          },
-          {
-            metricName: 'skip_rate',
-            expected: '< 10%',
-            actual: `${input.execution7d.skipRate}%`,
-            windowDays: 7,
-          },
-        ],
-        algorithmVersion: '1.0.0',
+        confidence,
+        trend,
+        evidence,
+        algorithmVersion: '1.1.0',
         generatedAt: now,
       });
     }
@@ -125,7 +157,7 @@ export function detectGaps(input: GapEngineInput): GrowthFinding[] {
           windowDays: 7,
         },
       ],
-      algorithmVersion: '1.0.0',
+      algorithmVersion: '1.1.0',
       generatedAt: now,
     });
   }
@@ -160,7 +192,7 @@ export function detectGaps(input: GapEngineInput): GrowthFinding[] {
               windowDays: 7,
             },
           ],
-          algorithmVersion: '1.0.0',
+          algorithmVersion: '1.1.0',
           generatedAt: now,
         });
       }
@@ -188,7 +220,7 @@ export function detectGaps(input: GapEngineInput): GrowthFinding[] {
             windowDays: 7,
           },
         ],
-        algorithmVersion: '1.0.0',
+        algorithmVersion: '1.1.0',
         generatedAt: now,
       });
     }

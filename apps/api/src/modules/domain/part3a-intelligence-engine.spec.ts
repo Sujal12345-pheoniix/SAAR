@@ -299,5 +299,90 @@ describe('SAAR Part 3A — Growth Intelligence Foundation Unit Tests', () => {
       expect(balanceGap).toBeDefined();
       expect(balanceGap?.title).toContain('Career');
     });
+
+    it('dynamically computes EXECUTION_GAP trend and confidence by comparing 7d vs 30d baselines', () => {
+      // 7d: 2 completed out of 5 (40% completion rate, 40% skipped, 20% rescheduled)
+      const tasks7d = [
+        { status: 'COMPLETED' },
+        { status: 'COMPLETED' },
+        { status: 'SKIPPED' },
+        { status: 'SKIPPED' },
+        { status: 'RESCHEDULED' },
+      ];
+      const exec7d = calculateExecutionFeatures(tasks7d, 7);
+
+      // Scenario A: 30d had 20% completion rate -> 7d is 40% -> IMPROVING
+      const tasks30dLower = [
+        { status: 'COMPLETED' },
+        ...Array(4).fill({ status: 'SKIPPED' }),
+        ...Array(5).fill({ status: 'COMPLETED' }),
+      ]; // 6 out of 10 = 60%, wait let's make it 2 out of 10 = 20%
+      const tasks30dLowerArray = [
+        { status: 'COMPLETED' },
+        { status: 'COMPLETED' },
+        ...Array(8).fill({ status: 'SKIPPED' }),
+      ]; // 20%
+      const exec30dLower = calculateExecutionFeatures(tasks30dLowerArray, 30);
+
+      const improvingGaps = detectGaps({
+        userId: 'u-1',
+        goals: [],
+        execution7d: exec7d,
+        execution30d: exec30dLower,
+        consistency7d: calculateConsistencyFeatures([], '2026-09-28', 7, []),
+        routine7d: calculateRoutineFeatures([], 7),
+        lifeAreas: calculateLifeAreaFeatures([], 7),
+      });
+
+      const execGapImproving = improvingGaps.find((g: GapFinding) => g.gapType === 'EXECUTION_GAP');
+      expect(execGapImproving).toBeDefined();
+      expect(execGapImproving?.trend).toBe('IMPROVING');
+      expect(execGapImproving?.confidence).toBe('ESTABLISHED_SIGNAL');
+      expect(execGapImproving?.algorithmVersion).toBe('1.1.0');
+
+      // Scenario B: 30d had 70% completion rate -> 7d is 40% -> DECLINING
+      const tasks30dHigherArray = [
+        ...Array(7).fill({ status: 'COMPLETED' }),
+        ...Array(3).fill({ status: 'SKIPPED' }),
+      ]; // 70%
+      const exec30dHigher = calculateExecutionFeatures(tasks30dHigherArray, 30);
+
+      const decliningGaps = detectGaps({
+        userId: 'u-1',
+        goals: [],
+        execution7d: exec7d,
+        execution30d: exec30dHigher,
+        consistency7d: calculateConsistencyFeatures([], '2026-09-28', 7, []),
+        routine7d: calculateRoutineFeatures([], 7),
+        lifeAreas: calculateLifeAreaFeatures([], 7),
+      });
+
+      const execGapDeclining = decliningGaps.find((g: GapFinding) => g.gapType === 'EXECUTION_GAP');
+      expect(execGapDeclining).toBeDefined();
+      expect(execGapDeclining?.trend).toBe('DECLINING');
+      expect(execGapDeclining?.confidence).toBe('ESTABLISHED_SIGNAL');
+      expect(execGapDeclining?.algorithmVersion).toBe('1.1.0');
+
+      // Scenario C: 30d has identical 40% completion rate -> STABLE
+      const tasks30dSameArray = [
+        ...Array(4).fill({ status: 'COMPLETED' }),
+        ...Array(6).fill({ status: 'SKIPPED' }),
+      ]; // 40%
+      const exec30dSame = calculateExecutionFeatures(tasks30dSameArray, 30);
+
+      const stableGaps = detectGaps({
+        userId: 'u-1',
+        goals: [],
+        execution7d: exec7d,
+        execution30d: exec30dSame,
+        consistency7d: calculateConsistencyFeatures([], '2026-09-28', 7, []),
+        routine7d: calculateRoutineFeatures([], 7),
+        lifeAreas: calculateLifeAreaFeatures([], 7),
+      });
+
+      const execGapStable = stableGaps.find((g: GapFinding) => g.gapType === 'EXECUTION_GAP');
+      expect(execGapStable).toBeDefined();
+      expect(execGapStable?.trend).toBe('STABLE');
+    });
   });
 });
