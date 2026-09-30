@@ -112,9 +112,13 @@ async function bootstrap(): Promise<void> {
   });
 
   // ── X-Request-Id correlation ─────────────────────────────────────────────────
+  const REQUEST_ID_REGEX = /^[A-Za-z0-9._-]{1,64}$/;
   app.use((req: Request, res: Response, next: NextFunction) => {
+    const rawHeader = req.headers['x-request-id'];
     const requestId =
-      (req.headers['x-request-id'] as string | undefined) ?? uuidv4();
+      typeof rawHeader === 'string' && REQUEST_ID_REGEX.test(rawHeader)
+        ? rawHeader
+        : uuidv4();
     (req as Request & { requestId: string }).requestId = requestId;
     res.setHeader('X-Request-Id', requestId);
     next();
