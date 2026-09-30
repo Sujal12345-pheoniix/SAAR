@@ -24,3 +24,5 @@ services:
         sync: false
       - key: LOG_LEVEL
         value: info
+      - key: TRUST_PROXY_HOPS
+        value: "1"

@@ -21,6 +21,9 @@ export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('development', 'test', 'staging', 'production')
     .default('development'),
+  TRUST_PROXY_HOPS: Joi.alternatives()
+    .try(Joi.number().integer().min(0), Joi.boolean(), Joi.string())
+    .optional(),
 
   // ── CORS ──────────────────────────────────────────────────────────────────
   CORS_ALLOWED_ORIGINS: Joi.string().default('http://localhost:3000'),
