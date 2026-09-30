@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
 import type { RegisterRequest, SessionUser } from '@/types';
+import { ArrowRight, Sparkles, Lock, Mail, User, AlertCircle, Loader2 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -99,8 +100,8 @@ export default function RegisterPage() {
           apiErrors._form =
             'The server is waking up from idle state. Please wait a moment and click Create account again.';
           break;
-        case 'EMAIL_TAKEN':
-          apiErrors.email = 'This email is already in use. Sign in instead?';
+        case 'EMAIL_EXISTS':
+          apiErrors.email = 'An account with this email already exists.';
           break;
         case 'VALIDATION_ERROR':
           Object.assign(apiErrors, result.error.error.details);
@@ -115,7 +116,7 @@ export default function RegisterPage() {
       return;
     }
 
-    // Success — persist session cookie and token in localStorage
+    // Success — persist session token in localStorage AND cookies for bulletproof auth
     const authData = result.data as unknown as { session?: { accessToken?: string }; accessToken?: string };
     const token = authData?.session?.accessToken || authData?.accessToken;
 
@@ -136,21 +137,40 @@ export default function RegisterPage() {
       document.cookie = `saar_session=${encodeURIComponent(token)}; path=/; max-age=604800; SameSite=Lax${typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : ''}`;
     }
 
-    window.location.href = '/dashboard';
+    const nextUrl =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('next') || '/dashboard'
+        : '/dashboard';
+
+    window.location.href = nextUrl;
   }
 
   const { errors, submitting } = state;
 
   return (
-    <>
-      <div style={{ marginBottom: '1.75rem', textAlign: 'center' }}>
-        <h1
-          style={{ fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '0.375rem' }}
+    <div className="bg-white/90 backdrop-blur-xl rounded-[36px] p-8 sm:p-10 border border-purple-100/90 shadow-xl shadow-purple-500/5">
+      {/* Pill Tab Switcher matching Image 2 */}
+      <div className="flex items-center p-1 bg-purple-50/70 rounded-full border border-purple-100/60 mb-8 max-w-xs mx-auto">
+        <Link
+          href="/login"
+          className="flex-1 py-2 text-center rounded-full text-xs font-semibold text-zinc-500 hover:text-purple-700 transition-colors"
         >
+          Sign In
+        </Link>
+        <button
+          type="button"
+          className="flex-1 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 shadow-sm"
+        >
+          Create Account
+        </button>
+      </div>
+
+      <div className="text-center mb-6">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight mb-2">
           Begin your journey
         </h1>
-        <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-          Create an account to start mapping your personal growth.
+        <p className="text-xs sm:text-sm text-zinc-500 font-normal leading-relaxed">
+          Create your personal account to start tracking habits and building deliberate daily cadence.
         </p>
       </div>
 
@@ -159,136 +179,140 @@ export default function RegisterPage() {
         <div
           role="alert"
           aria-live="polite"
-          style={{
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '8px',
-            padding: '0.75rem 1rem',
-            fontSize: '0.875rem',
-            color: '#dc2626',
-            marginBottom: '1.25rem',
-          }}
+          className="flex items-start gap-2.5 p-3.5 mb-5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium"
         >
-          {errors._form}
+          <AlertCircle size={16} className="flex-shrink-0 mt-0.5 text-rose-500" />
+          <span>{errors._form}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        {/* Display name */}
-        <div className="form-group">
-          <label htmlFor="displayName" className="form-label">
-            Your name
+      <form onSubmit={handleSubmit} noValidate className="space-y-4">
+        {/* Full Name */}
+        <div>
+          <label
+            htmlFor="displayName"
+            className="block text-xs font-semibold text-zinc-700 mb-1.5 ml-1"
+          >
+            Your Name
           </label>
-          <input
-            id="displayName"
-            name="displayName"
-            type="text"
-            autoComplete="name"
-            required
-            aria-invalid={errors.displayName ? 'true' : 'false'}
-            aria-describedby={errors.displayName ? 'displayName-error' : undefined}
-            className="form-input"
-            placeholder="Jane Doe"
-          />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+              <User size={16} />
+            </div>
+            <input
+              id="displayName"
+              name="displayName"
+              type="text"
+              autoComplete="name"
+              required
+              aria-describedby={errors.displayName ? 'name-error' : undefined}
+              aria-invalid={Boolean(errors.displayName)}
+              placeholder="Alex Morgan"
+              className={`w-full pl-10 pr-4 py-3 rounded-2xl bg-zinc-50/70 border text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:bg-white focus:outline-none ${
+                errors.displayName
+                  ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20'
+                  : 'border-purple-100 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
+              }`}
+            />
+          </div>
           {errors.displayName && (
-            <p id="displayName-error" className="form-error" role="alert">
+            <p id="name-error" className="text-[11px] text-rose-600 mt-1 ml-1 font-medium">
               {errors.displayName}
             </p>
           )}
         </div>
 
-        {/* Email */}
-        <div className="form-group">
-          <label htmlFor="email" className="form-label">
-            Email address
+        {/* Email Field */}
+        <div>
+          <label
+            htmlFor="email"
+            className="block text-xs font-semibold text-zinc-700 mb-1.5 ml-1"
+          >
+            Email Address
           </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            aria-invalid={errors.email ? 'true' : 'false'}
-            aria-describedby={errors.email ? 'email-error' : undefined}
-            className="form-input"
-            placeholder="you@example.com"
-          />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+              <Mail size={16} />
+            </div>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              aria-describedby={errors.email ? 'email-error' : undefined}
+              aria-invalid={Boolean(errors.email)}
+              placeholder="you@domain.com"
+              className={`w-full pl-10 pr-4 py-3 rounded-2xl bg-zinc-50/70 border text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:bg-white focus:outline-none ${
+                errors.email
+                  ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20'
+                  : 'border-purple-100 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
+              }`}
+            />
+          </div>
           {errors.email && (
-            <p id="email-error" className="form-error" role="alert">
+            <p id="email-error" className="text-[11px] text-rose-600 mt-1 ml-1 font-medium">
               {errors.email}
             </p>
           )}
         </div>
 
-        {/* Password */}
-        <div className="form-group">
-          <label htmlFor="password" className="form-label">
+        {/* Password Field */}
+        <div>
+          <label
+            htmlFor="password"
+            className="block text-xs font-semibold text-zinc-700 mb-1.5 ml-1"
+          >
             Password
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            required
-            aria-invalid={errors.password ? 'true' : 'false'}
-            aria-describedby={errors.password ? 'password-error' : 'password-hint'}
-            className="form-input"
-            placeholder="••••••••"
-          />
-          {errors.password ? (
-            <p id="password-error" className="form-error" role="alert">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400">
+              <Lock size={16} />
+            </div>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              aria-describedby={errors.password ? 'password-error' : undefined}
+              aria-invalid={Boolean(errors.password)}
+              placeholder="Min. 8 chars, 1 uppercase, 1 number"
+              className={`w-full pl-10 pr-4 py-3 rounded-2xl bg-zinc-50/70 border text-xs sm:text-sm text-zinc-900 placeholder:text-zinc-400 transition-all focus:bg-white focus:outline-none ${
+                errors.password
+                  ? 'border-rose-300 focus:ring-2 focus:ring-rose-500/20'
+                  : 'border-purple-100 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20'
+              }`}
+            />
+          </div>
+          {errors.password && (
+            <p id="password-error" className="text-[11px] text-rose-600 mt-1 ml-1 font-medium">
               {errors.password}
-            </p>
-          ) : (
-            <p
-              id="password-hint"
-              style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}
-            >
-              At least 8 characters, one uppercase letter, and one number.
             </p>
           )}
         </div>
 
-        {/* Terms notice */}
-        <p style={{ fontSize: '0.75rem', color: '#9ca3af', lineHeight: 1.5 }}>
-          By creating an account you agree to our{' '}
-          <Link href="/terms" style={{ color: '#6366f1' }}>
-            Terms of Service
-          </Link>{' '}
-          and{' '}
-          <Link href="/privacy" style={{ color: '#6366f1' }}>
-            Privacy Policy
-          </Link>
-          .
-        </p>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="btn btn-primary btn-full"
-          style={{ marginTop: '0.25rem' }}
-          aria-busy={submitting}
-        >
-          {submitting ? 'Creating account…' : 'Create account'}
-        </button>
+        {/* Submit Button */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full py-3.5 px-6 rounded-full text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 transition-all shadow-md shadow-purple-500/20 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            {submitting ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Creating account...</span>
+              </>
+            ) : (
+              <>
+                <span>Create Free Account</span>
+                <ArrowRight size={15} />
+              </>
+            )}
+          </button>
+        </div>
       </form>
-
-      {/* Login link */}
-      <p
-        style={{
-          marginTop: '1.5rem',
-          textAlign: 'center',
-          fontSize: '0.875rem',
-          color: '#6b7280',
-        }}
-      >
-        Already have an account?{' '}
-        <Link href="/login" style={{ color: '#6366f1', fontWeight: 500 }}>
-          Sign in
-        </Link>
-      </p>
-    </>
+    </div>
   );
 }

@@ -9,7 +9,6 @@ export const envValidationSchema = Joi.object({
 
   // ── JWT ───────────────────────────────────────────────────────────────────
   JWT_ACCESS_SECRET: Joi.string().min(32).required(),
-  JWT_REFRESH_SECRET: Joi.string().min(32).required(),
   JWT_ACCESS_EXPIRES_IN: Joi.number().integer().positive().default(900),
   JWT_REFRESH_EXPIRES_IN: Joi.number()
     .integer()
@@ -21,6 +20,9 @@ export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string()
     .valid('development', 'test', 'staging', 'production')
     .default('development'),
+  TRUST_PROXY_HOPS: Joi.alternatives()
+    .try(Joi.number().integer().min(0), Joi.boolean(), Joi.string())
+    .optional(),
 
   // ── CORS ──────────────────────────────────────────────────────────────────
   CORS_ALLOWED_ORIGINS: Joi.string().default('http://localhost:3000'),

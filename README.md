@@ -46,27 +46,31 @@ personal growth requires three things: **clarity** (knowing what matters), **act
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  SAAR Monorepo (pnpm workspaces)                                     │
-│                                                                       │
-│  apps/                                                               │
-│  ├── api/                NestJS REST API (primary)                   │
-│  └── worker/             BullMQ background worker                    │
-│                                                                       │
-│  packages/                                                            │
-│  ├── contracts/          Shared TypeScript interfaces & DTOs         │
-│  ├── config/             Environment parsing & validation            │
-│  └── logger/             Pino structured logger                      │
-│                                                                       │
-│  prisma/                                                              │
-│  ├── schema.prisma       Database schema (PostgreSQL 16)             │
-│  ├── migrations/         Versioned migration history                 │
-│  └── seed/               Synthetic seed data                         │
-│                                                                       │
-│  docs/                                                                │
-│  ├── adr/                Architecture Decision Records (ADR-001–010) │
-│  ├── architecture/       System design documents                     │
-│  ├── security/           Threat model                                │
-│  └── runbooks/           Operational procedures                      │
+│  SAAR Monorepo (pnpm workspaces + Turbo)                            │
+│                                                                     │
+│  apps/                                                              │
+│  ├── api/                NestJS REST API (primary backend)          │
+│  ├── web/                Next.js 15 App Router web client           │
+│  ├── worker/             BullMQ background worker                   │
+│  └── mobile/             Expo / React Native mobile app             │
+│                                                                     │
+│  packages/                                                          │
+│  ├── domain/             Behavioral intelligence & gap engine       │
+│  ├── contracts/          Shared TypeScript interfaces & DTOs        │
+│  ├── ai-core/            AI provider abstraction & templates        │
+│  ├── config/             Environment parsing & validation           │
+│  └── logger/             Pino structured logger                     │
+│                                                                     │
+│  prisma/                                                            │
+│  ├── schema.prisma       Database schema (PostgreSQL 16)            │
+│  ├── migrations/         Versioned migration history                │
+│  └── seed/               Synthetic seed data                        │
+│                                                                     │
+│  docs/                                                              │
+│  ├── adr/                Architecture Decision Records (ADR-001–010)│
+│  ├── architecture/       System design documents                    │
+│  ├── security/           Threat model                               │
+│  └── runbooks/           Operational procedures                     │
 └─────────────────────────────────────────────────────────────────────┘
 
 External Services
@@ -116,11 +120,11 @@ git   --version   # git version 2.40+
 ## 4. Quick Start
 
 ### Step 1 — Clone the repository
-
-```bash
-git clone https://github.com/your-org/saar.git
-cd saar
-```
+ 
+ ```bash
+ git clone https://github.com/Sujal12345-pheoniix/SAAR.git
+ cd saar
+ ```
 
 ### Step 2 — Configure environment
 
@@ -235,9 +239,8 @@ Copy `.env.example` to `.env` before running locally. **Never commit `.env`.**
 | `DATABASE_URL`                  | Yes         | `postgresql://saar:saar@localhost:5432/saar` | Prisma database connection string         |
 | `REDIS_URL`                     | Yes         | `redis://localhost:6379`               | Redis connection string (BullMQ + cache)         |
 | `JWT_SECRET`                    | Yes         | —                                      | HS256 signing secret for access tokens (32+ chars) |
-| `JWT_REFRESH_SECRET`            | Yes         | —                                      | HS256 signing secret for refresh tokens (32+ chars) |
 | `JWT_ACCESS_EXPIRES_IN`         | No          | `15m`                                  | Access token TTL (e.g. `15m`, `1h`)              |
-| `JWT_REFRESH_EXPIRES_IN`        | No          | `30d`                                  | Refresh token TTL (e.g. `30d`)                   |
+| `JWT_REFRESH_EXPIRES_IN`        | No          | `30d`                                  | Refresh token TTL (e.g. `30d`, opaque SHA-256)   |
 | `ENCRYPTION_KEY`                | Yes         | —                                      | 32-byte hex key for AES-256 field encryption      |
 | `AI_PROVIDER`                   | No          | `openai`                               | `openai` / `anthropic` / `gemini` / `local`       |
 | `AI_API_KEY`                    | Yes*        | —                                      | API key for the selected AI provider (*required for AI features) |
@@ -327,31 +330,35 @@ saar/
 │   │   │   ├── main.ts               # Bootstrap: OTEL init, NestFactory, global pipes
 │   │   │   ├── app.module.ts         # Root module
 │   │   │   └── modules/
-│   │   │       ├── auth/             # AuthModule: login, refresh, logout, guards
+│   │   │       ├── auth/             # AuthModule: login, refresh, logout, session guards
 │   │   │       ├── users/            # UsersModule: profile, memory management
 │   │   │       ├── life-areas/       # LifeAreasModule: CRUD life areas
 │   │   │       ├── goals/            # GoalsModule: goals + metrics
 │   │   │       ├── tasks/            # TasksModule: tasks + completion
 │   │   │       ├── routines/         # RoutinesModule: routines + RRULE
 │   │   │       ├── checkins/         # CheckinsModule: daily check-in
-│   │   │       ├── insights/         # InsightsModule: AI insight generation
-│   │   │       ├── ai-core/          # AiCoreModule: LLM adapter + policy pipeline
+│   │   │       ├── growth-engine/    # GrowthEngineModule: adaptive loop & intelligence
 │   │   │       ├── notifications/    # NotificationsModule: schedule + sync
 │   │   │       ├── subscriptions/    # SubscriptionsModule: entitlements + webhooks
 │   │   │       └── outbox/           # OutboxModule: event relay publisher
 │   │   └── test/
-│   │       ├── unit/                 # Jest unit tests (mocked)
-│   │       └── integration/          # Supertest integration tests (real DB)
 │   │
-│   └── worker/                       # BullMQ worker process
-│       └── src/
-│           ├── main.ts
-│           └── processors/
-│               ├── ai-jobs.processor.ts
-│               └── notification.processor.ts
+│   ├── web/                          # Next.js 15 App Router web client
+│   │   ├── app/                      # App router pages: (public), (auth), (app)
+│   │   ├── components/               # UI components, dashboard, habits, landing
+│   │   └── lib/                      # API client, store, tokens
+│   │
+│   ├── worker/                       # BullMQ worker process
+│   │   └── src/
+│   │       ├── main.ts
+│   │       └── processors/           # Growth aggregation, outbox relays
+│   │
+│   └── mobile/                       # Expo / React Native mobile application
 │
 ├── packages/
+│   ├── domain/                       # Pure behavioral intelligence, gap engine, calendar
 │   ├── contracts/                    # Shared interfaces, DTOs, enums
+│   ├── ai-core/                      # LLM provider adapters and system prompts
 │   ├── config/                       # env parsing (zod schema)
 │   └── logger/                       # Pino logger factory
 │

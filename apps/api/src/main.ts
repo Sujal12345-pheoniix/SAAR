@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import { v4 as uuidv4 } from 'uuid';
@@ -37,9 +38,25 @@ async function bootstrap(): Promise<void> {
         : undefined,
   });
 
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   });
+
+  // ── Trust Proxy ─────────────────────────────────────────────────────────────
+  // Trust reverse proxy hops (e.g. Render, Cloudflare) for accurate client IP resolution
+  const isProduction = process.env['NODE_ENV'] === 'production';
+  const trustProxyEnv = process.env['TRUST_PROXY_HOPS'];
+  const trustProxyHops: boolean | number =
+    trustProxyEnv !== undefined
+      ? trustProxyEnv === 'true'
+        ? true
+        : trustProxyEnv === 'false'
+        ? false
+        : parseInt(trustProxyEnv, 10)
+      : isProduction
+      ? 1
+      : 0;
+  app.set('trust proxy', trustProxyHops);
 
   // ── Request size limits ──────────────────────────────────────────────────────
   if (typeof jsonParser === 'function') {
@@ -50,7 +67,6 @@ async function bootstrap(): Promise<void> {
   }
 
   // ── Security headers ────────────────────────────────────────────────────────
-  const isProduction = process.env['NODE_ENV'] === 'production';
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -96,9 +112,13 @@ async function bootstrap(): Promise<void> {
   });
 
   // ── X-Request-Id correlation ─────────────────────────────────────────────────
+  const REQUEST_ID_REGEX = /^[A-Za-z0-9._-]{1,64}$/;
   app.use((req: Request, res: Response, next: NextFunction) => {
+    const rawHeader = req.headers['x-request-id'];
     const requestId =
-      (req.headers['x-request-id'] as string | undefined) ?? uuidv4();
+      typeof rawHeader === 'string' && REQUEST_ID_REGEX.test(rawHeader)
+        ? rawHeader
+        : uuidv4();
     (req as Request & { requestId: string }).requestId = requestId;
     res.setHeader('X-Request-Id', requestId);
     next();

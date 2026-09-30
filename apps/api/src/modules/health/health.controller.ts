@@ -1,5 +1,6 @@
 import { Controller, Get, OnModuleDestroy, VERSION_NEUTRAL } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from '../../database/prisma.service';
 import Redis from 'ioredis';
 
@@ -23,6 +24,7 @@ interface MetaResponse {
   timestamp: string;
 }
 
+@SkipThrottle()
 @Controller({ version: [VERSION_NEUTRAL, '1'] })
 export class HealthController implements OnModuleDestroy {
   private readonly redis: Redis;

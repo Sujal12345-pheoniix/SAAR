@@ -7,6 +7,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as argon2 from 'argon2';
+import { createHash } from 'crypto';
+import { Prisma } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../../database/prisma.service';
 import type { RegisterDto } from './dto/register.dto';
@@ -172,6 +174,19 @@ describe('AuthService', () => {
 
       await expect(service.register(dto)).rejects.toThrow(ConflictException);
     });
+
+    it('throws ConflictException when unique constraint race condition occurs on create (P2002)', async () => {
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+      const p2002Error = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`email`)',
+        { code: 'P2002', clientVersion: '5.20.0' },
+      );
+      prisma.$transaction.mockRejectedValueOnce(p2002Error);
+
+      await expect(service.register(dto)).rejects.toThrow(
+        new ConflictException('Email is already registered'),
+      );
+    });
   });
 
   // ── login ─────────────────────────────────────────────────────────────────
@@ -244,6 +259,44 @@ describe('AuthService', () => {
       const secret = 'validsecret1234567890abcdef1234567890';
       const rawToken = `rt_${sessionId}.${secret}`;
       const hash = await argon2.hash(secret);
+      const fakeUser = makeUser();
+      const fakeSession = {
+        ...makeSession({ id: sessionId, refreshHash: hash }),
+        tokenFamilyId: sessionId,
+        rotatedAt: null,
+        user: { ...fakeUser, profile: null },
+      };
+      const newSession = {
+        ...makeSession({ id: '00000000-0000-0000-0000-000000000002' }),
+        tokenFamilyId: sessionId,
+      };
+
+      prisma.session.findUnique.mockResolvedValueOnce(fakeSession);
+      prisma.$transaction.mockImplementation(
+        async (fn: (tx: typeof prisma) => Promise<unknown>) => {
+          return fn({
+            ...prisma,
+            session: {
+              ...prisma.session,
+              updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+              create: jest.fn().mockResolvedValue(newSession),
+            },
+            auditLog: prisma.auditLog,
+          });
+        },
+      );
+
+      const result = await service.refresh(rawToken);
+
+      expect(result.accessToken).toBe('mock.access.token');
+      expect(result.refreshToken).toMatch(/^rt_[0-9a-fA-F-]+\.[0-9a-fA-F]+$/);
+    });
+
+    it('rotates session and returns new tokens using sha256 refresh hash', async () => {
+      const sessionId = '00000000-0000-0000-0000-000000000001';
+      const secret = 'sha256secret1234567890abcdef1234567890';
+      const rawToken = `rt_${sessionId}.${secret}`;
+      const hash = createHash('sha256').update(secret).digest('hex');
       const fakeUser = makeUser();
       const fakeSession = {
         ...makeSession({ id: sessionId, refreshHash: hash }),

@@ -1,45 +1,47 @@
 import type { Metadata } from 'next';
 import { Navbar } from '@/components/landing/Navbar';
 import { Hero } from '@/components/landing/Hero';
-import { LifeIntelligenceMap } from '@/components/landing/LifeIntelligenceMap';
-import { HowSaarThinks } from '@/components/landing/HowSaarThinks';
-import { PlannerSimulator } from '@/components/landing/PlannerSimulator';
-import { GrowthStorySection } from '@/components/landing/GrowthStorySection';
-import { CompanionSection } from '@/components/landing/CompanionSection';
-import { CtaSection, Footer } from '@/components/landing/InsightsAndFooter';
+import { TrustStrip } from '@/components/landing/TrustStrip';
+import { BentoFeatures } from '@/components/landing/BentoFeatures';
+import { RoutineShowcase } from '@/components/landing/RoutineShowcase';
+import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
+import { AppDownloadBanner } from '@/components/landing/AppDownloadBanner';
+import { FaqAccordion } from '@/components/landing/FaqAccordion';
+import { PurpleNewsletterFooter } from '@/components/landing/PurpleNewsletterFooter';
 
 export const metadata: Metadata = {
   title: {
-    absolute: 'SAAR — Personal Growth Intelligence',
+    absolute: 'SAAR — Take Control of Your Daily Habits with AI Coaching',
   },
   description:
-    'You are not managing tasks. You are understanding the person behind the tasks. Turn your daily reality into a deliberate path toward who you want to become.',
+    'Track your habits, improve your health and focus, and take control of your growth with AI-powered coaching and data-driven insights.',
   robots: { index: true, follow: true },
 };
 
 /**
- * SAAR Ultimate Editorial Home Page.
- * Grounded hierarchy:
- * 01 — Who Am I Becoming? (Hero & Becoming Field)
- * 02 — What Is Happening In My Life? (Interactive Life Intelligence Map)
- * 03 — What Does SAAR Notice? (Human Transformation Stories & Evidence)
- * 04 — What Should I Do Next? (Adaptive Planning & Capacity Simulator)
- * 05 — What Changed? (Your Story of Change — Monthly Retrospective)
- * 06 — Grounded Companion (The SAAR Pulse & Action Confirmation)
- * 07 — Calm Invitation & Footnote
+ * SAAR Master Landing Page (Image 2 Reference Hierarchy):
+ * 01 — Pill Navbar with frosted glass
+ * 02 — Atmospheric Hero with 4.9 Score & Central High-Fidelity Phone Mockup
+ * 03 — Global Media & Trust Strip
+ * 04 — Bento Grid: Mint Habit Calendar + Lavender AI Companion Cards
+ * 05 — Routine Mastery Split Showcase
+ * 06 — 5-Star Builder Testimonials
+ * 07 — Dual-Phone App Download Banner
+ * 08 — Clean FAQ Accordion
+ * 09 — Purple Gradient Newsletter Footer
  */
 export default function HomePage() {
   return (
-    <main className="overflow-x-hidden min-h-screen bg-[#FAF8F5] text-[#0F1115]">
+    <main className="overflow-x-hidden min-h-screen bg-[#FAF9FF] text-zinc-900 selection:bg-purple-100 selection:text-purple-900">
       <Navbar />
       <Hero />
-      <LifeIntelligenceMap />
-      <HowSaarThinks />
-      <PlannerSimulator />
-      <GrowthStorySection />
-      <CompanionSection />
-      <CtaSection />
-      <Footer />
+      <TrustStrip />
+      <BentoFeatures />
+      <RoutineShowcase />
+      <TestimonialsSection />
+      <AppDownloadBanner />
+      <FaqAccordion />
+      <PurpleNewsletterFooter />
     </main>
   );
 }

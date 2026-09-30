@@ -3,14 +3,15 @@
 import { motion, useScroll } from 'framer-motion';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { Sparkles, ArrowRight, Menu, X } from 'lucide-react';
 
 const NAV_LINKS = [
-  { label: 'Becoming', href: '#becoming' },
-  { label: 'Life Intelligence', href: '#life-intelligence' },
-  { label: 'How SAAR Thinks', href: '#how-it-thinks' },
-  { label: 'Trade-offs', href: '#tradeoffs' },
-  { label: 'Growth Story', href: '#growth-story' },
-  { label: 'Companion', href: '#companion' },
+  { label: 'Home', href: '#home' },
+  { label: 'About', href: '#about' },
+  { label: 'Features', href: '#features' },
+  { label: 'Methodology', href: '#methodology' },
+  { label: 'Testimonials', href: '#testimonials' },
+  { label: 'FAQ', href: '#faq' },
 ];
 
 export function Navbar() {
@@ -19,45 +20,44 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    return scrollY.on('change', (v) => setScrolled(v > 30));
+    return scrollY.on('change', (v) => setScrolled(v > 20));
   }, [scrollY]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center w-full">
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
+    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center w-full px-4 sm:px-6 pt-4 pointer-events-none">
+      <div className="w-full max-w-5xl pointer-events-auto">
         <motion.nav
-          animate={{
-            backgroundColor: scrolled ? 'rgba(250, 248, 245, 0.92)' : 'rgba(250, 248, 245, 0.65)',
-            backdropFilter: scrolled ? 'blur(16px)' : 'blur(8px)',
-            borderColor: scrolled ? 'rgba(15, 17, 21, 0.08)' : 'rgba(15, 17, 21, 0.04)',
-            boxShadow: scrolled ? '0 4px 20px rgba(15, 17, 21, 0.04)' : 'none',
-            marginTop: scrolled ? '12px' : '18px',
-          }}
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="flex items-center justify-between px-6 py-3.5 rounded-2xl border transition-all"
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className={`flex items-center justify-between px-5 sm:px-7 py-3 rounded-full transition-all duration-300 ${
+            scrolled
+              ? 'bg-white/90 backdrop-blur-xl shadow-lg shadow-purple-500/5 border border-purple-100/80'
+              : 'bg-white/75 backdrop-blur-md shadow-sm border border-purple-100/50'
+          }`}
         >
-          {/* Logo — Editorial Typography */}
-          <Link href="/home" className="inline-flex items-center gap-2.5 text-decoration-none group">
-            <div className="w-7 h-7 rounded-lg bg-[#0F1115] text-[#FAF8F5] flex items-center justify-center font-editorial font-semibold text-base transition-transform group-hover:scale-105">
-              S
+          {/* Logo — Pill Brand Badge matching Image 2 */}
+          <Link href="/home" className="inline-flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-sm transition-transform duration-200 group-hover:scale-105">
+              <span className="font-bold text-sm tracking-wider">S</span>
             </div>
             <div className="flex flex-col">
-              <span className="font-editorial text-xl font-bold tracking-tight text-[#0F1115] leading-none">
+              <span className="font-bold text-lg tracking-tight text-zinc-900 leading-none">
                 SAAR
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-[#868E96] font-medium mt-0.5">
-                Growth Intelligence
+              <span className="text-[9px] uppercase tracking-wider text-purple-600/80 font-semibold mt-0.5">
+                Habits & Coaching
               </span>
             </div>
           </Link>
 
           {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-7">
+          <div className="hidden md:flex items-center gap-6">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-[#495057] hover:text-[#0F1115] transition-colors"
+                className="text-sm font-medium text-zinc-600 hover:text-purple-700 transition-colors"
               >
                 {link.label}
               </a>
@@ -68,68 +68,61 @@ export function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             <Link
               href="/login"
-              className="text-sm font-medium text-[#495057] hover:text-[#0F1115] px-3 py-1.5 transition-colors"
+              className="text-sm font-medium text-zinc-700 hover:text-purple-700 px-3.5 py-1.5 transition-colors"
             >
               Sign In
             </Link>
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-[#226949] hover:bg-[#1B543A] text-white transition-all shadow-sm hover:shadow hover:-translate-y-0.5"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white transition-all shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 hover:scale-[1.02]"
             >
-              Begin Journey
+              <span>Get Started</span>
+              <ArrowRight size={14} />
             </Link>
           </div>
 
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 rounded-lg text-[#0F1115] hover:bg-[#F5F2EB] transition-colors"
+            className="md:hidden p-2 rounded-full text-zinc-700 hover:bg-purple-50 transition-colors"
             aria-label="Toggle navigation menu"
-            aria-expanded={mobileOpen}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              {mobileOpen ? (
-                <path d="M18 6 6 18M6 6l12 12" />
-              ) : (
-                <path d="M3 12h18M3 6h18M3 18h18" />
-              )}
-            </svg>
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </motion.nav>
 
         {/* Mobile Dropdown */}
         {mobileOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="md:hidden mt-2 p-5 rounded-2xl bg-[#FAF8F5] border border-[rgba(15,17,21,0.08)] shadow-lg flex flex-col gap-4"
+            exit={{ opacity: 0, y: -8 }}
+            className="md:hidden mt-2 p-5 bg-white/95 backdrop-blur-xl rounded-3xl border border-purple-100 shadow-xl flex flex-col gap-3"
           >
             {NAV_LINKS.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="text-base font-medium text-[#495057] hover:text-[#0F1115] py-1"
+                className="text-sm font-medium text-zinc-700 hover:text-purple-600 px-3 py-2 rounded-xl hover:bg-purple-50 transition-colors"
               >
                 {link.label}
               </a>
             ))}
-            <hr className="border-[rgba(15,17,21,0.06)]" />
-            <div className="flex flex-col gap-2 pt-1">
+            <div className="pt-3 border-t border-purple-100 flex flex-col gap-2">
               <Link
                 href="/login"
                 onClick={() => setMobileOpen(false)}
-                className="text-center py-2 text-sm font-medium text-[#495057]"
+                className="text-center text-sm font-medium text-zinc-700 py-2.5 rounded-full border border-purple-200"
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
                 onClick={() => setMobileOpen(false)}
-                className="text-center py-2.5 rounded-xl text-sm font-medium bg-[#226949] text-white"
+                className="text-center text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2.5 rounded-full shadow-md"
               >
-                Begin Journey
+                Get Started
               </Link>
             </div>
           </motion.div>
