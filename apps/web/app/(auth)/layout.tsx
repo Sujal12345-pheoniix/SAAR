@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { SaarLogo } from '@/components/ui/SaarLogo';
+import { ArrowLeft, Sparkles, CheckCircle2 } from 'lucide-react';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -8,111 +8,42 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        display: 'flex',
-        background: 'var(--bg)',
-      }}
-    >
-      {/* Left panel — branding */}
-      <div
-        className="hidden lg:flex flex-col justify-between p-12"
-        style={{
-          width: '420px',
-          flexShrink: 0,
-          background: 'linear-gradient(145deg, #0B1020 0%, #1a1f3a 100%)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Glow */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background: 'radial-gradient(ellipse 70% 60% at 30% 20%, rgba(99,102,241,0.2) 0%, transparent 60%)',
-            pointerEvents: 'none',
-          }}
-        />
+    <div className="min-h-screen flex flex-col justify-between bg-[#FAF9FF] relative overflow-hidden aura-mesh-landing text-zinc-900">
+      {/* Background Soft Organic Blurs */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-gradient-to-tr from-purple-200/40 via-pink-100/30 to-indigo-100/30 blur-3xl rounded-full pointer-events-none -z-10" />
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-purple-200/20 blur-2xl rounded-full pointer-events-none -z-10" />
 
-        {/* Particle dots */}
-        {Array.from({ length: 24 }, (_, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              width: 2 + (i % 3),
-              height: 2 + (i % 3),
-              borderRadius: '50%',
-              background: `rgba(99,102,241,${0.2 + (i % 5) * 0.08})`,
-              left: `${(i * 37) % 90 + 5}%`,
-              top: `${(i * 53) % 90 + 5}%`,
-            }}
-          />
-        ))}
+      {/* Top Header / Back Link */}
+      <header className="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between z-10">
+        <Link
+          href="/home"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-600 hover:text-purple-700 bg-white/70 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-purple-100 shadow-sm transition-all hover:shadow"
+        >
+          <ArrowLeft size={14} />
+          <span>Back to Home</span>
+        </Link>
 
-        <div className="relative z-10">
-          <SaarLogo href="/home" size="lg" theme="dark" subtitle />
-        </div>
-
-        <div className="relative z-10">
-          <h2 style={{ fontSize: '2rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.2, marginBottom: '1rem' }}>
-            Your life.<br />
-            <span style={{ color: '#818CF8' }}>Decoded.</span>
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.9375rem', lineHeight: 1.7 }}>
-            Turn your daily habits, goals, and reflections into a living intelligence map of who you&apos;re becoming.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '2.5rem' }}>
-            {[
-              { icon: '🧠', text: 'Behavioral pattern recognition' },
-              { icon: '🎯', text: 'Goal alignment tracking' },
-              { icon: '💡', text: 'AI-powered personal insights' },
-            ].map((f) => (
-              <div key={f.text} style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
-                <div style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 10,
-                  background: 'rgba(99,102,241,0.15)',
-                  border: '1px solid rgba(99,102,241,0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '1rem',
-                  flexShrink: 0,
-                }}>
-                  {f.icon}
-                </div>
-                <span style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.65)', fontWeight: 500 }}>
-                  {f.text}
-                </span>
-              </div>
-            ))}
+        <Link href="/home" className="inline-flex items-center gap-2 group">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-sm">
+            S
           </div>
-        </div>
+          <span className="font-extrabold text-lg tracking-tight text-zinc-900">
+            SAAR
+          </span>
+        </Link>
+      </header>
 
-        <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.8125rem', position: 'relative', zIndex: 10 }}>
-          &copy; {new Date().getFullYear()} SAAR
-        </p>
-      </div>
-
-      {/* Right panel — form */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2rem 1.5rem',
-        }}
-      >
-        <div style={{ width: '100%', maxWidth: '420px' }}>
+      {/* Central Auth Container */}
+      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-10 z-10">
+        <div className="w-full max-w-md">
           {children}
         </div>
-      </div>
+      </main>
+
+      {/* Bottom Footer note */}
+      <footer className="w-full max-w-6xl mx-auto px-6 py-6 text-center text-xs text-zinc-400 z-10">
+        <p>&copy; {new Date().getFullYear()} SAAR. Grounded personal growth intelligence.</p>
+      </footer>
     </div>
   );
 }
