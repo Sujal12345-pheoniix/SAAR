@@ -105,21 +105,6 @@ function toSafeSession(s: Session): SafeSession {
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
-  // Fast in-memory session revocation lookup (avoids per-request DB hit)
-  private static readonly revokedSessionIds = new Set<string>();
-  private static readonly revokedUserTimestamps = new Map<string, number>();
-
-  public static isSessionRevoked(sessionId: string): boolean {
-    return AuthService.revokedSessionIds.has(sessionId);
-  }
-
-  public static isUserRevokedSince(userId: string, tokenIssuedAtSeconds?: number): boolean {
-    const revokedAtMs = AuthService.revokedUserTimestamps.get(userId);
-    if (!revokedAtMs) return false;
-    if (!tokenIssuedAtSeconds) return true;
-    return (tokenIssuedAtSeconds * 1000) <= revokedAtMs;
-  }
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
@@ -314,9 +299,6 @@ export class AuthService {
           data: { revokedAt: new Date() },
         });
 
-        // Invalidate in-memory session cache as well
-        AuthService.revokedSessionIds.add(session.id);
-
         await this.auditAuth('auth.refresh.reuse_detected', session.userId, {
           sessionId: session.id,
           tokenFamilyId: familyId,
@@ -437,9 +419,6 @@ export class AuthService {
       data: { revokedAt: new Date() },
     });
 
-    // Invalidate in memory cache immediately for zero-delay JWT revocation
-    AuthService.revokedSessionIds.add(sessionId);
-
     await this.auditAuth('auth.logout', userId, { sessionId });
     this.logger.log({ event: 'auth.logout', userId, sessionId });
   }
@@ -451,9 +430,6 @@ export class AuthService {
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
-
-    // Invalidate all tokens issued before now for this user
-    AuthService.revokedUserTimestamps.set(userId, Date.now());
 
     await this.auditAuth('auth.logout_all', userId, { count: result.count });
     this.logger.log({

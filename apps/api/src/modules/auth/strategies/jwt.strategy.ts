@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import type { AuthenticatedUser } from '../../../common/decorators/current-user.decorator';
-import { AuthService } from '../auth.service';
+import { PrismaService } from '../../../database/prisma.service';
 
 interface JwtPayload {
   sub: string;
@@ -17,7 +17,10 @@ interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(config: ConfigService) {
+  constructor(
+    config: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -35,22 +38,33 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       ]),
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('JWT_ACCESS_SECRET'),
+      issuer: 'saar-api',
+      audience: 'saar-client',
     });
   }
 
-  validate(payload: JwtPayload): AuthenticatedUser {
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     if (!payload.sub || !payload.sid) {
       throw new UnauthorizedException('Invalid token payload');
     }
     if (payload.typ && payload.typ !== 'access') {
       throw new UnauthorizedException('Invalid token type');
     }
-    if (AuthService.isSessionRevoked(payload.sid)) {
+
+    const session = await this.prisma.session.findUnique({
+      where: { id: payload.sid },
+    });
+
+    if (!session || session.userId !== payload.sub) {
+      throw new UnauthorizedException('Session not found or invalid');
+    }
+    if (session.revokedAt !== null) {
       throw new UnauthorizedException('Session has been revoked');
     }
-    if (AuthService.isUserRevokedSince(payload.sub, payload.iat)) {
-      throw new UnauthorizedException('Session has been revoked');
+    if (session.expiresAt <= new Date()) {
+      throw new UnauthorizedException('Session has expired');
     }
+
     return { userId: payload.sub, sessionId: payload.sid };
   }
 }
