@@ -11,8 +11,8 @@
 export interface JwtConfig {
   /** Secret used to sign / verify access tokens. */
   accessSecret: string;
-  /** Secret used to sign / verify refresh tokens. */
-  refreshSecret: string;
+  /** Optional secret previously used for refresh tokens. */
+  refreshSecret?: string | undefined;
   /** Access token lifetime in seconds (default: 900 = 15 min). */
   accessExpiresIn: number;
   /** Refresh token lifetime in seconds (default: 2 592 000 = 30 days). */
@@ -97,7 +97,7 @@ export function loadConfig(): AppConfig {
     redisUrl: requireEnv('REDIS_URL'),
     jwt: {
       accessSecret: requireEnv('JWT_ACCESS_SECRET'),
-      refreshSecret: requireEnv('JWT_REFRESH_SECRET'),
+      refreshSecret: process.env['JWT_REFRESH_SECRET'],
       accessExpiresIn: parseIntEnv('JWT_ACCESS_EXPIRES_IN', 900),
       refreshExpiresIn: parseIntEnv('JWT_REFRESH_EXPIRES_IN', 2_592_000),
     },
